@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScoreDocente</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #18181f;
+      --surface3: #1f1f28;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --accent: #e63946;
+      --accent2: #ff6b6b;
+      --accent-glow: rgba(230,57,70,0.15);
+      --text: #f0f0f5;
+      --text2: #9090a8;
+      --text3: #5a5a72;
+      --green: #2ecc71;
+      --green-bg: rgba(46,204,113,0.1);
+      --amber: #f39c12;
+      --amber-bg: rgba(243,156,18,0.1);
+      --red: #e63946;
+      --red-bg: rgba(230,57,70,0.1);
+      --radius: 12px;
+      --sidebar-w: 220px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+    /* ══════════════════════════════
+       LOGIN
+    ══════════════════════════════ */
+    #login-page {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+    }
+
+    .login-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 50%, rgba(230,57,70,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 20%, rgba(230,57,70,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .login-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      padding: 2.5rem;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 360px;
+      animation: fadeUp 0.4s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      font-size: 22px;
+    }
+    .logo h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .logo p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+      margin-bottom: 1rem;
+    }
+    .field-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .field-input::placeholder { color: var(--text3); }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+    .btn-login:hover { background: #c1121f; }
+    .btn-login:active { transform: scale(0.98); }
+
+    .error-msg {
+      background: var(--red-bg);
+      color: var(--accent2);
+      border: 1px solid rgba(230,57,70,0.2);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    /* ══════════════════════════════
+       LAYOUT
+    ══════════════════════════════ */
+    #director-page, #instructor-page {
+      display: none;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 0 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .sidebar-logo .brand {
+      font-family: 'Syne', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+    .sidebar-logo .role-tag {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 3px;
+      padding-left: 16px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .nav-section {
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0 0.75rem;
+      margin-bottom: 6px;
+      margin-top: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 400;
+      color: var(--text2);
+      margin-bottom: 2px;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active {
+      background: var(--accent-glow);
+      color: var(--accent2);
+      font-weight: 500;
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 60%;
+      background: var(--accent);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .user-avatar {
+      width: 30px; height: 30px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(230,57,70,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .user-name {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .logout-btn {
+      width: 100%;
+      padding: 9px 12px;
+      background: transparent;
+      color: var(--text3);
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover { background: var(--red-bg); color: var(--accent2); }
+
+    /* ── MAIN ── */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      padding: 2rem 2.5rem;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      margin-bottom: 1.75rem;
+    }
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--text3);
+      margin-top: 3px;
+    }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border2); }
+    .stat-card:hover::before { opacity: 1; }
+
+    .stat-icon {
+      font-size: 18px;
+      margin-bottom: 0.75rem;
+      opacity: 0.7;
+    }
+    .stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 5px;
+      font-weight: 400;
+    }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .table-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .table-header h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 500;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 10px 1.5rem;
+      text-align: left;
+      font-size: 11px;
+      color: var(--text3);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      background: var(--surface2);
+    }
+    td {
+      padding: 12px 1.5rem;
+      font-size: 13.5px;
+      color: var(--text2);
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: var(--surface2); color: var(--text); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-red   { background: var(--red-bg);   color: var(--accent2); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
+    .badge-gray  { background: var(--surface3); color: var(--text3); }
+
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── BUTTONS ── */
+    .eval-btn {
+      padding: 6px 14px;
+      background: var(--accent-glow);
+      color: var(--accent2);
+      border: 1px solid rgba(230,57,70,0.25);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .eval-btn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    /* ══════════════════════════════
+       MODAL
+    ══════════════════════════════ */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeUp 0.3s ease;
+    }
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--text3);
+      margin-bottom: 1.5rem;
+    }
+
+    .eval-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text3);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: var(--text3); }
+    .form-group textarea { resize: vertical; }
+
+    .modal-footer {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .btn-cancel {
+      flex: 1;
+      padding: 10px;
+      background: var(--surface2);
+      color: var(--text2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-cancel:hover { background: var(--surface3); color: var(--text); }
+    .btn-save {
+      flex: 2;
+      padding: 10px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover { background: #c1121f; }
+
+    /* ── SCORE INPUT VISUAL ── */
+    .score-input-wrap { position: relative; }
+    .score-input-wrap input {
+      padding-right: 36px;
+    }
+    .score-unit {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--text3);
+      pointer-events: none;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: var(--text3);
+    }
+    .empty-state .empty-icon { font-size: 36px; margin-bottom: 0.75rem; opacity: 0.4; }
+    .empty-state p { font-size: 13px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-page">
+    <div class="login-bg"></div>
+    <div class="login-card">
+      <div class="logo">
+        <div class="logo-mark">📋</div>
+        <h1>ScoreDocente</h1>
+        <p>Sistema de evaluación docente</p>
+      </div>
+      <div class="error-msg" id="error-msg"></div>
+      <label class="field-label">Correo electrónico</label>
+      <input class="field-input" type="email" id="email" placeholder="correo@colegio.edu.pe">
+      <label class="field-label">Contraseña</label>
+      <input class="field-input" type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()">
+      <button class="btn-login" onclick="login()">Ingresar</button>
+    </div>
+  </div>
+
+  <!-- PANEL DIRECTOR -->
+  <div id="director-page">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="brand"><div class="brand-dot"></div>ScoreDocente</div>
+        <div class="role-tag">Panel Director</div>
+      </div>
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" onclick="showSection('resumen', this)">📊 Resumen</div>
+      <div class="nav-item" onclick="showSection('docentes', this)">👨‍🏫 Docentes</div>
+      <div class="nav-item" onclick="showSection('evaluaciones', this)">📋 Evaluaciones</div>
+      <div class="nav-section">Análisis</div>
+      <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
+      <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar">👤</div>
+          <div class="user-name" id="dir-user-info"></div>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+          <span>↩</span> Cerrar sesión
+        </button>
+      </div>
+    </div>
+    <div class="main-content">
+
+      <div class="section active" id="section-resumen">
+        <div class="page-header">
+          <div class="page-title">Resumen General</div>
+          <div class="page-subtitle">Vista en tiempo real del sistema</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">👨‍🏫</div>
+            <div class="stat-number" id="stat-docentes">—</div>
+            <div class="stat-label">Docentes activos</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-number" id="stat-evaluaciones">—</div>
+            <div class="stat-label">Evaluaciones</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-number" id="stat-promedio">—</div>
+            <div class="stat-label">Promedio general</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🧑‍💼</div>
+            <div class="stat-number" id="stat-instructores">—</div>
+            <div class="stat-label">Instructores</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Últimas evaluaciones</h3>
+            <div class="live-badge"><div class="live-dot"></div>En vivo</div>
+          </div>
+          <table>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <tbody id="tabla-recientes"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-docentes">
+        <div class="page-header">
+          <div class="page-title">Docentes</div>
+          <div class="page-subtitle">Listado de docentes activos</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Lista de docentes</h3></div>
+          <table>
+            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Estado</th></tr></thead>
+            <tbody id="tabla-docentes"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-evaluaciones">
+        <div class="page-header">
+          <div class="page-title">Evaluaciones</div>
+          <div class="page-subtitle">Todas las evaluaciones registradas</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Evaluaciones realizadas</h3>
+            <div class="live-badge"><div class="live-dot"></div>En vivo</div>
+          </div>
+          <table>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <tbody id="tabla-evaluaciones"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-reportes">
+        <div class="page-header">
+          <div class="page-title">Reportes</div>
+          <div class="page-subtitle">Estadísticas del sistema</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Próximamente</h3></div>
+          <div class="empty-state"><div class="empty-icon">📊</div><p>Los reportes gráficos estarán disponibles pronto</p></div>
+        </div>
+      </div>
+
+      <div class="section" id="section-usuarios">
+        <div class="page-header">
+          <div class="page-title">Usuarios</div>
+          <div class="page-subtitle">Gestionar accesos al sistema</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Usuarios del sistema</h3></div>
+          <table>
+            <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th></tr></thead>
+            <tbody id="tabla-usuarios"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PANEL INSTRUCTOR -->
+  <div id="instructor-page">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="brand"><div class="brand-dot"></div>ScoreDocente</div>
+        <div class="role-tag">Panel Instructor</div>
+      </div>
+      <div class="nav-section">Evaluación</div>
+      <div class="nav-item active" onclick="showSectionSup('sup-docentes', this)">👨‍🏫 Docentes</div>
+      <div class="nav-item" onclick="showSectionSup('sup-historial', this)">📋 Historial</div>
+      <div class="nav-item" onclick="showSectionSup('sup-reportes', this)">📈 Reportes</div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar">👤</div>
+          <div class="user-name" id="inst-user-info"></div>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+          <span>↩</span> Cerrar sesión
+        </button>
+      </div>
+    </div>
+    <div class="main-content">
+
+      <div class="section active" id="section-sup-docentes">
+        <div class="page-header">
+          <div class="page-title">Docentes a Evaluar</div>
+          <div class="page-subtitle">Docentes pendientes de evaluación</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Lista de docentes</h3></div>
+          <table>
+            <thead><tr><th>Nombre</th><th>Curso</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-sup-docentes"><tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-sup-historial">
+        <div class="page-header">
+          <div class="page-title">Historial</div>
+          <div class="page-subtitle">Mis evaluaciones registradas</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Mis evaluaciones</h3></div>
+          <table>
+            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <tbody id="tabla-sup-historial"><tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-sup-reportes">
+        <div class="page-title">Mis Reportes</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL EVALUACIÓN -->
+  <div class="modal" id="modal-evaluacion">
+    <div class="modal-card">
+      <div class="modal-title">Evaluar docente</div>
+      <div class="modal-subtitle" id="modal-nombre-sub">Completa los puntajes</div>
+      <input type="hidden" id="modal-docente-id">
+
+      <div class="eval-grid">
+        <div class="form-group">
+          <label>Dominio disciplinar</label>
+          <div class="score-input-wrap">
+            <input type="number" id="eval-dominio" min="0" max="100" placeholder="0–100">
+            <span class="score-unit">pts</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Práctica pedagógica</label>
+          <div class="score-input-wrap">
+            <input type="number" id="eval-practica" min="0" max="100" placeholder="0–100">
+            <span class="score-unit">pts</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Clima de aula</label>
+          <div class="score-input-wrap">
+            <input type="number" id="eval-clima" min="0" max="100" placeholder="0–100">
+            <span class="score-unit">pts</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Logro de aprendizaje</label>
+          <div class="score-input-wrap">
+            <input type="number" id="eval-logro" min="0" max="100" placeholder="0–100">
+            <span class="score-unit">pts</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Innovación</label>
+          <div class="score-input-wrap">
+            <input type="number" id="eval-innovacion" min="0" max="100" placeholder="0–100">
+            <span class="score-unit">pts</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Comunicación / Tutoría</label>
+          <div class="score-input-wrap">
+            <input type="number" id="eval-comunicacion" min="0" max="100" placeholder="0–100">
+            <span class="score-unit">pts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Observación (opcional)</label>
+        <textarea id="eval-observacion" rows="3" placeholder="Comentarios adicionales..."></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn-save" onclick="guardarEvaluacion()">Guardar evaluación</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let usuario = null;
+    let token = null;
+    let pollingInterval = null;
+
+    window.onload = () => {
+      const t = localStorage.getItem('token');
+      const u = localStorage.getItem('usuario');
+      if (t && u) {
+        token = t;
+        usuario = JSON.parse(u);
+        mostrarPanel();
+      } else {
+        document.getElementById('login-page').style.display = 'flex';
+      }
+    };
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('error-msg');
+      errorMsg.style.display = 'none';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errorMsg.textContent = data.error || 'Error al iniciar sesión';
+          errorMsg.style.display = 'block';
+          return;
+        }
+        token = data.token;
+        usuario = data.usuario;
+        localStorage.setItem('token', token);
+        localStorage.setItem('usuario', JSON.stringify(usuario));
+        mostrarPanel();
+      } catch (err) {
+        errorMsg.textContent = 'Error de conexión';
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    function mostrarPanel() {
+      document.getElementById('login-page').style.display = 'none';
+      if (usuario.rol === 'director') {
+        document.getElementById('director-page').style.display = 'flex';
+        document.getElementById('dir-user-info').textContent = usuario.nombre;
+        cargarDatosDirector();
+        iniciarPollingDirector();
+      } else {
+        document.getElementById('instructor-page').style.display = 'flex';
+        document.getElementById('inst-user-info').textContent = usuario.nombre;
+        cargarDatosSupervisor();
+      }
+    }
+
+    function logout() {
+      if (pollingInterval) clearInterval(pollingInterval);
+      localStorage.clear();
+      location.reload();
+    }
+
+    function showSection(id, el) {
+      document.querySelectorAll('#director-page .section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('#director-page .nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('section-' + id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function showSectionSup(id, el) {
+      document.querySelectorAll('#instructor-page .section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('#instructor-page .nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('section-' + id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    async function cargarDatosDirector() {
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+
+        const resDoc = await fetch('/api/docentes', { headers });
+        const docentes = await resDoc.json();
+        document.getElementById('stat-docentes').textContent = docentes.length || 0;
+
+        document.getElementById('tabla-docentes').innerHTML = docentes.length
+          ? docentes.map(d => `
+            <tr>
+              <td style="color:var(--text);font-weight:500">${d.nombre} ${d.apellido}</td>
+              <td>${d.curso || '—'}</td>
+              <td>${d.nivel || '—'}</td>
+              <td><span class="badge badge-green">Activo</span></td>
+            </tr>`).join('')
+          : '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
+
+        const resEval = await fetch('/api/evaluaciones', { headers });
+        const evaluaciones = await resEval.json();
+        document.getElementById('stat-evaluaciones').textContent = evaluaciones.length || 0;
+
+        const promedios = evaluaciones.map(e => parseFloat(e.promedio)).filter(Boolean);
+        const promGeneral = promedios.length
+          ? (promedios.reduce((a,b) => a+b, 0) / promedios.length).toFixed(1) + '%'
+          : '—';
+        document.getElementById('stat-promedio').textContent = promGeneral;
+
+        const rowsEval = evaluaciones.map(e => `
+          <tr>
+            <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+            <td>${e.instructor_nombre}</td>
+            <td><span class="badge ${e.promedio >= 70 ? 'badge-green' : e.promedio >= 50 ? 'badge-amber' : 'badge-red'}">${e.promedio}%</span></td>
+            <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+          </tr>`).join('') || '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+
+        document.getElementById('tabla-evaluaciones').innerHTML = rowsEval;
+        document.getElementById('tabla-recientes').innerHTML = rowsEval;
+
+        const resUsu = await fetch('/api/auth/usuarios', { headers });
+        const usuarios = await resUsu.json();
+        document.getElementById('stat-instructores').textContent = usuarios.filter(u => u.rol === 'supervisor').length || 0;
+
+        document.getElementById('tabla-usuarios').innerHTML = usuarios.map(u => `
+          <tr>
+            <td style="color:var(--text);font-weight:500">${u.nombre}</td>
+            <td style="color:var(--text3)">${u.email}</td>
+            <td><span class="badge ${u.rol === 'director' ? 'badge-red' : 'badge-amber'}">${u.rol}</span></td>
+            <td><span class="badge ${u.activo ? 'badge-green' : 'badge-gray'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+          </tr>`).join('');
+
+      } catch (err) {
+        console.error('Error cargando datos:', err);
+      }
+    }
+
+    async function cargarDatosSupervisor() {
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+
+        const resDoc = await fetch('/api/docentes/pendientes', { headers });
+        const docentes = await resDoc.json();
+
+        document.getElementById('tabla-sup-docentes').innerHTML = docentes.length
+          ? docentes.map(d => `
+            <tr>
+              <td style="color:var(--text);font-weight:500">${d.nombre} ${d.apellido}</td>
+              <td>${d.curso || '—'}</td>
+              <td><button class="eval-btn" onclick="evaluarDocente(${d.id}, '${d.nombre} ${d.apellido}')">Evaluar</button></td>
+            </tr>`).join('')
+          : '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">✅</div><p>Ya evaluaste a todos los docentes</p></div></td></tr>';
+
+        const resEval = await fetch('/api/evaluaciones/mias', { headers });
+        const evaluaciones = await resEval.json();
+
+        document.getElementById('tabla-sup-historial').innerHTML = evaluaciones.length
+          ? evaluaciones.map(e => `
+            <tr>
+              <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+              <td><span class="badge ${e.promedio >= 70 ? 'badge-green' : e.promedio >= 50 ? 'badge-amber' : 'badge-red'}">${e.promedio}%</span></td>
+              <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+            </tr>`).join('')
+          : '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+
+        actualizarReporteSupervisor(evaluaciones);
+
+      } catch (err) {
+        console.error('Error cargando datos:', err);
+      }
+    }
+
+    function actualizarReporteSupervisor(evaluaciones) {
+      const total = evaluaciones.length;
+      const aprobados = evaluaciones.filter(e => e.promedio >= 70).length;
+      const enProceso = evaluaciones.filter(e => e.promedio >= 50 && e.promedio < 70).length;
+      const bajos = evaluaciones.filter(e => e.promedio < 50).length;
+
+      document.getElementById('section-sup-reportes').innerHTML = `
+        <div class="page-header">
+          <div class="page-title">Mis Reportes</div>
+          <div class="page-subtitle">Resumen de mis evaluaciones</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-number">${total}</div><div class="stat-label">Evaluados</div></div>
+          <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${aprobados}</div><div class="stat-label">Puntaje alto ≥70%</div></div>
+          <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-number" style="color:var(--amber)">${enProceso}</div><div class="stat-label">Puntaje medio 50–69%</div></div>
+          <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-number" style="color:var(--accent2)">${bajos}</div><div class="stat-label">Puntaje bajo &lt;50%</div></div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Detalle de mis evaluaciones</h3></div>
+          <table>
+            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <tbody>
+              ${evaluaciones.length
+                ? evaluaciones.map(e => `
+                  <tr>
+                    <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+                    <td><span class="badge ${e.promedio >= 70 ? 'badge-green' : e.promedio >= 50 ? 'badge-amber' : 'badge-red'}">${e.promedio}%</span></td>
+                    <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+                  </tr>`).join('')
+                : '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>'
+              }
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    function evaluarDocente(id, nombre) {
+      document.getElementById('modal-nombre-sub').textContent = nombre;
+      document.getElementById('modal-docente-id').value = id;
+      ['eval-dominio','eval-practica','eval-clima','eval-logro','eval-innovacion','eval-comunicacion','eval-observacion']
+        .forEach(i => { document.getElementById(i).value = ''; });
+      document.getElementById('modal-evaluacion').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-evaluacion').style.display = 'none';
+    }
+
+    async function guardarEvaluacion() {
+      const docente_id           = document.getElementById('modal-docente-id').value;
+      const dominio_disciplinar  = parseInt(document.getElementById('eval-dominio').value);
+      const practica_pedagogica  = parseInt(document.getElementById('eval-practica').value);
+      const clima_aula           = parseInt(document.getElementById('eval-clima').value);
+      const logro_aprendizaje    = parseInt(document.getElementById('eval-logro').value);
+      const innovacion           = parseInt(document.getElementById('eval-innovacion').value);
+      const comunicacion_tutoria = parseInt(document.getElementById('eval-comunicacion').value);
+      const observacion          = document.getElementById('eval-observacion').value;
+
+      if ([dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria]
+          .some(v => isNaN(v) || v < 0 || v > 100)) {
+        alert('Todos los puntajes deben ser entre 0 y 100');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/evaluaciones', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ docente_id, dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria, observacion })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + data.error); return; }
+        alert('✅ Evaluación guardada! Promedio: ' + data.promedio + '%');
+        cerrarModal();
+        cargarDatosSupervisor();
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    function iniciarPollingDirector() {
+      if (pollingInterval) clearInterval(pollingInterval);
+      pollingInterval = setInterval(() => cargarDatosDirector(), 10000);
+    }
+  </script>
+</body>
+</html>
