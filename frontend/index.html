@@ -613,6 +613,8 @@
     .empty-state p { font-size: 13px; }
 
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -738,13 +740,32 @@
       </div>
 
       <div class="section" id="section-reportes">
-        <div class="page-header">
-          <div class="page-title">Reportes</div>
-          <div class="page-subtitle">Estadísticas del sistema</div>
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="page-title">Reportes</div>
+            <div class="page-subtitle">Estadísticas generales del sistema</div>
+          </div>
+          <button onclick="descargarReportePDF()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+            📄 Descargar PDF
+          </button>
+        </div>
+        <div class="stats-grid" id="reporte-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+          <div class="table-card" style="padding:1.5rem">
+            <div class="table-header" style="padding:0;border:none;margin-bottom:1rem"><h3>Promedio por docente</h3></div>
+            <canvas id="chart-docentes" height="220"></canvas>
+          </div>
+          <div class="table-card" style="padding:1.5rem">
+            <div class="table-header" style="padding:0;border:none;margin-bottom:1rem"><h3>Distribucion de puntajes</h3></div>
+            <canvas id="chart-distribucion" height="220"></canvas>
+          </div>
         </div>
         <div class="table-card">
-          <div class="table-header"><h3>Próximamente</h3></div>
-          <div class="empty-state"><div class="empty-icon">📊</div><p>Los reportes gráficos estarán disponibles pronto</p></div>
+          <div class="table-header"><h3>Detalle completo</h3></div>
+          <table>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <tbody id="tabla-reporte-detalle"></tbody>
+          </table>
         </div>
       </div>
 
@@ -1004,6 +1025,7 @@
 
         document.getElementById('tabla-evaluaciones').innerHTML = rowsEval;
         document.getElementById('tabla-recientes').innerHTML = rowsEval;
+        renderizarGraficos(evaluaciones);
 
         const resUsu = await fetch('/api/auth/usuarios', { headers });
         const usuarios = await resUsu.json();
@@ -1045,8 +1067,9 @@
           ? evaluaciones.map(e => `
             <tr>
               <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
-              <td><span class="badge ${e.promedio >= 70 ? 'badge-green' : e.promedio >= 50 ? 'badge-amber' : 'badge-red'}">${e.promedio}%</span></td>
+              <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
               <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+              <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacion(${e.id})">🗑 Eliminar</button></td>
             </tr>`).join('')
           : '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
 
@@ -1077,7 +1100,7 @@
         <div class="table-card">
           <div class="table-header"><h3>Detalle de mis evaluaciones</h3></div>
           <table>
-            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th><th>Acción</th></tr></thead>
             <tbody>
               ${evaluaciones.length
                 ? evaluaciones.map(e => `
@@ -1136,7 +1159,147 @@
         alert('Error de conexión');
       }
     }
+    async function eliminarEvaluacion(id) {
+      if (!confirm('¿Seguro que quieres eliminar esta evaluación?')) return;
+      try {
+        const res = await fetch('/api/evaluaciones/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + data.error); return; }
+        alert('✅ Evaluación eliminada');
+        cargarDatosSupervisor();
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+    let chartDocentes = null;
+    let chartDistribucion = null;
 
+    function renderizarGraficos(evaluaciones) {
+      // Stats cards
+      const promedios = evaluaciones.map(e => parseFloat(e.puntaje_total)).filter(Boolean);
+      const promGeneral = promedios.length ? (promedios.reduce((a,b)=>a+b,0)/promedios.length).toFixed(1) : 0;
+      const altos  = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 70).length;
+      const medios = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 50 && parseFloat(e.puntaje_total) < 70).length;
+      const bajos  = evaluaciones.filter(e => parseFloat(e.puntaje_total) < 50).length;
+
+      document.getElementById('reporte-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-number">${promGeneral}%</div><div class="stat-label">Promedio general</div></div>
+        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${altos}</div><div class="stat-label">Puntaje alto ≥70%</div></div>
+        <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-number" style="color:var(--amber)">${medios}</div><div class="stat-label">Puntaje medio 50-69%</div></div>
+        <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-number" style="color:var(--accent2)">${bajos}</div><div class="stat-label">Puntaje bajo &lt;50%</div></div>`;
+
+      // Tabla detalle
+      document.getElementById('tabla-reporte-detalle').innerHTML = evaluaciones.map(e => `
+        <tr>
+          <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+          <td>${e.instructor_nombre}</td>
+          <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+          <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+        </tr>`).join('') || '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+
+      // Grafico barras - promedio por docente
+      if (chartDocentes) chartDocentes.destroy();
+      const ctxD = document.getElementById('chart-docentes').getContext('2d');
+      chartDocentes = new Chart(ctxD, {
+        type: 'bar',
+        data: {
+          labels: evaluaciones.map(e => e.docente_nombre.split(' ')[0] + ' ' + (e.docente_nombre.split(' ')[1]||'')),
+          datasets: [{
+            label: 'Promedio',
+            data: evaluaciones.map(e => parseFloat(e.puntaje_total).toFixed(1)),
+            backgroundColor: evaluaciones.map(e =>
+              parseFloat(e.puntaje_total) >= 70 ? 'rgba(46,204,113,0.7)' :
+              parseFloat(e.puntaje_total) >= 50 ? 'rgba(243,156,18,0.7)' : 'rgba(230,57,70,0.7)'),
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 0, max: 100, ticks: { color: '#9090a8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#9090a8', maxRotation: 45 }, grid: { display: false } }
+          }
+        }
+      });
+
+      // Grafico dona - distribucion
+      if (chartDistribucion) chartDistribucion.destroy();
+      const ctxDist = document.getElementById('chart-distribucion').getContext('2d');
+      chartDistribucion = new Chart(ctxDist, {
+        type: 'doughnut',
+        data: {
+          labels: ['Alto ≥70%', 'Medio 50-69%', 'Bajo <50%'],
+          datasets: [{
+            data: [altos, medios, bajos],
+            backgroundColor: ['rgba(46,204,113,0.8)', 'rgba(243,156,18,0.8)', 'rgba(230,57,70,0.8)'],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#9090a8', padding: 16, font: { size: 12 } } } },
+          cutout: '65%'
+        }
+      });
+    }
+
+    async function descargarReportePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const fecha = new Date().toLocaleDateString('es-PE');
+
+      // Header
+      doc.setFillColor(230, 57, 70);
+      doc.rect(0, 0, 210, 28, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+      doc.text('EduScore CS — Reporte de Evaluaciones', 14, 12);
+      doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+      doc.text('I.E.P. Cervantes School  |  Generado: ' + fecha, 14, 22);
+
+      // Grafico barras
+      const canvasD = document.getElementById('chart-docentes');
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text('Promedio por docente', 14, 38);
+      doc.addImage(canvasD.toDataURL('image/png'), 'PNG', 14, 42, 182, 70);
+
+      // Grafico dona
+      const canvasDist = document.getElementById('chart-distribucion');
+      doc.text('Distribucion de puntajes', 14, 122);
+      doc.addImage(canvasDist.toDataURL('image/png'), 'PNG', 55, 126, 100, 70);
+
+      // Tabla
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text('Detalle de evaluaciones', 14, 206);
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+
+      const rows = document.querySelectorAll('#tabla-reporte-detalle tr');
+      let y = 214;
+      doc.setFillColor(240, 240, 245);
+      doc.rect(14, y-5, 182, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.text('Docente', 16, y); doc.text('Instructor', 80, y); doc.text('Promedio', 140, y); doc.text('Fecha', 170, y);
+      y += 7; doc.setFont('helvetica', 'normal');
+
+      rows.forEach(row => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 4) {
+          doc.text(cells[0].textContent.trim().substring(0,30), 16, y);
+          doc.text(cells[1].textContent.trim().substring(0,25), 80, y);
+          doc.text(cells[2].textContent.trim(), 140, y);
+          doc.text(cells[3].textContent.trim(), 170, y);
+          y += 7;
+        }
+      });
+
+      doc.save('EduScore_Reporte_' + fecha.replace(/\//g,'-') + '.pdf');
+    }
     function iniciarPollingDirector() {
       if (pollingInterval) clearInterval(pollingInterval);
       pollingInterval = setInterval(() => cargarDatosDirector(), 10000);

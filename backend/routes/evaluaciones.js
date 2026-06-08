@@ -58,5 +58,20 @@ router.get('/mias', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener evaluaciones' });
   }
 });
-
+  // DELETE /api/evaluaciones/:id
+router.delete('/:id', verificarToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      'DELETE FROM evaluaciones WHERE id = $1 AND supervisor_id = $2 RETURNING *',
+      [req.params.id, req.usuario.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Evaluacion no encontrada o sin permiso' });
+    }
+    res.json({ mensaje: 'Evaluacion eliminada correctamente' });
+  } catch (err) {
+    console.error('Error eliminando evaluacion:', err);
+    res.status(500).json({ error: 'Error al eliminar evaluacion' });
+  }
+});
     module.exports = router;
