@@ -1009,7 +1009,7 @@
         const evaluaciones = await resEval.json();
         document.getElementById('stat-evaluaciones').textContent = evaluaciones.length || 0;
 
-        const promedios = evaluaciones.map(e => parseFloat(e.promedio)).filter(Boolean);
+        const promedios = evaluaciones.map(e => parseFloat(e.puntaje_total)).filter(v => !isNaN(v) && v > 0);
         const promGeneral = promedios.length
           ? (promedios.reduce((a,b) => a+b, 0) / promedios.length).toFixed(1) + '%'
           : '—';
@@ -1019,12 +1019,13 @@
           <tr>
             <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
             <td>${e.instructor_nombre}</td>
-            <td><span class="badge ${e.promedio >= 70 ? 'badge-green' : e.promedio >= 50 ? 'badge-amber' : 'badge-red'}">${e.promedio}%</span></td>
+            <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
             <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
           </tr>`).join('') || '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
 
         document.getElementById('tabla-evaluaciones').innerHTML = rowsEval;
         document.getElementById('tabla-recientes').innerHTML = rowsEval;
+        window._ultimasEvaluaciones = evaluaciones;
         renderizarGraficos(evaluaciones);
 
         const resUsu = await fetch('/api/auth/usuarios', { headers });
@@ -1082,9 +1083,9 @@
 
     function actualizarReporteSupervisor(evaluaciones) {
       const total = evaluaciones.length;
-      const aprobados = evaluaciones.filter(e => e.promedio >= 70).length;
-      const enProceso = evaluaciones.filter(e => e.promedio >= 50 && e.promedio < 70).length;
-      const bajos = evaluaciones.filter(e => e.promedio < 50).length;
+      const aprobados = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 70).length;
+      const enProceso = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 50 && parseFloat(e.puntaje_total) < 70).length;
+      const bajos = evaluaciones.filter(e => parseFloat(e.puntaje_total) < 50).length;
 
       document.getElementById('section-sup-reportes').innerHTML = `
         <div class="page-header">
@@ -1100,13 +1101,13 @@
         <div class="table-card">
           <div class="table-header"><h3>Detalle de mis evaluaciones</h3></div>
           <table>
-            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th><th>Acción</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th></tr></thead>
             <tbody>
               ${evaluaciones.length
                 ? evaluaciones.map(e => `
                   <tr>
                     <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
-                    <td><span class="badge ${e.promedio >= 70 ? 'badge-green' : e.promedio >= 50 ? 'badge-amber' : 'badge-red'}">${e.promedio}%</span></td>
+                    <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
                     <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
                   </tr>`).join('')
                 : '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>'
@@ -1249,53 +1250,157 @@
 
     async function descargarReportePDF() {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const fecha = new Date().toLocaleDateString('es-PE');
 
-      // Header
+      // ── Capturar gráficos ANTES de crear el PDF ──
+      // Forzar fondo blanco en los canvas para que se vean bien en PDF
+      function canvasConFondo(canvasId) {
+        const original = document.getElementById(canvasId);
+        const temp = document.createElement('canvas');
+        temp.width = original.width;
+        temp.height = original.height;
+        const ctx = temp.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, temp.width, temp.height);
+        ctx.drawImage(original, 0, 0);
+        return temp.toDataURL('image/png');
+      }
+
+      const imgBarras = canvasConFondo('chart-docentes');
+      const imgDona   = canvasConFondo('chart-distribucion');
+
+      // ── Obtener evaluaciones guardadas ──
+      const evalsGuardadas = window._ultimasEvaluaciones || [];
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      // ── PÁGINA 1: Resumen general ──
       doc.setFillColor(230, 57, 70);
-      doc.rect(0, 0, 210, 28, 'F');
+      doc.rect(0, 0, 210, 30, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-      doc.text('EduScore CS — Reporte de Evaluaciones', 14, 12);
-      doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-      doc.text('I.E.P. Cervantes School  |  Generado: ' + fecha, 14, 22);
-
-      // Grafico barras
-      const canvasD = document.getElementById('chart-docentes');
-      doc.setTextColor(30, 30, 30);
-      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text('Promedio por docente', 14, 38);
-      doc.addImage(canvasD.toDataURL('image/png'), 'PNG', 14, 42, 182, 70);
-
-      // Grafico dona
-      const canvasDist = document.getElementById('chart-distribucion');
-      doc.text('Distribucion de puntajes', 14, 122);
-      doc.addImage(canvasDist.toDataURL('image/png'), 'PNG', 55, 126, 100, 70);
-
-      // Tabla
-      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text('Detalle de evaluaciones', 14, 206);
+      doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+      doc.text('EduScore CS — Reporte General', 14, 13);
       doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.text('I.E.P. Cervantes School  |  Generado: ' + fecha, 14, 23);
 
-      const rows = document.querySelectorAll('#tabla-reporte-detalle tr');
-      let y = 214;
-      doc.setFillColor(240, 240, 245);
-      doc.rect(14, y-5, 182, 7, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.text('Docente', 16, y); doc.text('Instructor', 80, y); doc.text('Promedio', 140, y); doc.text('Fecha', 170, y);
-      y += 7; doc.setFont('helvetica', 'normal');
+      // Stats generales
+      const promedios = evalsGuardadas.map(e => parseFloat(e.puntaje_total)).filter(v => !isNaN(v));
+      const promGen   = promedios.length ? (promedios.reduce((a,b)=>a+b,0)/promedios.length).toFixed(1) : '0';
+      const altos  = evalsGuardadas.filter(e => parseFloat(e.puntaje_total) >= 70).length;
+      const medios = evalsGuardadas.filter(e => parseFloat(e.puntaje_total) >= 50 && parseFloat(e.puntaje_total) < 70).length;
+      const bajos  = evalsGuardadas.filter(e => parseFloat(e.puntaje_total) < 50).length;
 
-      rows.forEach(row => {
-        if (y > 270) { doc.addPage(); y = 20; }
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 4) {
-          doc.text(cells[0].textContent.trim().substring(0,30), 16, y);
-          doc.text(cells[1].textContent.trim().substring(0,25), 80, y);
-          doc.text(cells[2].textContent.trim(), 140, y);
-          doc.text(cells[3].textContent.trim(), 170, y);
-          y += 7;
+      const stats = [
+        { label: 'Promedio General', valor: promGen + '%', color: [230,57,70] },
+        { label: 'Puntaje Alto >=70%', valor: altos, color: [46,204,113] },
+        { label: 'Puntaje Medio 50-69%', valor: medios, color: [243,156,18] },
+        { label: 'Puntaje Bajo <50%', valor: bajos, color: [230,57,70] },
+      ];
+      stats.forEach((s, i) => {
+        const x = 14 + (i % 2) * 96;
+        const y = 38 + Math.floor(i / 2) * 22;
+        doc.setFillColor(...s.color);
+        doc.roundedRect(x, y, 90, 18, 2, 2, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(String(s.valor), x + 45, y + 8, { align: 'center' });
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(s.label, x + 45, y + 14, { align: 'center' });
+      });
+
+      // Gráfico barras
+      doc.setTextColor(30,30,30);
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('Promedio por docente', 14, 88);
+      doc.addImage(imgBarras, 'PNG', 14, 92, 182, 75);
+
+      // Gráfico dona
+      doc.text('Distribucion de puntajes', 14, 175);
+      doc.addImage(imgDona, 'PNG', 55, 179, 100, 75);
+
+      // ── PÁGINA 2+: Un docente por página ──
+      evalsGuardadas.forEach((e, idx) => {
+        doc.addPage();
+        const pt = parseFloat(e.puntaje_total);
+        const color = pt >= 70 ? [46,204,113] : pt >= 50 ? [243,156,18] : [230,57,70];
+        const nivel = pt >= 70 ? 'DESTACADO' : pt >= 50 ? 'EN PROCESO' : 'NECESITA MEJORA';
+
+        // Header página individual
+        doc.setFillColor(...color);
+        doc.rect(0, 0, 210, 30, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text('Reporte Individual — ' + e.docente_nombre, 14, 13);
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text('Instructor: ' + e.instructor_nombre + '  |  Fecha: ' + new Date(e.creado_en).toLocaleDateString('es-PE'), 14, 23);
+
+        // Puntaje total grande
+        doc.setFillColor(245,245,250);
+        doc.roundedRect(14, 36, 182, 28, 3, 3, 'F');
+        doc.setTextColor(...color);
+        doc.setFontSize(32); doc.setFont('helvetica', 'bold');
+        doc.text(pt.toFixed(1) + '%', 105, 55, { align: 'center' });
+        doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100,100,100);
+        doc.text(nivel, 105, 61, { align: 'center' });
+
+        // Gráfico radar por criterios usando barras horizontales
+        const criterios = [
+          { label: 'Dominio disciplinar',   valor: parseFloat(e.dominio_disciplinar)   || 0 },
+          { label: 'Practica pedagogica',   valor: parseFloat(e.practica_pedagogica)   || 0 },
+          { label: 'Clima de aula',         valor: parseFloat(e.clima_aula)            || 0 },
+          { label: 'Logro de aprendizaje',  valor: parseFloat(e.logro_aprendizaje)     || 0 },
+          { label: 'Innovacion',            valor: parseFloat(e.innovacion)            || 0 },
+          { label: 'Comunicacion/Tutoria',  valor: parseFloat(e.comunicacion_tutoria)  || 0 },
+        ];
+
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30,30,30);
+        doc.text('Detalle por criterio', 14, 76);
+
+        criterios.forEach((c, i) => {
+          const y = 82 + i * 18;
+          const barW = (c.valor / 100) * 120;
+          const barColor = c.valor >= 70 ? [46,204,113] : c.valor >= 50 ? [243,156,18] : [230,57,70];
+
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+          doc.setTextColor(60,60,60);
+          doc.text(c.label, 14, y + 5);
+
+          // Barra fondo gris
+          doc.setFillColor(220,220,228);
+          doc.roundedRect(80, y, 120, 7, 2, 2, 'F');
+
+          // Barra de valor
+          if (barW > 0) {
+            doc.setFillColor(...barColor);
+            doc.roundedRect(80, y, barW, 7, 2, 2, 'F');
+          }
+
+          // Valor
+          doc.setTextColor(...barColor);
+          doc.setFont('helvetica', 'bold');
+          doc.text(c.valor.toFixed(0) + ' pts', 205, y + 6, { align: 'right' });
+        });
+
+        // Observación
+        if (e.observacion) {
+          doc.setFillColor(255,249,196);
+          doc.roundedRect(14, 198, 182, 30, 3, 3, 'F');
+          doc.setTextColor(100,80,0);
+          doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+          doc.text('Observacion:', 18, 207);
+          doc.setFont('helvetica', 'normal');
+          const obs = doc.splitTextToSize(e.observacion, 170);
+          doc.text(obs, 18, 214);
         }
+
+        // Pie de página
+        doc.setFillColor(240,240,245);
+        doc.rect(0, 272, 210, 25, 'F');
+        doc.setTextColor(120,120,140);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text('EduScore CS  |  I.E.P. Cervantes School  |  Pagina ' + (idx + 2), 105, 285, { align: 'center' });
       });
 
       doc.save('EduScore_Reporte_' + fecha.replace(/\//g,'-') + '.pdf');
