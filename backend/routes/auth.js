@@ -79,4 +79,42 @@ router.get('/usuarios', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener usuarios' });
   }
 });
+// POST /api/auth/usuarios — crear usuario (solo director)
+router.post('/usuarios', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede crear usuarios' });
+  }
+  const { nombre, email, password, rol } = req.body;
+  if (!nombre || !email || !password || !rol) {
+    return res.status(400).json({ error: 'Todos los campos son requeridos' });
+  }
+  try {
+    const existe = await db.query('SELECT id FROM usuarios WHERE email = $1', [email.toLowerCase().trim()]);
+    if (existe.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    const result = await db.query(
+      `INSERT INTO usuarios (nombre, email, password_hash, rol, activo)
+       VALUES ($1, $2, $3, $4, true) RETURNING id, nombre, email, rol, activo`,
+      [nombre.trim(), email.toLowerCase().trim(), hash, rol]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al crear usuario' });
+  }
+});
+
+// PATCH /api/auth/usuarios/:id/desactivar
+router.patch('/usuarios/:id/desactivar', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Sin permiso' });
+  }
+  try {
+    await db.query('UPDATE usuarios SET activo = false WHERE id = $1', [req.params.id]);
+    res.json({ mensaje: 'Usuario desactivado' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al desactivar usuario' });
+  }
+});
 module.exports = { router, verificarToken };

@@ -3,15 +3,17 @@ const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
 
-// GET /api/docentes/pendientes  ← NUEVO
+// GET /api/docentes/pendientes
 router.get('/pendientes', verificarToken, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, nombre, apellido, curso, nivel 
+      `SELECT id, nombre, apellido, curso, nivel, tipo
        FROM docentes 
        WHERE activo = true 
        AND id NOT IN (
-         SELECT docente_id FROM evaluaciones WHERE supervisor_id = $1
+         SELECT docente_id FROM evaluaciones 
+         WHERE supervisor_id = $1
+         AND DATE(creado_en) = CURRENT_DATE
        )
        ORDER BY nombre`,
       [req.usuario.id]
@@ -21,16 +23,82 @@ router.get('/pendientes', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener docentes pendientes' });
   }
 });
+
 // GET /api/docentes
 router.get('/', verificarToken, async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT id, nombre, apellido, curso, nivel, activo FROM docentes WHERE activo = true ORDER BY nombre'
+      'SELECT id, nombre, apellido, curso, nivel, tipo, activo FROM docentes WHERE activo = true ORDER BY nombre'
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Error obteniendo docentes:', err);
     res.status(500).json({ error: 'Error al obtener docentes' });
+  }
+});
+
+// GET /api/docentes/historial — activos e inactivos
+router.get('/historial', verificarToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT d.id, d.nombre, d.apellido, d.curso, d.nivel, d.tipo, d.activo,
+        COUNT(e.id) AS total_evaluaciones,
+        MAX(e.creado_en) AS ultima_evaluacion,
+        AVG(e.puntaje_total) AS promedio_general
+       FROM docentes d
+       LEFT JOIN evaluaciones e ON e.docente_id = d.id
+       GROUP BY d.id
+       ORDER BY d.activo DESC, d.nombre`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener historial' });
+  }
+});
+
+// POST /api/docentes
+router.post('/', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede agregar docentes' });
+  }
+  const { nombre, apellido, curso, nivel, tipo } = req.body;
+  if (!nombre || !apellido) {
+    return res.status(400).json({ error: 'Nombre y apellido son requeridos' });
+  }
+  try {
+    const result = await db.query(
+      `INSERT INTO docentes (nombre, apellido, curso, nivel, tipo, activo)
+       VALUES ($1, $2, $3, $4, $5, true) RETURNING *`,
+      [nombre.trim(), apellido.trim(), curso || '', nivel || 'Primaria', tipo || 'Docente']
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al agregar docente' });
+  }
+});
+
+// PATCH /api/docentes/:id/desactivar
+router.patch('/:id/desactivar', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede desactivar docentes' });
+  }
+  try {
+    await db.query('UPDATE docentes SET activo = false WHERE id = $1', [req.params.id]);
+    res.json({ mensaje: 'Docente desactivado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al desactivar docente' });
+  }
+});
+
+// PATCH /api/docentes/:id/activar
+router.patch('/:id/activar', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede activar docentes' });
+  }
+  try {
+    await db.query('UPDATE docentes SET activo = true WHERE id = $1', [req.params.id]);
+    res.json({ mensaje: 'Docente activado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al activar docente' });
   }
 });
 

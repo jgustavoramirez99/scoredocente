@@ -661,6 +661,7 @@
       <div class="nav-item" onclick="showSection('evaluaciones', this)">📋 Evaluaciones</div>
       <div class="nav-section">Análisis</div>
       <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
+      <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
       <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
       <div class="sidebar-footer">
         <div class="user-chip">
@@ -714,23 +715,54 @@
       </div>
 
       <div class="section" id="section-docentes">
-        <div class="page-header">
-          <div class="page-title">Docentes</div>
-          <div class="page-subtitle">Listado de docentes activos</div>
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="page-title">Docentes</div>
+            <div class="page-subtitle">Listado de docentes activos</div>
+          </div>
+          <button onclick="abrirModalDocente()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+            ➕ Agregar docente
+          </button>
         </div>
         <div class="table-card">
           <div class="table-header"><h3>Lista de docentes</h3></div>
           <table>
-            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Estado</th></tr></thead>
-            <tbody id="tabla-docentes"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Tipo</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-docentes"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
-
+      
+      <div class="section" id="section-historial">
+        <div class="page-header">
+          <div class="page-title">Historial de Docentes</div>
+          <div class="page-subtitle">Todos los docentes — activos e inactivos</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Registro completo</h3></div>
+          <table>
+            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Evaluaciones</th><th>Promedio</th><th>Última eval.</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-historial"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
       <div class="section" id="section-evaluaciones">
         <div class="page-header">
           <div class="page-title">Evaluaciones</div>
           <div class="page-subtitle">Todas las evaluaciones registradas</div>
+        </div>
+        <div style="display:flex;gap:1rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap">
+          <div class="form-group" style="margin:0">
+            <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase">Filtrar por fecha</label>
+            <input type="date" id="filtro-fecha" style="padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px" onchange="filtrarEvaluaciones()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase">Filtrar por mes</label>
+            <input type="month" id="filtro-mes" style="padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px" onchange="filtrarEvaluaciones()">
+          </div>
+          <button onclick="limpiarFiltros()" style="padding:8px 16px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:18px">
+            ✕ Limpiar
+          </button>
         </div>
         <div class="table-card">
           <div class="table-header">
@@ -738,8 +770,8 @@
             <div class="live-badge"><div class="live-dot"></div>En vivo</div>
           </div>
           <table>
-            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
-            <tbody id="tabla-evaluaciones"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th><th>Hora</th></tr></thead>
+            <tbody id="tabla-evaluaciones"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -778,6 +810,11 @@
         <div class="page-header">
           <div class="page-title">Usuarios</div>
           <div class="page-subtitle">Gestionar accesos al sistema</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+          <button onclick="abrirModalUsuario()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+            ➕ Agregar instructor
+          </button>
         </div>
         <div class="table-card">
           <div class="table-header"><h3>Usuarios del sistema</h3></div>
@@ -851,13 +888,97 @@
 
     </div>
   </div>
+  
+  <!-- MODAL AGREGAR DOCENTE -->
+  <div class="modal" id="modal-docente">
+    <div class="modal-card">
+      <div class="modal-title">Agregar docente</div>
+      <div class="modal-subtitle">Completa los datos del nuevo docente</div>
+      <div class="eval-grid">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="doc-nombre" placeholder="Ej: Ana">
+        </div>
+        <div class="form-group">
+          <label>Apellido</label>
+          <input type="text" id="doc-apellido" placeholder="Ej: Torres">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Curso que dicta</label>
+        <input type="text" id="doc-curso" placeholder="Ej: Matemática, Comunicación...">
+      </div>
+      <div class="eval-grid">
+        <div class="form-group">
+          <label>Nivel</label>
+          <select id="doc-nivel" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+            <option value="Inicial">Inicial</option>
+            <option value="Primaria" selected>Primaria</option>
+            <option value="Secundaria">Secundaria</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="doc-tipo" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+            <option value="Docente" selected>Docente</option>
+            <option value="Auxiliar">Auxiliar</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="cerrarModalDocente()">Cancelar</button>
+        <button class="btn-save" onclick="guardarDocente()">Guardar docente</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- MODAL AGREGAR USUARIO -->
+  <div class="modal" id="modal-usuario">
+    <div class="modal-card">
+      <div class="modal-title">Agregar instructor</div>
+      <div class="modal-subtitle">Crear nueva cuenta de acceso</div>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Nombre completo</label>
+        <input type="text" id="usu-nombre" placeholder="Ej: Juan Pérez">
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Correo electrónico</label>
+        <input type="email" id="usu-email" placeholder="correo@cervantesschool.edu.pe">
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Contraseña</label>
+        <input type="password" id="usu-password" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="form-group" style="margin-bottom:0.75rem">
+        <label>Rol</label>
+        <select id="usu-rol" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          <option value="supervisor">Instructor</option>
+          <option value="director">Director</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="cerrarModalUsuario()">Cancelar</button>
+        <button class="btn-save" onclick="guardarUsuario()">Crear usuario</button>
+      </div>
+    </div>
+  </div>
   <!-- MODAL EVALUACIÓN -->
   <div class="modal" id="modal-evaluacion">
     <div class="modal-card">
       <div class="modal-title">Evaluar docente</div>
       <div class="modal-subtitle" id="modal-nombre-sub">Completa los puntajes</div>
       <input type="hidden" id="modal-docente-id">
+
+      <div class="eval-grid" style="margin-bottom:0.75rem">
+        <div class="form-group">
+          <label>Fecha de evaluación</label>
+          <input type="date" id="eval-fecha">
+        </div>
+        <div class="form-group">
+          <label>Hora</label>
+          <input type="time" id="eval-hora">
+        </div>
+      </div>
 
       <div class="eval-grid">
         <div class="form-group">
@@ -1003,15 +1124,17 @@
         const docentes = await resDoc.json();
         document.getElementById('stat-docentes').textContent = docentes.length || 0;
 
-        document.getElementById('tabla-docentes').innerHTML = docentes.length
+       document.getElementById('tabla-docentes').innerHTML = docentes.length
           ? docentes.map(d => `
             <tr>
               <td style="color:var(--text);font-weight:500">${d.nombre} ${d.apellido}</td>
               <td>${d.curso || '—'}</td>
               <td>${d.nivel || '—'}</td>
-              <td><span class="badge badge-green">Activo</span></td>
+              <td><span class="badge badge-amber">${d.tipo || 'Docente'}</span></td>
+              <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="desactivarDocente(${d.id},'${d.nombre} ${d.apellido}')">Desactivar</button></td>
             </tr>`).join('')
-          : '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
+          : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
+        cargarHistorial();
 
         const resEval = await fetch('/api/evaluaciones', { headers });
         const evaluaciones = await resEval.json();
@@ -1023,13 +1146,14 @@
           : '—';
         document.getElementById('stat-promedio').textContent = promGeneral;
 
-        const rowsEval = evaluaciones.map(e => `
+       const rowsEval = evaluaciones.map(e => `
           <tr>
             <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
             <td>${e.instructor_nombre}</td>
             <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
-            <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
-          </tr>`).join('') || '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+            <td style="color:var(--text3)">${e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+            <td style="color:var(--text3)">${e.hora ? e.hora.slice(0,5) : '—'}</td>
+          </tr>`).join('') || '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
 
         document.getElementById('tabla-evaluaciones').innerHTML = rowsEval;
         document.getElementById('tabla-recientes').innerHTML = rowsEval;
@@ -1130,6 +1254,10 @@
       document.getElementById('modal-docente-id').value = id;
       ['eval-dominio','eval-practica','eval-clima','eval-logro','eval-innovacion','eval-comunicacion','eval-observacion']
         .forEach(i => { document.getElementById(i).value = ''; });
+      // Fecha y hora automática
+      const ahora = new Date();
+      document.getElementById('eval-fecha').value = ahora.toISOString().split('T')[0];
+      document.getElementById('eval-hora').value = ahora.toTimeString().slice(0,5);
       document.getElementById('modal-evaluacion').style.display = 'flex';
     }
 
@@ -1146,6 +1274,8 @@
       const innovacion           = parseInt(document.getElementById('eval-innovacion').value);
       const comunicacion_tutoria = parseInt(document.getElementById('eval-comunicacion').value);
       const observacion          = document.getElementById('eval-observacion').value;
+      const fecha_eval           = document.getElementById('eval-fecha').value;
+      const hora_eval            = document.getElementById('eval-hora').value;
 
       if ([dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria]
           .some(v => isNaN(v) || v < 0 || v > 100)) {
@@ -1157,7 +1287,8 @@
         const res = await fetch('/api/evaluaciones', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ docente_id, dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria, observacion })
+          body: JSON.stringify({ docente_id, dominio_disciplinar, practica_pedagogica, clima_aula,
+            logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, fecha_eval, hora_eval })
         });
         const data = await res.json();
         if (!res.ok) { alert('Error: ' + data.error); return; }
@@ -1412,6 +1543,165 @@
       });
 
       doc.save('EduScore_Reporte_' + fecha.replace(/\//g,'-') + '.pdf');
+    }
+    // ── DOCENTES ──
+    function abrirModalDocente() {
+      ['doc-nombre','doc-apellido','doc-curso'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('doc-nivel').value = 'Primaria';
+      document.getElementById('doc-tipo').value = 'Docente';
+      document.getElementById('modal-docente').style.display = 'flex';
+    }
+
+    function cerrarModalDocente() {
+      document.getElementById('modal-docente').style.display = 'none';
+    }
+
+    async function guardarDocente() {
+      const nombre   = document.getElementById('doc-nombre').value.trim();
+      const apellido = document.getElementById('doc-apellido').value.trim();
+      const curso    = document.getElementById('doc-curso').value.trim();
+      const nivel    = document.getElementById('doc-nivel').value;
+      const tipo     = document.getElementById('doc-tipo').value;
+
+      if (!nombre || !apellido) { alert('Nombre y apellido son requeridos'); return; }
+
+      try {
+        const res = await fetch('/api/docentes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ nombre, apellido, curso, nivel, tipo })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + data.error); return; }
+        alert('✅ Docente agregado correctamente');
+        cerrarModalDocente();
+        cargarDatosDirector();
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function desactivarDocente(id, nombre) {
+      if (!confirm(`¿Desactivar a ${nombre}? Quedará en el historial pero no podrá ser evaluado.`)) return;
+      try {
+        const res = await fetch(`/api/docentes/${id}/desactivar`, {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) { alert('Error al desactivar'); return; }
+        alert('✅ Docente desactivado');
+        cargarDatosDirector();
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function activarDocente(id) {
+      try {
+        const res = await fetch(`/api/docentes/${id}/activar`, {
+          method: 'PATCH',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) { alert('Error al activar'); return; }
+        alert('✅ Docente reactivado');
+        cargarDatosDirector();
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    async function cargarHistorial() {
+      try {
+        const res = await fetch('/api/docentes/historial', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const docentes = await res.json();
+        document.getElementById('tabla-historial').innerHTML = docentes.length
+          ? docentes.map(d => `
+            <tr>
+              <td style="color:var(--text);font-weight:500">${d.nombre} ${d.apellido}</td>
+              <td>${d.curso || '—'}</td>
+              <td>${d.nivel || '—'}</td>
+              <td style="text-align:center">${d.total_evaluaciones || 0}</td>
+              <td>${d.promedio_general ? parseFloat(d.promedio_general).toFixed(1)+'%' : '—'}</td>
+              <td style="color:var(--text3)">${d.ultima_evaluacion ? new Date(d.ultima_evaluacion).toLocaleDateString('es-PE') : '—'}</td>
+              <td><span class="badge ${d.activo ? 'badge-green' : 'badge-gray'}">${d.activo ? 'Activo' : 'Inactivo'}</span></td>
+              <td>${d.activo
+                ? `<button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="desactivarDocente(${d.id},'${d.nombre} ${d.apellido}')">Desactivar</button>`
+                : `<button class="eval-btn" style="background:var(--green-bg);color:var(--green);border-color:rgba(46,204,113,0.25)" onclick="activarDocente(${d.id})">Reactivar</button>`
+              }</td>
+            </tr>`).join('')
+          : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🗂️</div><p>Sin registros</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando historial:', err);
+      }
+    }
+
+    // ── USUARIOS ──
+    function abrirModalUsuario() {
+      ['usu-nombre','usu-email','usu-password'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('modal-usuario').style.display = 'flex';
+    }
+
+    function cerrarModalUsuario() {
+      document.getElementById('modal-usuario').style.display = 'none';
+    }
+
+    async function guardarUsuario() {
+      const nombre   = document.getElementById('usu-nombre').value.trim();
+      const email    = document.getElementById('usu-email').value.trim();
+      const password = document.getElementById('usu-password').value;
+      const rol      = document.getElementById('usu-rol').value;
+
+      if (!nombre || !email || !password) { alert('Todos los campos son requeridos'); return; }
+      if (password.length < 8) { alert('La contraseña debe tener mínimo 8 caracteres'); return; }
+
+      try {
+        const res = await fetch('/api/auth/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ nombre, email, password, rol })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + data.error); return; }
+        alert('✅ Usuario creado correctamente');
+        cerrarModalUsuario();
+        cargarDatosDirector();
+      } catch (err) {
+        alert('Error de conexión');
+      }
+    }
+
+    // ── FILTROS EVALUACIONES ──
+    async function filtrarEvaluaciones() {
+      const fecha = document.getElementById('filtro-fecha').value;
+      const mes   = document.getElementById('filtro-mes').value;
+      let url = '/api/evaluaciones';
+      if (fecha) url += '?fecha=' + fecha;
+      else if (mes) url += '?mes=' + mes;
+
+      try {
+        const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        const evaluaciones = await res.json();
+        document.getElementById('tabla-evaluaciones').innerHTML = evaluaciones.length
+          ? evaluaciones.map(e => `
+            <tr>
+              <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+              <td>${e.instructor_nombre}</td>
+              <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+              <td style="color:var(--text3)">${e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+              <td style="color:var(--text3)">${e.hora ? e.hora.slice(0,5) : '—'}</td>
+            </tr>`).join('')
+          : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin resultados para este filtro</p></div></td></tr>';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function limpiarFiltros() {
+      document.getElementById('filtro-fecha').value = '';
+      document.getElementById('filtro-mes').value = '';
+      cargarDatosDirector();
     }
     function iniciarPollingDirector() {
       if (pollingInterval) clearInterval(pollingInterval);

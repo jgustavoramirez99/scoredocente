@@ -1,20 +1,26 @@
-    const express = require('express');
-    const router = express.Router();
-    const db = require('../db');
-    const { verificarToken } = require('./auth');
+const express = require('express');
+const router = express.Router();
+const db = require('../db');
+const { verificarToken } = require('./auth');
 
-    // POST /api/evaluaciones
-    router.post('/', verificarToken, async (req, res) => {
-  const { docente_id, dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria, observacion } = req.body;
+// POST /api/evaluaciones
+router.post('/', verificarToken, async (req, res) => {
+  const { docente_id, dominio_disciplinar, practica_pedagogica, clima_aula,
+          logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, fecha_eval, hora_eval } = req.body;
 
-  const puntaje_total = ((dominio_disciplinar + practica_pedagogica + clima_aula + logro_aprendizaje + innovacion + comunicacion_tutoria) / 6).toFixed(2);
+  const puntaje_total = ((dominio_disciplinar + practica_pedagogica + clima_aula +
+    logro_aprendizaje + innovacion + comunicacion_tutoria) / 6).toFixed(2);
 
   try {
     const result = await db.query(
       `INSERT INTO evaluaciones 
-        (docente_id, supervisor_id, dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, puntaje_total)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [docente_id, req.usuario.id, dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, puntaje_total]
+        (docente_id, supervisor_id, dominio_disciplinar, practica_pedagogica, clima_aula,
+         logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, puntaje_total, fecha, hora)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [docente_id, req.usuario.id, dominio_disciplinar, practica_pedagogica, clima_aula,
+       logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, puntaje_total,
+       fecha_eval || new Date().toISOString().split('T')[0],
+       hora_eval  || new Date().toTimeString().split(' ')[0]]
     );
     res.json({ ...result.rows[0], promedio: puntaje_total });
   } catch (err) {
@@ -23,8 +29,19 @@
   }
 });
 
+// GET /api/evaluaciones
 router.get('/', verificarToken, async (req, res) => {
   try {
+    const { fecha, mes } = req.query;
+    let where = '';
+    const params = [];
+    if (fecha) {
+      params.push(fecha);
+      where = `WHERE DATE(e.creado_en) = $${params.length}`;
+    } else if (mes) {
+      params.push(mes);
+      where = `WHERE TO_CHAR(e.creado_en, 'YYYY-MM') = $${params.length}`;
+    }
     const result = await db.query(
       `SELECT e.*, 
         d.nombre || ' ' || d.apellido AS docente_nombre,
@@ -32,7 +49,9 @@ router.get('/', verificarToken, async (req, res) => {
        FROM evaluaciones e
        JOIN docentes d ON e.docente_id = d.id
        JOIN usuarios u ON e.supervisor_id = u.id
-       ORDER BY e.creado_en DESC`
+       ${where}
+       ORDER BY e.creado_en DESC`,
+      params
     );
     res.json(result.rows);
   } catch (err) {
@@ -40,6 +59,7 @@ router.get('/', verificarToken, async (req, res) => {
   }
 });
 
+// GET /api/evaluaciones/mias
 router.get('/mias', verificarToken, async (req, res) => {
   try {
     const result = await db.query(
@@ -58,7 +78,8 @@ router.get('/mias', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener evaluaciones' });
   }
 });
-  // DELETE /api/evaluaciones/:id
+
+// DELETE /api/evaluaciones/:id
 router.delete('/:id', verificarToken, async (req, res) => {
   try {
     const result = await db.query(
@@ -70,8 +91,8 @@ router.delete('/:id', verificarToken, async (req, res) => {
     }
     res.json({ mensaje: 'Evaluacion eliminada correctamente' });
   } catch (err) {
-    console.error('Error eliminando evaluacion:', err);
     res.status(500).json({ error: 'Error al eliminar evaluacion' });
   }
 });
-    module.exports = router;
+
+module.exports = router;
