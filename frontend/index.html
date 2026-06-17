@@ -1507,18 +1507,18 @@
         </div>`;
     }
 
-    function evaluarDocente(id, nombre) {
-      document.getElementById('modal-nombre-sub').textContent = nombre;
-      document.getElementById('modal-docente-id').value = id;
-      ['eval-dominio','eval-practica','eval-clima','eval-logro','eval-innovacion','eval-comunicacion','eval-observacion']
-        .forEach(i => { document.getElementById(i).value = ''; });
+    //function evaluarDocente(id, nombre) {
+      //document.getElementById('modal-nombre-sub').textContent = nombre;
+      //document.getElementById('modal-docente-id').value = id;
+      //['eval-dominio','eval-practica','eval-clima','eval-logro','eval-innovacion','eval-comunicacion','eval-observacion']
+      //  .forEach(i => { document.getElementById(i).value = ''; });
       // Fecha y hora automática
-      const ahora = new Date();
-      document.getElementById('eval-fecha').value = ahora.toISOString().split('T')[0];
-      document.getElementById('eval-hora').value = ahora.toTimeString().slice(0,5);
-      document.getElementById('modal-evaluacion').style.display = 'flex';
-    }
-
+     // const ahora = new Date();
+     // document.getElementById('eval-fecha').value = ahora.toISOString().split('T')[0];
+     // document.getElementById('eval-hora').value = ahora.toTimeString().slice(0,5);
+     // document.getElementById('modal-evaluacion').style.display = 'flex';
+   // }
+ 
     function cerrarModal() {
       document.getElementById('modal-evaluacion').style.display = 'none';
     }
