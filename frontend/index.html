@@ -611,7 +611,64 @@
     }
     .empty-state .empty-icon { font-size: 36px; margin-bottom: 0.75rem; opacity: 0.4; }
     .empty-state p { font-size: 13px; }
-
+  
+    .eval-seccion {
+      background: #1a1a2e;
+      border: 1px solid #2a2a3e;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .eval-seccion-title {
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #e63946;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .eval-subtotal {
+      background: #e63946;
+      color: white;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .eval-indicador {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #2a2a3e;
+      gap: 1rem;
+      font-size: 0.82rem;
+      color: #ccc;
+    }
+    .eval-indicador:last-child { border-bottom: none; }
+    .eval-radio-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .eval-radio-group label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.78rem;
+      color: #aaa;
+      cursor: pointer;
+    }
+    .eval-radio-group input[type="radio"] {
+      accent-color: #e63946;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -964,7 +1021,7 @@
   </div>
   <!-- MODAL EVALUACIÓN -->
   <div class="modal" id="modal-evaluacion">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width:680px;max-height:90vh;overflow-y:auto">
       <div class="modal-title">Evaluar docente</div>
       <div class="modal-subtitle" id="modal-nombre-sub">Completa los puntajes</div>
       <input type="hidden" id="modal-docente-id">
@@ -980,52 +1037,253 @@
         </div>
       </div>
 
-      <div class="eval-grid">
-        <div class="form-group">
-          <label>Dominio disciplinar</label>
-          <div class="score-input-wrap">
-            <input type="number" id="eval-dominio" min="0" max="100" placeholder="0–100">
-            <span class="score-unit">pts</span>
+      <!-- A. PLANIFICACIÓN Y ORGANIZACIÓN (máx 16) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">A. Planificación y organización del aprendizaje <span id="sub-plan" class="eval-subtotal">0/16</span></div>
+        <div class="eval-indicador">
+          <span>Comunica claramente el propósito de aprendizaje y criterios de evaluación.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="plan1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="plan1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="plan1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="plan1" value="4" onchange="calcSubtotal()"> 4</label>
           </div>
         </div>
-        <div class="form-group">
-          <label>Práctica pedagógica</label>
-          <div class="score-input-wrap">
-            <input type="number" id="eval-practica" min="0" max="100" placeholder="0–100">
-            <span class="score-unit">pts</span>
+        <div class="eval-indicador">
+          <span>Las actividades están alineadas a las competencias y capacidades.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="plan2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="plan2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="plan2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="plan2" value="4" onchange="calcSubtotal()"> 4</label>
           </div>
         </div>
-        <div class="form-group">
-          <label>Clima de aula</label>
-          <div class="score-input-wrap">
-            <input type="number" id="eval-clima" min="0" max="100" placeholder="0–100">
-            <span class="score-unit">pts</span>
+        <div class="eval-indicador">
+          <span>Considera necesidades e intereses de los estudiantes.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="plan3" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="plan3" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="plan3" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="plan3" value="4" onchange="calcSubtotal()"> 4</label>
           </div>
         </div>
-        <div class="form-group">
-          <label>Logro de aprendizaje</label>
-          <div class="score-input-wrap">
-            <input type="number" id="eval-logro" min="0" max="100" placeholder="0–100">
-            <span class="score-unit">pts</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Innovación</label>
-          <div class="score-input-wrap">
-            <input type="number" id="eval-innovacion" min="0" max="100" placeholder="0–100">
-            <span class="score-unit">pts</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Comunicación / Tutoría</label>
-          <div class="score-input-wrap">
-            <input type="number" id="eval-comunicacion" min="0" max="100" placeholder="0–100">
-            <span class="score-unit">pts</span>
+        <div class="eval-indicador">
+          <span>Organiza adecuadamente el tiempo y recursos pedagógicos.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="plan4" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="plan4" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="plan4" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="plan4" value="4" onchange="calcSubtotal()"> 4</label>
           </div>
         </div>
       </div>
 
-      <div class="form-group">
+      <!-- B. DESARROLLO DE LA SESIÓN (máx 20) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">B. Desarrollo de la sesión con enfoque por competencias <span id="sub-des" class="eval-subtotal">0/20</span></div>
+        <div class="eval-indicador">
+          <span>Genera situaciones retadoras y significativas.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="des1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="des1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="des1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="des1" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Promueve el pensamiento crítico y la resolución de problemas.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="des2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="des2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="des2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="des2" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Formula preguntas de alto nivel cognitivo.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="des3" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="des3" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="des3" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="des3" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Propicia la participación activa de todos los estudiantes.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="des4" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="des4" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="des4" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="des4" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Relaciona los aprendizajes con situaciones reales.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="des5" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="des5" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="des5" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="des5" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- C. USO DE MATERIALES (máx 16) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">C. Uso de materiales y recursos didácticos <span id="sub-mat" class="eval-subtotal">0/16</span></div>
+        <div class="eval-indicador">
+          <span>Utiliza materiales pertinentes al propósito de aprendizaje.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="mat1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="mat1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="mat1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="mat1" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Emplea recursos concretos, digitales o manipulativos.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="mat2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="mat2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="mat2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="mat2" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Los materiales favorecen la comprensión y participación.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="mat3" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="mat3" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="mat3" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="mat3" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Aprovecha eficientemente los recursos disponibles.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="mat4" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="mat4" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="mat4" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="mat4" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. EVALUACIÓN FORMATIVA (máx 16) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">D. Evaluación formativa <span id="sub-eval" class="eval-subtotal">0/16</span></div>
+        <div class="eval-indicador">
+          <span>Monitorea permanentemente el progreso de los estudiantes.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="eval1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="eval1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="eval1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="eval1" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Brinda retroalimentación oportuna y pertinente.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="eval2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="eval2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="eval2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="eval2" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Utiliza evidencias para verificar el logro de competencias.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="eval3" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="eval3" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="eval3" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="eval3" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Promueve la autoevaluación y coevaluación.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="eval4" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="eval4" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="eval4" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="eval4" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- E. CLIMA DEL AULA (máx 12) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">E. Clima del aula y gestión de la convivencia <span id="sub-clima" class="eval-subtotal">0/12</span></div>
+        <div class="eval-indicador">
+          <span>Mantiene un ambiente de respeto y confianza.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="clima1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="clima1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="clima1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="clima1" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Gestiona adecuadamente la disciplina y normas de convivencia.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="clima2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="clima2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="clima2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="clima2" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Promueve la inclusión y participación de todos los estudiantes.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="clima3" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="clima3" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="clima3" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="clima3" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- F. RESPONSABILIDAD PROFESIONAL (máx 16) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">F. Responsabilidad profesional <span id="sub-resp" class="eval-subtotal">0/16</span></div>
+        <div class="eval-indicador">
+          <span>Presenta oportunamente su planificación y registros.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="resp1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="resp1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="resp1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="resp1" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Mantiene actualizado el registro de evaluación.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="resp2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="resp2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="resp2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="resp2" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Participa en procesos de mejora continua.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="resp3" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="resp3" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="resp3" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="resp3" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Cumple los acuerdos y disposiciones institucionales.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="resp4" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="resp4" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="resp4" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="resp4" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem">
         <label>Observación (opcional)</label>
         <textarea id="eval-observacion" rows="3" placeholder="Comentarios adicionales..."></textarea>
       </div>
@@ -1266,20 +1524,38 @@
     }
 
     async function guardarEvaluacion() {
-      const docente_id           = document.getElementById('modal-docente-id').value;
-      const dominio_disciplinar  = parseInt(document.getElementById('eval-dominio').value);
-      const practica_pedagogica  = parseInt(document.getElementById('eval-practica').value);
-      const clima_aula           = parseInt(document.getElementById('eval-clima').value);
-      const logro_aprendizaje    = parseInt(document.getElementById('eval-logro').value);
-      const innovacion           = parseInt(document.getElementById('eval-innovacion').value);
-      const comunicacion_tutoria = parseInt(document.getElementById('eval-comunicacion').value);
-      const observacion          = document.getElementById('eval-observacion').value;
-      const fecha_eval           = document.getElementById('eval-fecha').value;
-      const hora_eval            = document.getElementById('eval-hora').value;
+      const docente_id = document.getElementById('modal-docente-id').value;
+      const fecha_eval = document.getElementById('eval-fecha').value;
+      const hora_eval  = document.getElementById('eval-hora').value;
+      const observacion = document.getElementById('eval-observacion').value;
 
-      if ([dominio_disciplinar, practica_pedagogica, clima_aula, logro_aprendizaje, innovacion, comunicacion_tutoria]
-          .some(v => isNaN(v) || v < 0 || v > 100)) {
-        alert('Todos los puntajes deben ser entre 0 y 100');
+      const getRadio = name => {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        return sel ? parseInt(sel.value) : null;
+      };
+
+      const plan_ind1 = getRadio('plan1'), plan_ind2 = getRadio('plan2'),
+            plan_ind3 = getRadio('plan3'), plan_ind4 = getRadio('plan4');
+      const des_ind1  = getRadio('des1'),  des_ind2  = getRadio('des2'),
+            des_ind3  = getRadio('des3'),  des_ind4  = getRadio('des4'), des_ind5 = getRadio('des5');
+      const mat_ind1  = getRadio('mat1'),  mat_ind2  = getRadio('mat2'),
+            mat_ind3  = getRadio('mat3'),  mat_ind4  = getRadio('mat4');
+      const eval_ind1 = getRadio('eval1'), eval_ind2 = getRadio('eval2'),
+            eval_ind3 = getRadio('eval3'), eval_ind4 = getRadio('eval4');
+      const clima_ind1 = getRadio('clima1'), clima_ind2 = getRadio('clima2'),
+            clima_ind3 = getRadio('clima3');
+      const resp_ind1 = getRadio('resp1'), resp_ind2 = getRadio('resp2'),
+            resp_ind3 = getRadio('resp3'), resp_ind4 = getRadio('resp4');
+
+      const todos = [plan_ind1, plan_ind2, plan_ind3, plan_ind4,
+                     des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
+                     mat_ind1, mat_ind2, mat_ind3, mat_ind4,
+                     eval_ind1, eval_ind2, eval_ind3, eval_ind4,
+                     clima_ind1, clima_ind2, clima_ind3,
+                     resp_ind1, resp_ind2, resp_ind3, resp_ind4];
+
+      if (todos.some(v => v === null)) {
+        alert('⚠️ Debes marcar todos los indicadores antes de guardar');
         return;
       }
 
@@ -1287,8 +1563,16 @@
         const res = await fetch('/api/evaluaciones', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ docente_id, dominio_disciplinar, practica_pedagogica, clima_aula,
-            logro_aprendizaje, innovacion, comunicacion_tutoria, observacion, fecha_eval, hora_eval })
+          body: JSON.stringify({
+            docente_id,
+            plan_ind1, plan_ind2, plan_ind3, plan_ind4,
+            des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
+            mat_ind1, mat_ind2, mat_ind3, mat_ind4,
+            eval_ind1, eval_ind2, eval_ind3, eval_ind4,
+            clima_ind1, clima_ind2, clima_ind3,
+            resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+            observacion, fecha_eval, hora_eval
+          })
         });
         const data = await res.json();
         if (!res.ok) { alert('Error: ' + data.error); return; }
@@ -1298,6 +1582,25 @@
       } catch (err) {
         alert('Error de conexión');
       }
+    }
+    function calcSubtotal() {
+      const getVal = name => {
+        const sel = document.querySelector(`input[name="${name}"]:checked`);
+        return sel ? parseInt(sel.value) : 0;
+      };
+      const plan = getVal('plan1')+getVal('plan2')+getVal('plan3')+getVal('plan4');
+      const des  = getVal('des1')+getVal('des2')+getVal('des3')+getVal('des4')+getVal('des5');
+      const mat  = getVal('mat1')+getVal('mat2')+getVal('mat3')+getVal('mat4');
+      const evl  = getVal('eval1')+getVal('eval2')+getVal('eval3')+getVal('eval4');
+      const cli  = getVal('clima1')+getVal('clima2')+getVal('clima3');
+      const resp = getVal('resp1')+getVal('resp2')+getVal('resp3')+getVal('resp4');
+
+      document.getElementById('sub-plan').textContent  = plan  + '/16';
+      document.getElementById('sub-des').textContent   = des   + '/20';
+      document.getElementById('sub-mat').textContent   = mat   + '/16';
+      document.getElementById('sub-eval').textContent  = evl   + '/16';
+      document.getElementById('sub-clima').textContent = cli   + '/12';
+      document.getElementById('sub-resp').textContent  = resp  + '/16';
     }
     async function eliminarEvaluacion(id) {
       if (!confirm('¿Seguro que quieres eliminar esta evaluación?')) return;
