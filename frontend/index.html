@@ -2273,7 +2273,8 @@ function descargarFormularioPDF() {
   const fecha = (e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')).replace(/\//g,'-');
   doc.save('Formulario_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
 }
-<!-- MODAL DETALLE EVALUACIÓN (DIRECTOR) -->
+  </script>
+  <!-- MODAL DETALLE EVALUACIÓN (DIRECTOR) -->
 <div class="modal" id="modal-detalle-eval">
   <div class="modal-card" style="max-width:700px;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
@@ -2289,6 +2290,5 @@ function descargarFormularioPDF() {
     <div id="detalle-contenido"></div>
   </div>
 </div>
-  </script>
 </body>
 </html>
