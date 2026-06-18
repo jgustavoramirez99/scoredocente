@@ -1289,9 +1289,58 @@
         </div>
       </div>
 
-      <div class="form-group" style="margin-top:1rem">
-        <label>Observación (opcional)</label>
-        <textarea id="eval-observacion" rows="3" placeholder="Comentarios adicionales..."></textarea>
+      <!-- DATOS ADICIONALES -->
+      <div class="eval-grid" style="margin-bottom:0.75rem">
+        <div class="form-group">
+          <label>Área / Grado</label>
+          <input type="text" id="eval-area" placeholder="Ej: Matemática - 3° Primaria">
+        </div>
+        <div class="form-group">
+          <label>Tema / Experiencia de aprendizaje</label>
+          <input type="text" id="eval-tema" placeholder="Ej: Fracciones equivalentes">
+        </div>
+      </div>
+
+      <!-- FORTALEZAS -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">V. Fortalezas Identificadas</div>
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <input type="text" id="eval-fortaleza1" placeholder="Fortaleza 1">
+        </div>
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <input type="text" id="eval-fortaleza2" placeholder="Fortaleza 2">
+        </div>
+        <div class="form-group">
+          <input type="text" id="eval-fortaleza3" placeholder="Fortaleza 3">
+        </div>
+      </div>
+
+      <!-- ASPECTOS DE MEJORA -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">VI. Aspectos de Mejora</div>
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <input type="text" id="eval-mejora1" placeholder="Aspecto de mejora 1">
+        </div>
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <input type="text" id="eval-mejora2" placeholder="Aspecto de mejora 2">
+        </div>
+        <div class="form-group">
+          <input type="text" id="eval-mejora3" placeholder="Aspecto de mejora 3">
+        </div>
+      </div>
+
+      <!-- COMPROMISOS Y RECOMENDACIONES -->
+      <div class="form-group" style="margin-top:0.75rem">
+        <label>VII. Compromisos del Docente</label>
+        <textarea id="eval-compromisos" rows="2" placeholder="Compromisos asumidos por el docente..."></textarea>
+      </div>
+      <div class="form-group" style="margin-top:0.75rem">
+        <label>VIII. Recomendaciones del Coordinador Académico</label>
+        <textarea id="eval-recomendaciones" rows="2" placeholder="Recomendaciones del coordinador..."></textarea>
+      </div>
+      <div class="form-group" style="margin-top:0.75rem">
+        <label>Observación adicional (opcional)</label>
+        <textarea id="eval-observacion" rows="2" placeholder="Comentarios adicionales..."></textarea>
       </div>
 
       <div class="modal-footer">
@@ -1555,7 +1604,17 @@
       const docente_id = document.getElementById('modal-docente-id').value;
       const fecha_eval = document.getElementById('eval-fecha').value;
       const hora_eval  = document.getElementById('eval-hora').value;
-      const observacion = document.getElementById('eval-observacion').value;
+      const observacion      = document.getElementById('eval-observacion').value;
+      const area_grado       = document.getElementById('eval-area').value;
+      const tema_aprendizaje = document.getElementById('eval-tema').value;
+      const fortaleza1       = document.getElementById('eval-fortaleza1').value;
+      const fortaleza2       = document.getElementById('eval-fortaleza2').value;
+      const fortaleza3       = document.getElementById('eval-fortaleza3').value;
+      const mejora1          = document.getElementById('eval-mejora1').value;
+      const mejora2          = document.getElementById('eval-mejora2').value;
+      const mejora3          = document.getElementById('eval-mejora3').value;
+      const compromisos      = document.getElementById('eval-compromisos').value;
+      const recomendaciones  = document.getElementById('eval-recomendaciones').value;
 
       const getRadio = name => {
         const sel = document.querySelector(`input[name="${name}"]:checked`);
@@ -1599,7 +1658,11 @@
             eval_ind1, eval_ind2, eval_ind3, eval_ind4,
             clima_ind1, clima_ind2, clima_ind3,
             resp_ind1, resp_ind2, resp_ind3, resp_ind4,
-            observacion, fecha_eval, hora_eval
+            observacion, fecha_eval, hora_eval,
+            area_grado, tema_aprendizaje,
+            fortaleza1, fortaleza2, fortaleza3,
+            mejora1, mejora2, mejora3,
+            compromisos, recomendaciones
           })
         });
         const data = await res.json();
@@ -2148,130 +2211,372 @@ function descargarFormularioPDF() {
   if (!_evalDetalle) return;
   const e = _evalDetalle;
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-  // Encabezado
-  doc.setFillColor(230,57,70);
-  doc.rect(0, 0, 210, 28, 'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(16); doc.setFont('helvetica', 'bold');
-  doc.text('EduScore CS — Formulario de Evaluación Docente', 14, 12);
+  // ── LOGO (base64 de Cervantes1.png) ──
+  // Cargar el logo desde el servidor
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.src = '/Cervantes1.png'; // ajusta la ruta si es diferente
+  logoImg.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = logoImg.width; canvas.height = logoImg.height;
+    canvas.getContext('2d').drawImage(logoImg, 0, 0);
+    const logoData = canvas.toDataURL('image/png');
+    _generarPDFConLogo(doc, e, logoData);
+  };
+  logoImg.onerror = () => _generarPDFConLogo(doc, e, null);
+}
+
+function _generarPDFConLogo(doc, e, logoData) {
+  const pt = parseFloat(e.puntaje_total);
+  const nivel = pt >= 90 ? 'DESTACADO' : pt >= 80 ? 'LOGRADO' : pt >= 70 ? 'EN PROCESO' : 'REQUIERE MEJORA';
+  const colorNivel = pt >= 90 ? [46,204,113] : pt >= 80 ? [46,150,200] : pt >= 70 ? [243,156,18] : [230,57,70];
+
+  // ════════════════════════════════
+  // ENCABEZADO
+  // ════════════════════════════════
+  // Línea roja superior
+  doc.setFillColor(180, 0, 30);
+  doc.rect(0, 0, 210, 2, 'F');
+
+  // Logo
+  if (logoData) {
+    doc.addImage(logoData, 'PNG', 10, 4, 40, 18);
+  }
+
+  // Título centrado
+  doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(20, 20, 80);
+  doc.text('FICHA DE MONITOREO Y ACOMPAÑAMIENTO DOCENTE', 105, 10, { align: 'center' });
   doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-  doc.text('I.E.P. Cervantes School  |  R&R Tech Solutions', 14, 21);
+  doc.setTextColor(100,100,100);
+  doc.text('I.E.P. Cervantes School  —  ' + new Date().getFullYear(), 105, 16, { align: 'center' });
 
-  // Datos generales
-  doc.setTextColor(30,30,30);
-  doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-  doc.text('Docente:', 14, 36); doc.setFont('helvetica', 'normal');
-  doc.text(e.docente_nombre || '—', 50, 36);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Instructor:', 120, 36); doc.setFont('helvetica', 'normal');
-  doc.text(e.instructor_nombre || '—', 150, 36);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Fecha:', 14, 44); doc.setFont('helvetica', 'normal');
-  doc.text(e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE'), 50, 44);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Promedio:', 120, 44); doc.setFont('helvetica', 'normal');
-  const prom = parseFloat(e.puntaje_total).toFixed(1) + '%';
-  doc.setTextColor(...(parseFloat(e.puntaje_total)>=70?[46,204,113]:parseFloat(e.puntaje_total)>=50?[243,156,18]:[230,57,70]));
-  doc.text(prom, 150, 44);
+  // Línea separadora
+  doc.setDrawColor(180, 0, 30);
+  doc.setLineWidth(0.5);
+  doc.line(10, 24, 200, 24);
 
-  doc.setDrawColor(200,200,210);
-  doc.line(14, 48, 196, 48);
+  // ════════════════════════════════
+  // I. DATOS GENERALES
+  // ════════════════════════════════
+  let y = 30;
+  doc.setFillColor(220, 220, 235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(20, 20, 80);
+  doc.text('I. DATOS GENERALES', 13, y + 4.5);
+  y += 9;
+
+  const datos = [
+    ['Docente:', e.docente_nombre || '—',          'Observador:', e.instructor_nombre || '—'],
+    ['Área/Grado:', e.area_grado || '—',           'Fecha:', e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')],
+    ['Hora:', e.hora ? e.hora.slice(0,5) : '—',    'Tema:', e.tema_aprendizaje || '—'],
+  ];
+
+  doc.setFontSize(8.5);
+  datos.forEach(fila => {
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(40,40,40);
+    doc.text(fila[0], 12, y);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(60,60,60);
+    doc.text(fila[1], 35, y);
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(40,40,40);
+    doc.text(fila[2], 110, y);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(60,60,60);
+    doc.text(fila[3], 133, y);
+    y += 6;
+  });
+
+  // ════════════════════════════════
+  // II. ESCALA DE VALORACIÓN
+  // ════════════════════════════════
+  y += 2;
+  doc.setFillColor(220, 220, 235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20,20,80);
+  doc.text('II. ESCALA DE VALORACIÓN', 13, y + 4.5);
+  y += 8;
+
+  const escala = [['4','Destacado'],['3','Logrado'],['2','En proceso'],['1','Inicio']];
+  const colores = [[46,204,113],[46,150,200],[243,156,18],[230,57,70]];
+  escala.forEach((item, i) => {
+    const x = 12 + i * 47;
+    doc.setFillColor(...colores[i]);
+    doc.roundedRect(x, y, 44, 8, 1.5, 1.5, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text(item[0] + ' — ' + item[1], x + 22, y + 5.5, { align: 'center' });
+  });
+  y += 13;
+
+  // ════════════════════════════════
+  // III. CRITERIOS (tabla estilo Word)
+  // ════════════════════════════════
+  doc.setFillColor(220, 220, 235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20,20,80);
+  doc.text('III. CRITERIOS DE EVALUACIÓN', 13, y + 4.5);
+  y += 8;
 
   const secciones = [
-    { titulo: 'A. Planificacion y organizacion', items: [
-      { label: 'Comunica el proposito de aprendizaje', val: e.plan_ind1 },
-      { label: 'Actividades alineadas a competencias', val: e.plan_ind2 },
-      { label: 'Considera necesidades de estudiantes', val: e.plan_ind3 },
-      { label: 'Organiza tiempo y recursos', val: e.plan_ind4 },
+    { titulo: 'A. PLANIFICACIÓN Y ORGANIZACIÓN DEL APRENDIZAJE', max: 16, items: [
+      { label: 'Comunica claramente el propósito de aprendizaje y criterios de evaluación.', val: e.plan_ind1 },
+      { label: 'Las actividades están alineadas a las competencias y capacidades.', val: e.plan_ind2 },
+      { label: 'Considera necesidades e intereses de los estudiantes.', val: e.plan_ind3 },
+      { label: 'Organiza adecuadamente el tiempo y recursos pedagógicos.', val: e.plan_ind4 },
     ]},
-    { titulo: 'B. Desarrollo de la sesion', items: [
-      { label: 'Genera situaciones retadoras', val: e.des_ind1 },
-      { label: 'Promueve pensamiento critico', val: e.des_ind2 },
-      { label: 'Formula preguntas de alto nivel', val: e.des_ind3 },
-      { label: 'Participacion activa de estudiantes', val: e.des_ind4 },
-      { label: 'Relaciona aprendizajes con situaciones reales', val: e.des_ind5 },
+    { titulo: 'B. DESARROLLO DE LA SESIÓN CON ENFOQUE POR COMPETENCIAS', max: 20, items: [
+      { label: 'Genera situaciones retadoras y significativas.', val: e.des_ind1 },
+      { label: 'Promueve el pensamiento crítico y la resolución de problemas.', val: e.des_ind2 },
+      { label: 'Formula preguntas de alto nivel cognitivo.', val: e.des_ind3 },
+      { label: 'Propicia la participación de todos los estudiantes.', val: e.des_ind4 },
+      { label: 'Relaciona los aprendizajes con situaciones reales.', val: e.des_ind5 },
     ]},
-    { titulo: 'C. Uso de materiales', items: [
-      { label: 'Materiales pertinentes al proposito', val: e.mat_ind1 },
-      { label: 'Recursos concretos o digitales', val: e.mat_ind2 },
-      { label: 'Materiales accesibles para todos', val: e.mat_ind3 },
-      { label: 'Integra tecnologia pedagógicamente', val: e.mat_ind4 },
+    { titulo: 'C. USO DE MATERIALES Y RECURSOS DIDÁCTICOS', max: 16, items: [
+      { label: 'Utiliza materiales pertinentes al propósito de aprendizaje.', val: e.mat_ind1 },
+      { label: 'Emplea recursos concretos, digitales o manipulativos.', val: e.mat_ind2 },
+      { label: 'Los materiales favorecen la comprensión y participación.', val: e.mat_ind3 },
+      { label: 'Aprovecha eficientemente los recursos disponibles.', val: e.mat_ind4 },
     ]},
-    { titulo: 'D. Evaluacion del aprendizaje', items: [
-      { label: 'Evaluaciones formativas en sesion', val: e.eval_ind1 },
-      { label: 'Instrumentos de evaluacion pertinentes', val: e.eval_ind2 },
-      { label: 'Retroalimentacion oportuna', val: e.eval_ind3 },
-      { label: 'Registra avances y dificultades', val: e.eval_ind4 },
+    { titulo: 'D. EVALUACIÓN FORMATIVA', max: 20, items: [
+      { label: 'Monitorea permanentemente el progreso de los estudiantes.', val: e.eval_ind1 },
+      { label: 'Brinda retroalimentación oportuna y pertinente.', val: e.eval_ind2 },
+      { label: 'Utiliza evidencias para verificar el logro de competencias.', val: e.eval_ind3 },
+      { label: 'Promueve la autoevaluación y coevaluación.', val: e.eval_ind4 },
     ]},
-    { titulo: 'E. Clima del aula', items: [
-      { label: 'Ambiente de respeto y confianza', val: e.clima_ind1 },
-      { label: 'Gestion de disciplina y convivencia', val: e.clima_ind2 },
-      { label: 'Inclusion y participacion de todos', val: e.clima_ind3 },
+    { titulo: 'E. CLIMA DEL AULA Y GESTIÓN DE LA CONVIVENCIA', max: 12, items: [
+      { label: 'Mantiene un ambiente de respeto y confianza.', val: e.clima_ind1 },
+      { label: 'Gestiona adecuadamente la disciplina y normas de convivencia.', val: e.clima_ind2 },
+      { label: 'Promueve la inclusión y participación de todos los estudiantes.', val: e.clima_ind3 },
     ]},
-    { titulo: 'F. Responsabilidad profesional', items: [
-      { label: 'Presenta planificacion oportunamente', val: e.resp_ind1 },
-      { label: 'Registro de evaluacion actualizado', val: e.resp_ind2 },
-      { label: 'Participa en mejora continua', val: e.resp_ind3 },
-      { label: 'Cumple disposiciones institucionales', val: e.resp_ind4 },
+    { titulo: 'F. RESPONSABILIDAD PROFESIONAL', max: 16, items: [
+      { label: 'Presenta oportunamente su planificación y registros.', val: e.resp_ind1 },
+      { label: 'Mantiene actualizado el registro de evaluación.', val: e.resp_ind2 },
+      { label: 'Participa en procesos de mejora continua.', val: e.resp_ind3 },
+      { label: 'Cumple los acuerdos y disposiciones institucionales.', val: e.resp_ind4 },
     ]},
   ];
 
-  let y = 55;
+  // Cabecera de tabla
+  const colW = [140, 10, 10, 10, 10, 10]; // Indicador + col 1,2,3,4 + Subtotal
+  const tableX = 10;
+  const colXs = [tableX];
+  colW.forEach((w,i) => { if(i>0) colXs.push(colXs[i-1]+colW[i-1]); });
+
+  function drawTableHeader(yy) {
+    doc.setFillColor(50,50,100);
+    doc.rect(tableX, yy, 190, 6, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+    doc.text('Indicadores', tableX + 2, yy + 4.2);
+    ['1','2','3','4','Sub'].forEach((h,i) => {
+      doc.text(h, colXs[i+1] + 4, yy + 4.2, { align:'center' });
+    });
+    return yy + 6;
+  }
+
   secciones.forEach(sec => {
-    const subtotal = sec.items.reduce((a, i) => a + (parseInt(i.val) || 0), 0);
-    const [r,g,b] = subtotal/sec.items.length/4 >= 0.7 ? [46,204,113] : subtotal/sec.items.length/4 >= 0.5 ? [243,156,18] : [230,57,70];
+    if (y > 250) { doc.addPage(); y = 15; _dibujarPie(doc); }
 
-    if (y > 255) { doc.addPage(); y = 15; }
+    const subtotal = sec.items.reduce((a,i) => a + (parseInt(i.val)||0), 0);
+    const pct = subtotal / sec.max;
+    const [r,g,b] = pct >= 0.9 ? [46,204,113] : pct >= 0.8 ? [46,150,200] : pct >= 0.7 ? [243,156,18] : [230,57,70];
 
-    doc.setFillColor(245,245,250);
-    doc.roundedRect(14, y, 182, 7, 1.5, 1.5, 'F');
-    doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','bold');
-    doc.text(sec.titulo, 17, y + 5);
+    // Título sección
     doc.setFillColor(r,g,b);
-    doc.roundedRect(178, y+1, 16, 5, 1, 1, 'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(8);
-    doc.text(subtotal + '', 186, y + 5, { align: 'center' });
-    y += 9;
+    doc.roundedRect(tableX, y, 190, 6, 1, 1, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(sec.titulo, tableX + 2, y + 4.2);
+    doc.text('Subtotal: ' + subtotal + '/' + sec.max, 198, y + 4.2, { align: 'right' });
+    y += 6;
 
-    sec.items.forEach(it => {
-      if (y > 275) { doc.addPage(); y = 15; }
-      doc.setTextColor(70,70,80); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
-      doc.text('• ' + it.label, 18, y);
-      doc.setTextColor(r,g,b); doc.setFont('helvetica','bold');
-      doc.text(String(it.val || '—'), 190, y, { align: 'right' });
-      doc.setDrawColor(235,235,242);
-      doc.line(18, y + 2, 192, y + 2);
+    y = drawTableHeader(y);
+
+    sec.items.forEach((it, idx) => {
+      if (y > 270) { doc.addPage(); y = 15; _dibujarPie(doc); }
+      const bg = idx % 2 === 0 ? [248,248,252] : [255,255,255];
+      doc.setFillColor(...bg);
+      doc.rect(tableX, y, 190, 7, 'F');
+      doc.setDrawColor(210,210,220);
+      doc.rect(tableX, y, 190, 7, 'S');
+
+      // Texto indicador
+      doc.setTextColor(40,40,40); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+      const lines = doc.splitTextToSize(it.label, 136);
+      doc.text(lines, tableX + 2, y + 4.2);
+
+      // Valores 1-4 con círculo marcado
+      const val = parseInt(it.val) || 0;
+      [1,2,3,4].forEach((n,i) => {
+        const cx = colXs[i+1] + 5;
+        const cy = y + 3.5;
+        if (val === n) {
+          doc.setFillColor(r,g,b);
+          doc.circle(cx, cy, 2.5, 'F');
+          doc.setTextColor(255,255,255); doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.text(String(n), cx, cy + 0.9, { align:'center' });
+        } else {
+          doc.setDrawColor(180,180,190);
+          doc.circle(cx, cy, 2.5, 'S');
+          doc.setTextColor(160,160,170); doc.setFontSize(7); doc.setFont('helvetica','normal');
+          doc.text(String(n), cx, cy + 0.9, { align:'center' });
+        }
+      });
+
       y += 7;
     });
     y += 3;
   });
 
-  if (e.observacion) {
-    if (y > 255) { doc.addPage(); y = 15; }
-    doc.setFillColor(255,249,196);
-    doc.roundedRect(14, y, 182, 16, 2, 2, 'F');
-    doc.setTextColor(100,80,0); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
-    doc.text('Observacion:', 18, y + 6);
-    doc.setFont('helvetica','normal');
-    const obs = doc.splitTextToSize(e.observacion, 160);
-    doc.text(obs, 18, y + 12);
-    y += 20;
+  // ════════════════════════════════
+  // IV. RESULTADO FINAL
+  // ════════════════════════════════
+  if (y > 200) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+  doc.setFillColor(220,220,235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(20,20,80);
+  doc.text('IV. RESULTADO FINAL', 13, y + 4.5);
+  y += 9;
+
+  const resultados = [
+    ['Planificación y organización', 16, e.plan_ind1+e.plan_ind2+e.plan_ind3+e.plan_ind4],
+    ['Desarrollo de la sesión', 20, e.des_ind1+e.des_ind2+e.des_ind3+e.des_ind4+e.des_ind5],
+    ['Uso de materiales didácticos', 16, e.mat_ind1+e.mat_ind2+e.mat_ind3+e.mat_ind4],
+    ['Evaluación formativa', 20, e.eval_ind1+e.eval_ind2+e.eval_ind3+e.eval_ind4],
+    ['Clima del aula', 12, e.clima_ind1+e.clima_ind2+e.clima_ind3],
+    ['Responsabilidad profesional', 16, e.resp_ind1+e.resp_ind2+e.resp_ind3+e.resp_ind4],
+  ];
+
+  // Cabecera tabla resultado
+  doc.setFillColor(50,50,100);
+  doc.rect(10, y, 190, 6, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('Criterio', 13, y+4.2);
+  doc.text('Puntaje Máximo', 148, y+4.2, {align:'center'});
+  doc.text('Puntaje Obtenido', 192, y+4.2, {align:'right'});
+  y += 6;
+
+  resultados.forEach((r2, i) => {
+    const bg = i % 2 === 0 ? [248,248,252] : [255,255,255];
+    doc.setFillColor(...bg);
+    doc.rect(10, y, 190, 6.5, 'F');
+    doc.setDrawColor(210,210,220); doc.rect(10, y, 190, 6.5, 'S');
+    doc.setTextColor(40,40,40); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(r2[0], 13, y+4.5);
+    doc.text(String(r2[1]), 148, y+4.5, {align:'center'});
+    doc.setTextColor(...colorNivel);
+    doc.setFont('helvetica','bold');
+    doc.text(String(r2[2]||0), 192, y+4.5, {align:'right'});
+    y += 6.5;
+  });
+
+  // Fila TOTAL
+  doc.setFillColor(50,50,100);
+  doc.rect(10, y, 190, 7, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('TOTAL', 13, y+5);
+  doc.text('96', 148, y+5, {align:'center'});
+  doc.text(pt.toFixed(1) + '%', 192, y+5, {align:'right'});
+  y += 10;
+
+  // Nivel de desempeño
+  doc.setFillColor(...colorNivel);
+  doc.roundedRect(10, y, 190, 10, 2, 2, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('NIVEL DE DESEMPEÑO: ' + nivel + '  (' + pt.toFixed(1) + '%)', 105, y+6.5, {align:'center'});
+  y += 15;
+
+  // Escala referencia
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text('Destacado: 90-100  |  Logrado: 80-89  |  En proceso: 70-79  |  Requiere mejora: <70', 105, y, {align:'center'});
+  y += 8;
+
+  // ════════════════════════════════
+  // V-VIII. CAMPOS ABIERTOS
+  // ════════════════════════════════
+  if (y > 210) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+  function drawSeccionTexto(titulo, lineas, yPos) {
+    doc.setFillColor(220,220,235);
+    doc.roundedRect(10, yPos, 190, 6, 1, 1, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(20,20,80);
+    doc.text(titulo, 13, yPos+4.5);
+    yPos += 8;
+    lineas.forEach((txt, i) => {
+      doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+      doc.text((i+1) + '.  ' + (txt || ''), 14, yPos);
+      doc.setDrawColor(180,180,190);
+      doc.line(24, yPos+1.5, 198, yPos+1.5);
+      yPos += 8;
+    });
+    return yPos + 2;
   }
 
-  // Pie
+  function drawSeccionLibre(titulo, texto, yPos) {
+    doc.setFillColor(220,220,235);
+    doc.roundedRect(10, yPos, 190, 6, 1, 1, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(20,20,80);
+    doc.text(titulo, 13, yPos+4.5);
+    yPos += 8;
+    const wrapped = doc.splitTextToSize(texto || '', 180);
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+    doc.text(wrapped.length > 0 && wrapped[0] ? wrapped : [''], 14, yPos);
+    for (let i=0; i<3; i++) {
+      doc.setDrawColor(180,180,190);
+      doc.line(14, yPos+1.5+i*6, 198, yPos+1.5+i*6);
+    }
+    return yPos + 22;
+  }
+
+  y = drawSeccionTexto('V. FORTALEZAS IDENTIFICADAS',
+    [e.fortaleza1, e.fortaleza2, e.fortaleza3], y);
+
+  if (y > 230) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+  y = drawSeccionTexto('VI. ASPECTOS DE MEJORA',
+    [e.mejora1, e.mejora2, e.mejora3], y);
+
+  if (y > 230) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+  y = drawSeccionLibre('VII. COMPROMISOS DEL DOCENTE', e.compromisos, y);
+  y = drawSeccionLibre('VIII. RECOMENDACIONES DEL COORDINADOR ACADÉMICO', e.recomendaciones, y);
+
+  if (e.observacion) {
+    y = drawSeccionLibre('Observación adicional', e.observacion, y);
+  }
+
+  // ════════════════════════════════
+  // FIRMAS
+  // ════════════════════════════════
+  if (y > 255) { doc.addPage(); y = 15; _dibujarPie(doc); }
+  y += 8;
+  doc.setDrawColor(60,60,80);
+  doc.line(20, y, 85, y);
+  doc.line(125, y, 190, y);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text('Firma del Docente', 52, y+5, {align:'center'});
+  doc.text('Firma del Coordinador Académico', 157, y+5, {align:'center'});
+  doc.text(e.docente_nombre || '', 52, y+10, {align:'center'});
+  doc.text(e.instructor_nombre || '', 157, y+10, {align:'center'});
+
+  // Pie en todas las páginas
   const totalPags = doc.getNumberOfPages();
-  for (let i = 1; i <= totalPags; i++) {
+  for (let i=1; i<=totalPags; i++) {
     doc.setPage(i);
-    doc.setFillColor(240,240,245);
-    doc.rect(0, 287, 210, 10, 'F');
-    doc.setTextColor(130,130,150); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-    doc.text('EduScore CS  |  I.E.P. Cervantes School  |  Pagina ' + i + ' de ' + totalPags, 105, 293, { align: 'center' });
+    _dibujarPie(doc, i, totalPags);
   }
 
   const fecha = (e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')).replace(/\//g,'-');
-  doc.save('Formulario_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
+  doc.save('Ficha_Monitoreo_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
+}
+
+function _dibujarPie(doc, pag, total) {
+  doc.setFillColor(20,20,80);
+  doc.rect(0, 287, 210, 10, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  const txt = pag ? 'EduScore CS  |  I.E.P. Cervantes School  |  Página ' + pag + ' de ' + total
+                  : 'EduScore CS  |  I.E.P. Cervantes School';
+  doc.text(txt, 105, 293, {align:'center'});
 }
   </script>
   <!-- MODAL DETALLE EVALUACIÓN (DIRECTOR) -->
