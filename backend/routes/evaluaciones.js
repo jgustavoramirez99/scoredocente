@@ -14,7 +14,6 @@ router.post('/', verificarToken, async (req, res) => {
     resp_ind1, resp_ind2, resp_ind3, resp_ind4,
     observacion, fecha_eval, hora_eval } = req.body;
 
-  // Subtotales por sección
   const dominio_disciplinar  = (plan_ind1 + plan_ind2 + plan_ind3 + plan_ind4);
   const practica_pedagogica  = (des_ind1 + des_ind2 + des_ind3 + des_ind4 + des_ind5);
   const clima_aula           = (mat_ind1 + mat_ind2 + mat_ind3 + mat_ind4);
@@ -108,6 +107,34 @@ router.get('/mias', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener evaluaciones' });
   }
 });
+
+// ── NUEVO ──────────────────────────────────────────────
+// GET /api/evaluaciones/:id — detalle completo (solo director)
+router.get('/:id', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede ver el detalle' });
+  }
+  try {
+    const result = await db.query(
+      `SELECT e.*,
+              d.nombre || ' ' || d.apellido AS docente_nombre,
+              u.nombre AS instructor_nombre
+       FROM evaluaciones e
+       JOIN docentes d ON e.docente_id = d.id
+       JOIN usuarios u ON e.supervisor_id = u.id
+       WHERE e.id = $1`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Evaluación no encontrada' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al obtener evaluación:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+// ──────────────────────────────────────────────────────
 
 // DELETE /api/evaluaciones/:id
 router.delete('/:id', verificarToken, async (req, res) => {

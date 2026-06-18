@@ -117,4 +117,8 @@ router.patch('/usuarios/:id/desactivar', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al desactivar usuario' });
   }
 });
+// GET /api/auth/verificar — valida si el token sigue activo
+router.get('/verificar', verificarToken, (req, res) => {
+  res.json({ valido: true, usuario: req.usuario });
+});
 module.exports = { router, verificarToken };

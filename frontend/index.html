@@ -358,10 +358,16 @@
     .stat-card:hover::before { opacity: 1; }
 
     .stat-icon {
-      font-size: 18px;
-      margin-bottom: 0.75rem;
-      opacity: 0.7;
-    }
+  font-size: 18px;
+  margin-bottom: 0.75rem;
+  opacity: 0.7;
+  display: block;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
     .stat-number {
       font-family: 'Syne', sans-serif;
       font-size: 28px;
@@ -765,7 +771,7 @@
             <div class="live-badge"><div class="live-dot"></div>En vivo</div>
           </div>
           <table>
-            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th><th>Detalle</th></tr></thead>
             <tbody id="tabla-recientes"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
@@ -827,7 +833,7 @@
             <div class="live-badge"><div class="live-dot"></div>En vivo</div>
           </div>
           <table>
-            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th><th>Hora</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th><th>Hora</th><th>Detalle</th></tr></thead>
             <tbody id="tabla-evaluaciones"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
@@ -1300,17 +1306,25 @@
     let token = null;
     let pollingInterval = null;
 
-    window.onload = () => {
-      const t = localStorage.getItem('token');
-      const u = localStorage.getItem('usuario');
-      if (t && u) {
+    window.onload = async () => {
+  const t = localStorage.getItem('token');
+  const u = localStorage.getItem('usuario');
+  if (t && u) {
+    try {
+      const res = await fetch('/api/auth/verificar', {
+        headers: { 'Authorization': 'Bearer ' + t }
+      });
+      if (res.ok) {
         token = t;
         usuario = JSON.parse(u);
         mostrarPanel();
-      } else {
-        document.getElementById('login-page').style.display = 'flex';
+        return;
       }
-    };
+    } catch(e) {}
+    localStorage.clear(); // token vencido o inválido → limpiar
+  }
+  document.getElementById('login-page').style.display = 'flex';
+};
 
     async function login() {
       const email = document.getElementById('email').value;
@@ -1405,13 +1419,14 @@
         document.getElementById('stat-promedio').textContent = promGeneral;
 
        const rowsEval = evaluaciones.map(e => `
-          <tr>
-            <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
-            <td>${e.instructor_nombre}</td>
-            <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
-            <td style="color:var(--text3)">${e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
-            <td style="color:var(--text3)">${e.hora ? e.hora.slice(0,5) : '—'}</td>
-          </tr>`).join('') || '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+  <tr>
+    <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+    <td>${e.instructor_nombre}</td>
+    <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+    <td style="color:var(--text3)">${e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+    <td style="color:var(--text3)">${e.hora ? e.hora.slice(0,5) : '—'}</td>
+    <td><button class="eval-btn" onclick="verFormularioDirector(${e.id})">🔍 Ver</button></td>
+  </tr>`).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
 
         document.getElementById('tabla-evaluaciones').innerHTML = rowsEval;
         document.getElementById('tabla-recientes').innerHTML = rowsEval;
@@ -1484,9 +1499,9 @@
         </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-number">${total}</div><div class="stat-label">Evaluados</div></div>
-          <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${aprobados}</div><div class="stat-label">Puntaje alto ≥70%</div></div>
-          <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-number" style="color:var(--amber)">${enProceso}</div><div class="stat-label">Puntaje medio 50–69%</div></div>
-          <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-number" style="color:var(--accent2)">${bajos}</div><div class="stat-label">Puntaje bajo &lt;50%</div></div>
+          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-number" style="color:var(--green)">${aprobados}</div><div class="stat-label">Puntaje alto ≥70%</div></div>
+          <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-number" style="color:var(--amber)">${enProceso}</div><div class="stat-label">Puntaje medio 50–69%</div></div>
+          <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-number" style="color:var(--accent2)">${bajos}</div><div class="stat-label">Puntaje bajo &lt;50%</div></div>
         </div>
         <div class="table-card">
           <div class="table-header"><h3>Detalle de mis evaluaciones</h3></div>
@@ -2031,6 +2046,249 @@
           .catch(err => console.log('SW error:', err));
       });
     }
+    // ── VER FORMULARIO COMPLETO (DIRECTOR) ──
+let _evalDetalle = null;
+
+async function verFormularioDirector(id) {
+  try {
+    const res = await fetch('/api/evaluaciones/' + id, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) { alert('No se pudo cargar la evaluación'); return; }
+    const e = await res.json();
+    _evalDetalle = e;
+
+    document.getElementById('detalle-titulo').textContent = 'Evaluación: ' + (e.docente_nombre || '');
+    document.getElementById('detalle-subtitulo').textContent =
+      'Instructor: ' + (e.instructor_nombre || '—') +
+      '  |  Fecha: ' + (e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')) +
+      '  |  Promedio: ' + parseFloat(e.puntaje_total).toFixed(1) + '%';
+
+    const criterios = [
+      { titulo: 'A. Planificación y organización del aprendizaje', max: 16,
+        items: [
+          { label: 'Comunica claramente el propósito de aprendizaje y criterios de evaluación.', val: e.plan_ind1 },
+          { label: 'Las actividades están alineadas a las competencias y capacidades.', val: e.plan_ind2 },
+          { label: 'Considera necesidades e intereses de los estudiantes.', val: e.plan_ind3 },
+          { label: 'Organiza adecuadamente el tiempo y recursos pedagógicos.', val: e.plan_ind4 },
+        ]},
+      { titulo: 'B. Desarrollo de la sesión con enfoque por competencias', max: 20,
+        items: [
+          { label: 'Genera situaciones retadoras y significativas.', val: e.des_ind1 },
+          { label: 'Promueve el pensamiento crítico y la resolución de problemas.', val: e.des_ind2 },
+          { label: 'Formula preguntas de alto nivel cognitivo.', val: e.des_ind3 },
+          { label: 'Propicia la participación activa de todos los estudiantes.', val: e.des_ind4 },
+          { label: 'Relaciona los aprendizajes con situaciones reales.', val: e.des_ind5 },
+        ]},
+      { titulo: 'C. Uso de materiales y recursos didácticos', max: 16,
+        items: [
+          { label: 'Utiliza materiales pertinentes al propósito de aprendizaje.', val: e.mat_ind1 },
+          { label: 'Emplea recursos concretos, digitales o manipulativos.', val: e.mat_ind2 },
+          { label: 'Los materiales son accesibles para todos los estudiantes.', val: e.mat_ind3 },
+          { label: 'Integra tecnología de forma pedagógica.', val: e.mat_ind4 },
+        ]},
+      { titulo: 'D. Evaluación del aprendizaje', max: 16,
+        items: [
+          { label: 'Aplica evaluaciones formativas durante la sesión.', val: e.eval_ind1 },
+          { label: 'Usa instrumentos de evaluación pertinentes.', val: e.eval_ind2 },
+          { label: 'Brinda retroalimentación oportuna a los estudiantes.', val: e.eval_ind3 },
+          { label: 'Registra los avances y dificultades de los estudiantes.', val: e.eval_ind4 },
+        ]},
+      { titulo: 'E. Clima del aula y gestión de la convivencia', max: 12,
+        items: [
+          { label: 'Mantiene un ambiente de respeto y confianza.', val: e.clima_ind1 },
+          { label: 'Gestiona adecuadamente la disciplina y normas de convivencia.', val: e.clima_ind2 },
+          { label: 'Promueve la inclusión y participación de todos los estudiantes.', val: e.clima_ind3 },
+        ]},
+      { titulo: 'F. Responsabilidad profesional', max: 16,
+        items: [
+          { label: 'Presenta oportunamente su planificación y registros.', val: e.resp_ind1 },
+          { label: 'Mantiene actualizado el registro de evaluación.', val: e.resp_ind2 },
+          { label: 'Participa en procesos de mejora continua.', val: e.resp_ind3 },
+          { label: 'Cumple los acuerdos y disposiciones institucionales.', val: e.resp_ind4 },
+        ]},
+    ];
+
+    const html = criterios.map(sec => {
+      const subtotal = sec.items.reduce((a, i) => a + (parseInt(i.val) || 0), 0);
+      const color = subtotal / sec.max >= 0.7 ? 'var(--green)' : subtotal / sec.max >= 0.5 ? 'var(--amber)' : 'var(--accent2)';
+      return `
+        <div class="eval-seccion" style="margin-bottom:0.75rem">
+          <div class="eval-seccion-title">
+            ${sec.titulo}
+            <span class="eval-subtotal" style="background:${color}">${subtotal}/${sec.max}</span>
+          </div>
+          ${sec.items.map(it => `
+            <div class="eval-indicador">
+              <span>${it.label}</span>
+              <span style="font-weight:700;color:var(--text);min-width:24px;text-align:center">${it.val || '—'}</span>
+            </div>`).join('')}
+        </div>`;
+    }).join('');
+
+    const obs = e.observacion
+      ? `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:1rem;margin-top:1rem">
+           <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Observación</div>
+           <div style="font-size:14px;color:var(--text)">${e.observacion}</div>
+         </div>` : '';
+
+    document.getElementById('detalle-contenido').innerHTML = html + obs;
+    document.getElementById('modal-detalle-eval').style.display = 'flex';
+  } catch(err) {
+    alert('Error al cargar el formulario');
+    console.error(err);
+  }
+}
+
+function cerrarModalDetalle() {
+  document.getElementById('modal-detalle-eval').style.display = 'none';
+}
+
+function descargarFormularioPDF() {
+  if (!_evalDetalle) return;
+  const e = _evalDetalle;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Encabezado
+  doc.setFillColor(230,57,70);
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+  doc.text('EduScore CS — Formulario de Evaluación Docente', 14, 12);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('I.E.P. Cervantes School  |  R&R Tech Solutions', 14, 21);
+
+  // Datos generales
+  doc.setTextColor(30,30,30);
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.text('Docente:', 14, 36); doc.setFont('helvetica', 'normal');
+  doc.text(e.docente_nombre || '—', 50, 36);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Instructor:', 120, 36); doc.setFont('helvetica', 'normal');
+  doc.text(e.instructor_nombre || '—', 150, 36);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Fecha:', 14, 44); doc.setFont('helvetica', 'normal');
+  doc.text(e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE'), 50, 44);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Promedio:', 120, 44); doc.setFont('helvetica', 'normal');
+  const prom = parseFloat(e.puntaje_total).toFixed(1) + '%';
+  doc.setTextColor(...(parseFloat(e.puntaje_total)>=70?[46,204,113]:parseFloat(e.puntaje_total)>=50?[243,156,18]:[230,57,70]));
+  doc.text(prom, 150, 44);
+
+  doc.setDrawColor(200,200,210);
+  doc.line(14, 48, 196, 48);
+
+  const secciones = [
+    { titulo: 'A. Planificacion y organizacion', items: [
+      { label: 'Comunica el proposito de aprendizaje', val: e.plan_ind1 },
+      { label: 'Actividades alineadas a competencias', val: e.plan_ind2 },
+      { label: 'Considera necesidades de estudiantes', val: e.plan_ind3 },
+      { label: 'Organiza tiempo y recursos', val: e.plan_ind4 },
+    ]},
+    { titulo: 'B. Desarrollo de la sesion', items: [
+      { label: 'Genera situaciones retadoras', val: e.des_ind1 },
+      { label: 'Promueve pensamiento critico', val: e.des_ind2 },
+      { label: 'Formula preguntas de alto nivel', val: e.des_ind3 },
+      { label: 'Participacion activa de estudiantes', val: e.des_ind4 },
+      { label: 'Relaciona aprendizajes con situaciones reales', val: e.des_ind5 },
+    ]},
+    { titulo: 'C. Uso de materiales', items: [
+      { label: 'Materiales pertinentes al proposito', val: e.mat_ind1 },
+      { label: 'Recursos concretos o digitales', val: e.mat_ind2 },
+      { label: 'Materiales accesibles para todos', val: e.mat_ind3 },
+      { label: 'Integra tecnologia pedagógicamente', val: e.mat_ind4 },
+    ]},
+    { titulo: 'D. Evaluacion del aprendizaje', items: [
+      { label: 'Evaluaciones formativas en sesion', val: e.eval_ind1 },
+      { label: 'Instrumentos de evaluacion pertinentes', val: e.eval_ind2 },
+      { label: 'Retroalimentacion oportuna', val: e.eval_ind3 },
+      { label: 'Registra avances y dificultades', val: e.eval_ind4 },
+    ]},
+    { titulo: 'E. Clima del aula', items: [
+      { label: 'Ambiente de respeto y confianza', val: e.clima_ind1 },
+      { label: 'Gestion de disciplina y convivencia', val: e.clima_ind2 },
+      { label: 'Inclusion y participacion de todos', val: e.clima_ind3 },
+    ]},
+    { titulo: 'F. Responsabilidad profesional', items: [
+      { label: 'Presenta planificacion oportunamente', val: e.resp_ind1 },
+      { label: 'Registro de evaluacion actualizado', val: e.resp_ind2 },
+      { label: 'Participa en mejora continua', val: e.resp_ind3 },
+      { label: 'Cumple disposiciones institucionales', val: e.resp_ind4 },
+    ]},
+  ];
+
+  let y = 55;
+  secciones.forEach(sec => {
+    const subtotal = sec.items.reduce((a, i) => a + (parseInt(i.val) || 0), 0);
+    const [r,g,b] = subtotal/sec.items.length/4 >= 0.7 ? [46,204,113] : subtotal/sec.items.length/4 >= 0.5 ? [243,156,18] : [230,57,70];
+
+    if (y > 255) { doc.addPage(); y = 15; }
+
+    doc.setFillColor(245,245,250);
+    doc.roundedRect(14, y, 182, 7, 1.5, 1.5, 'F');
+    doc.setTextColor(30,30,30); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text(sec.titulo, 17, y + 5);
+    doc.setFillColor(r,g,b);
+    doc.roundedRect(178, y+1, 16, 5, 1, 1, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8);
+    doc.text(subtotal + '', 186, y + 5, { align: 'center' });
+    y += 9;
+
+    sec.items.forEach(it => {
+      if (y > 275) { doc.addPage(); y = 15; }
+      doc.setTextColor(70,70,80); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      doc.text('• ' + it.label, 18, y);
+      doc.setTextColor(r,g,b); doc.setFont('helvetica','bold');
+      doc.text(String(it.val || '—'), 190, y, { align: 'right' });
+      doc.setDrawColor(235,235,242);
+      doc.line(18, y + 2, 192, y + 2);
+      y += 7;
+    });
+    y += 3;
+  });
+
+  if (e.observacion) {
+    if (y > 255) { doc.addPage(); y = 15; }
+    doc.setFillColor(255,249,196);
+    doc.roundedRect(14, y, 182, 16, 2, 2, 'F');
+    doc.setTextColor(100,80,0); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+    doc.text('Observacion:', 18, y + 6);
+    doc.setFont('helvetica','normal');
+    const obs = doc.splitTextToSize(e.observacion, 160);
+    doc.text(obs, 18, y + 12);
+    y += 20;
+  }
+
+  // Pie
+  const totalPags = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPags; i++) {
+    doc.setPage(i);
+    doc.setFillColor(240,240,245);
+    doc.rect(0, 287, 210, 10, 'F');
+    doc.setTextColor(130,130,150); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+    doc.text('EduScore CS  |  I.E.P. Cervantes School  |  Pagina ' + i + ' de ' + totalPags, 105, 293, { align: 'center' });
+  }
+
+  const fecha = (e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')).replace(/\//g,'-');
+  doc.save('Formulario_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
+}
+<!-- MODAL DETALLE EVALUACIÓN (DIRECTOR) -->
+<div class="modal" id="modal-detalle-eval">
+  <div class="modal-card" style="max-width:700px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <div>
+        <div class="modal-title" id="detalle-titulo">Formulario de evaluación</div>
+        <div class="modal-subtitle" id="detalle-subtitulo"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem">
+        <button onclick="descargarFormularioPDF()" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📄 PDF</button>
+        <button onclick="cerrarModalDetalle()" style="padding:8px 14px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">✕</button>
+      </div>
+    </div>
+    <div id="detalle-contenido"></div>
+  </div>
+</div>
   </script>
 </body>
 </html>
