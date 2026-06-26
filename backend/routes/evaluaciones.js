@@ -5,64 +5,70 @@ const { verificarToken } = require('./auth');
 
 // POST /api/evaluaciones
 router.post('/', verificarToken, async (req, res) => {
-  const { docente_id,
+  const {
+    docente_id,
+    dominio_disciplinar, practica_pedagogica, clima_aula,
+    logro_aprendizaje, innovacion, comunicacion_tutoria,
+    observacion, fecha_eval, hora_eval,
+    // indicadores individuales
     plan_ind1, plan_ind2, plan_ind3, plan_ind4,
     des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
     mat_ind1, mat_ind2, mat_ind3, mat_ind4,
     eval_ind1, eval_ind2, eval_ind3, eval_ind4,
     clima_ind1, clima_ind2, clima_ind3,
     resp_ind1, resp_ind2, resp_ind3, resp_ind4,
-    observacion, fecha_eval, hora_eval,
+    // campos adicionales
     area_grado, tema_aprendizaje,
     fortaleza1, fortaleza2, fortaleza3,
     mejora1, mejora2, mejora3,
-    compromisos, recomendaciones } = req.body;
+    compromisos, recomendaciones
+  } = req.body;
 
-  const dominio_disciplinar  = (plan_ind1 + plan_ind2 + plan_ind3 + plan_ind4);
-  const practica_pedagogica  = (des_ind1 + des_ind2 + des_ind3 + des_ind4 + des_ind5);
-  const clima_aula           = (mat_ind1 + mat_ind2 + mat_ind3 + mat_ind4);
-  const logro_aprendizaje    = (eval_ind1 + eval_ind2 + eval_ind3 + eval_ind4);
-  const innovacion           = (clima_ind1 + clima_ind2 + clima_ind3);
-  const comunicacion_tutoria = (resp_ind1 + resp_ind2 + resp_ind3 + resp_ind4);
-
-  const puntaje_total = ((dominio_disciplinar + practica_pedagogica + clima_aula +
-    logro_aprendizaje + innovacion + comunicacion_tutoria) / 96 * 100).toFixed(2);
+  const puntaje_total = (
+    (dominio_disciplinar + practica_pedagogica + clima_aula +
+     logro_aprendizaje + innovacion + comunicacion_tutoria) / 6
+  ).toFixed(2);
 
   try {
     const result = await db.query(
       `INSERT INTO evaluaciones 
         (docente_id, supervisor_id,
+         dominio_disciplinar, practica_pedagogica, clima_aula,
+         logro_aprendizaje, innovacion, comunicacion_tutoria,
+         observacion, puntaje_total, fecha, hora,
          plan_ind1, plan_ind2, plan_ind3, plan_ind4,
          des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
          mat_ind1, mat_ind2, mat_ind3, mat_ind4,
          eval_ind1, eval_ind2, eval_ind3, eval_ind4,
          clima_ind1, clima_ind2, clima_ind3,
          resp_ind1, resp_ind2, resp_ind3, resp_ind4,
-         dominio_disciplinar, practica_pedagogica, clima_aula,
-         logro_aprendizaje, innovacion, comunicacion_tutoria,
-         observacion, puntaje_total, fecha, hora,
          area_grado, tema_aprendizaje,
-fortaleza1, fortaleza2, fortaleza3,
-mejora1, mejora2, mejora3,
-compromisos, recomendaciones)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45,$46,$47) RETURNING *`,
-      [docente_id, req.usuario.id,
-       plan_ind1, plan_ind2, plan_ind3, plan_ind4,
-       des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
-       mat_ind1, mat_ind2, mat_ind3, mat_ind4,
-       eval_ind1, eval_ind2, eval_ind3, eval_ind4,
-       clima_ind1, clima_ind2, clima_ind3,
-       resp_ind1, resp_ind2, resp_ind3, resp_ind4,
-       dominio_disciplinar, practica_pedagogica, clima_aula,
-       logro_aprendizaje, innovacion, comunicacion_tutoria,
-       observacion, puntaje_total,
-       fecha_eval || new Date().toISOString().split('T')[0],
-       hora_eval  || new Date().toTimeString().split(' ')[0],
-       area_grado || '', tema_aprendizaje || '',
-       fortaleza1 || '', fortaleza2 || '', fortaleza3 || '',
-       mejora1 || '', mejora2 || '', mejora3 || '',
-       compromisos || '', recomendaciones || ''
-       ]
+         fortaleza1, fortaleza2, fortaleza3,
+         mejora1, mejora2, mejora3,
+         compromisos, recomendaciones)
+       VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+         $13,$14,$15,$16,$17,$18,$19,$20,$21,
+         $22,$23,$24,$25,$26,$27,$28,$29,
+         $30,$31,$32,$33,$34,$35,$36,
+         $37,$38,$39,$40,$41,$42,$43,$44,$45,$46
+       ) RETURNING *`,
+      [
+        docente_id, req.usuario.id,
+        dominio_disciplinar, practica_pedagogica, clima_aula,
+        logro_aprendizaje, innovacion, comunicacion_tutoria,
+        observacion, puntaje_total, fecha_eval, hora_eval,
+        plan_ind1, plan_ind2, plan_ind3, plan_ind4,
+        des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
+        mat_ind1, mat_ind2, mat_ind3, mat_ind4,
+        eval_ind1, eval_ind2, eval_ind3, eval_ind4,
+        clima_ind1, clima_ind2, clima_ind3,
+        resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+        area_grado, tema_aprendizaje,
+        fortaleza1, fortaleza2, fortaleza3,
+        mejora1, mejora2, mejora3,
+        compromisos, recomendaciones
+      ]
     );
     res.json({ ...result.rows[0], promedio: puntaje_total });
   } catch (err) {

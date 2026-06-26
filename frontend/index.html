@@ -1596,13 +1596,14 @@
   document.getElementById('modal-evaluacion').style.display = 'flex';
 }
  
-    function cerrarModal() {
+function cerrarModal() {
   document.getElementById('modal-evaluacion').style.display = 'none';
-  // Limpiar todos los radios
   document.querySelectorAll('#modal-evaluacion input[type="radio"]').forEach(r => r.checked = false);
-  // Limpiar observación
-  document.getElementById('eval-observacion').value = '';
-  // Resetear subtotales
+  ['eval-observacion','eval-area','eval-tema',
+   'eval-fortaleza1','eval-fortaleza2','eval-fortaleza3',
+   'eval-mejora1','eval-mejora2','eval-mejora3',
+   'eval-compromisos','eval-recomendaciones']
+    .forEach(id => document.getElementById(id).value = '');
   document.getElementById('sub-plan').textContent  = '0/16';
   document.getElementById('sub-des').textContent   = '0/20';
   document.getElementById('sub-mat').textContent   = '0/16';
@@ -1661,17 +1662,29 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({
-        docente_id,
-        dominio_disciplinar,
-        practica_pedagogica,
-        clima_aula,
-        logro_aprendizaje,
-        innovacion,
-        comunicacion_tutoria,
-        observacion,
-        fecha_eval,
-        hora_eval
-      })
+  docente_id,
+  dominio_disciplinar, practica_pedagogica, clima_aula,
+  logro_aprendizaje, innovacion, comunicacion_tutoria,
+  observacion, fecha_eval, hora_eval,
+  // indicadores individuales
+  plan_ind1, plan_ind2, plan_ind3, plan_ind4,
+  des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
+  mat_ind1, mat_ind2, mat_ind3, mat_ind4,
+  eval_ind1, eval_ind2, eval_ind3, eval_ind4,
+  clima_ind1, clima_ind2, clima_ind3,
+  resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+  // campos adicionales
+  area_grado:        document.getElementById('eval-area').value,
+  tema_aprendizaje:  document.getElementById('eval-tema').value,
+  fortaleza1:        document.getElementById('eval-fortaleza1').value,
+  fortaleza2:        document.getElementById('eval-fortaleza2').value,
+  fortaleza3:        document.getElementById('eval-fortaleza3').value,
+  mejora1:           document.getElementById('eval-mejora1').value,
+  mejora2:           document.getElementById('eval-mejora2').value,
+  mejora3:           document.getElementById('eval-mejora3').value,
+  compromisos:       document.getElementById('eval-compromisos').value,
+  recomendaciones:   document.getElementById('eval-recomendaciones').value,
+})
     });
     const data = await res.json();
     if (!res.ok) { alert('Error: ' + data.error); return; }
