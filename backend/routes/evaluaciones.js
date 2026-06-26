@@ -24,10 +24,15 @@ router.post('/', verificarToken, async (req, res) => {
     compromisos, recomendaciones
   } = req.body;
 
-  const puntaje_total = (
-    (dominio_disciplinar + practica_pedagogica + clima_aula +
-     logro_aprendizaje + innovacion + comunicacion_tutoria) / 6
-  ).toFixed(2);
+  // Redondear a entero porque las columnas son INTEGER
+  const dom  = Math.round(dominio_disciplinar);
+  const prac = Math.round(practica_pedagogica);
+  const clim = Math.round(clima_aula);
+  const logr = Math.round(logro_aprendizaje);
+  const inn  = Math.round(innovacion);
+  const com  = Math.round(comunicacion_tutoria);
+
+  const puntaje_total = ((dom + prac + clim + logr + inn + com) / 6).toFixed(2);
 
   try {
     const result = await db.query(
@@ -55,8 +60,7 @@ router.post('/', verificarToken, async (req, res) => {
        ) RETURNING *`,
       [
         docente_id, req.usuario.id,
-        dominio_disciplinar, practica_pedagogica, clima_aula,
-        logro_aprendizaje, innovacion, comunicacion_tutoria,
+        dom, prac, clim, logr, inn, com,
         observacion, puntaje_total, fecha_eval, hora_eval,
         plan_ind1, plan_ind2, plan_ind3, plan_ind4,
         des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
