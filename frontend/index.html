@@ -1597,83 +1597,91 @@
 }
  
     function cerrarModal() {
-      document.getElementById('modal-evaluacion').style.display = 'none';
-    }
+  document.getElementById('modal-evaluacion').style.display = 'none';
+  // Limpiar todos los radios
+  document.querySelectorAll('#modal-evaluacion input[type="radio"]').forEach(r => r.checked = false);
+  // Limpiar observación
+  document.getElementById('eval-observacion').value = '';
+  // Resetear subtotales
+  document.getElementById('sub-plan').textContent  = '0/16';
+  document.getElementById('sub-des').textContent   = '0/20';
+  document.getElementById('sub-mat').textContent   = '0/16';
+  document.getElementById('sub-eval').textContent  = '0/16';
+  document.getElementById('sub-clima').textContent = '0/12';
+  document.getElementById('sub-resp').textContent  = '0/16';
+}
 
     async function guardarEvaluacion() {
-      const docente_id = document.getElementById('modal-docente-id').value;
-      const fecha_eval = document.getElementById('eval-fecha').value;
-      const hora_eval  = document.getElementById('eval-hora').value;
-      const observacion      = document.getElementById('eval-observacion').value;
-      const area_grado       = document.getElementById('eval-area').value;
-      const tema_aprendizaje = document.getElementById('eval-tema').value;
-      const fortaleza1       = document.getElementById('eval-fortaleza1').value;
-      const fortaleza2       = document.getElementById('eval-fortaleza2').value;
-      const fortaleza3       = document.getElementById('eval-fortaleza3').value;
-      const mejora1          = document.getElementById('eval-mejora1').value;
-      const mejora2          = document.getElementById('eval-mejora2').value;
-      const mejora3          = document.getElementById('eval-mejora3').value;
-      const compromisos      = document.getElementById('eval-compromisos').value;
-      const recomendaciones  = document.getElementById('eval-recomendaciones').value;
+  const docente_id = document.getElementById('modal-docente-id').value;
+  const fecha_eval = document.getElementById('eval-fecha').value;
+  const hora_eval  = document.getElementById('eval-hora').value;
+  const observacion = document.getElementById('eval-observacion').value;
 
-      const getRadio = name => {
-        const sel = document.querySelector(`input[name="${name}"]:checked`);
-        return sel ? parseInt(sel.value) : null;
-      };
+  const getRadio = name => {
+    const sel = document.querySelector(`input[name="${name}"]:checked`);
+    return sel ? parseInt(sel.value) : null;
+  };
 
-      const plan_ind1 = getRadio('plan1'), plan_ind2 = getRadio('plan2'),
-            plan_ind3 = getRadio('plan3'), plan_ind4 = getRadio('plan4');
-      const des_ind1  = getRadio('des1'),  des_ind2  = getRadio('des2'),
-            des_ind3  = getRadio('des3'),  des_ind4  = getRadio('des4'), des_ind5 = getRadio('des5');
-      const mat_ind1  = getRadio('mat1'),  mat_ind2  = getRadio('mat2'),
-            mat_ind3  = getRadio('mat3'),  mat_ind4  = getRadio('mat4');
-      const eval_ind1 = getRadio('eval1'), eval_ind2 = getRadio('eval2'),
-            eval_ind3 = getRadio('eval3'), eval_ind4 = getRadio('eval4');
-      const clima_ind1 = getRadio('clima1'), clima_ind2 = getRadio('clima2'),
-            clima_ind3 = getRadio('clima3');
-      const resp_ind1 = getRadio('resp1'), resp_ind2 = getRadio('resp2'),
-            resp_ind3 = getRadio('resp3'), resp_ind4 = getRadio('resp4');
+  // Leer todos los indicadores individuales
+  const plan_ind1 = getRadio('plan1'), plan_ind2 = getRadio('plan2'),
+        plan_ind3 = getRadio('plan3'), plan_ind4 = getRadio('plan4');
+  const des_ind1  = getRadio('des1'),  des_ind2  = getRadio('des2'),
+        des_ind3  = getRadio('des3'),  des_ind4  = getRadio('des4'), des_ind5 = getRadio('des5');
+  const mat_ind1  = getRadio('mat1'),  mat_ind2  = getRadio('mat2'),
+        mat_ind3  = getRadio('mat3'),  mat_ind4  = getRadio('mat4');
+  const eval_ind1 = getRadio('eval1'), eval_ind2 = getRadio('eval2'),
+        eval_ind3 = getRadio('eval3'), eval_ind4 = getRadio('eval4');
+  const clima_ind1 = getRadio('clima1'), clima_ind2 = getRadio('clima2'),
+        clima_ind3 = getRadio('clima3');
+  const resp_ind1 = getRadio('resp1'), resp_ind2 = getRadio('resp2'),
+        resp_ind3 = getRadio('resp3'), resp_ind4 = getRadio('resp4');
 
-      const todos = [plan_ind1, plan_ind2, plan_ind3, plan_ind4,
-                     des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
-                     mat_ind1, mat_ind2, mat_ind3, mat_ind4,
-                     eval_ind1, eval_ind2, eval_ind3, eval_ind4,
-                     clima_ind1, clima_ind2, clima_ind3,
-                     resp_ind1, resp_ind2, resp_ind3, resp_ind4];
+  const todos = [plan_ind1, plan_ind2, plan_ind3, plan_ind4,
+                 des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
+                 mat_ind1, mat_ind2, mat_ind3, mat_ind4,
+                 eval_ind1, eval_ind2, eval_ind3, eval_ind4,
+                 clima_ind1, clima_ind2, clima_ind3,
+                 resp_ind1, resp_ind2, resp_ind3, resp_ind4];
 
-      if (todos.some(v => v === null)) {
-        alert('⚠️ Debes marcar todos los indicadores antes de guardar');
-        return;
-      }
+  if (todos.some(v => v === null)) {
+    alert('⚠️ Debes marcar todos los indicadores antes de guardar');
+    return;
+  }
 
-      try {
-        const res = await fetch('/api/evaluaciones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({
-            docente_id,
-            plan_ind1, plan_ind2, plan_ind3, plan_ind4,
-            des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
-            mat_ind1, mat_ind2, mat_ind3, mat_ind4,
-            eval_ind1, eval_ind2, eval_ind3, eval_ind4,
-            clima_ind1, clima_ind2, clima_ind3,
-            resp_ind1, resp_ind2, resp_ind3, resp_ind4,
-            observacion, fecha_eval, hora_eval,
-            area_grado, tema_aprendizaje,
-            fortaleza1, fortaleza2, fortaleza3,
-            mejora1, mejora2, mejora3,
-            compromisos, recomendaciones
-          })
-        });
-        const data = await res.json();
-        if (!res.ok) { alert('Error: ' + data.error); return; }
-        alert('✅ Evaluación guardada! Promedio: ' + data.promedio + '%');
-        cerrarModal();
-        cargarDatosSupervisor();
-      } catch (err) {
-        alert('Error de conexión');
-      }
-    }
+  // ✅ CALCULAR LOS 6 CAMPOS QUE ESPERA EL BACKEND (sobre 100)
+  const dominio_disciplinar   = ((plan_ind1 + plan_ind2 + plan_ind3 + plan_ind4) / 16 * 100);
+  const practica_pedagogica   = ((des_ind1 + des_ind2 + des_ind3 + des_ind4 + des_ind5) / 20 * 100);
+  const clima_aula            = ((mat_ind1 + mat_ind2 + mat_ind3 + mat_ind4) / 16 * 100);
+  const logro_aprendizaje     = ((eval_ind1 + eval_ind2 + eval_ind3 + eval_ind4) / 16 * 100);
+  const innovacion            = ((clima_ind1 + clima_ind2 + clima_ind3) / 12 * 100);
+  const comunicacion_tutoria  = ((resp_ind1 + resp_ind2 + resp_ind3 + resp_ind4) / 16 * 100);
+
+  try {
+    const res = await fetch('/api/evaluaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        docente_id,
+        dominio_disciplinar,
+        practica_pedagogica,
+        clima_aula,
+        logro_aprendizaje,
+        innovacion,
+        comunicacion_tutoria,
+        observacion,
+        fecha_eval,
+        hora_eval
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert('Error: ' + data.error); return; }
+    alert('✅ Evaluación guardada! Promedio: ' + data.promedio + '%');
+    cerrarModal();
+    cargarDatosSupervisor();
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
     function calcSubtotal() {
       const getVal = name => {
         const sel = document.querySelector(`input[name="${name}"]:checked`);
