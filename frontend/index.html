@@ -1015,9 +1015,12 @@
       <div class="form-group" style="margin-bottom:0.75rem">
         <label>Rol</label>
         <select id="usu-rol" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
-          <option value="supervisor">Instructor</option>
-          <option value="director">Director</option>
-        </select>
+  <option value="supervisor">Instructor</option>
+  <option value="coordinador_general">Coordinador General</option>
+  <option value="coordinador_academico">Coordinador Académico</option>
+  <option value="directora">Director(a)</option>
+  <option value="director">Gerente General</option>
+</select>
       </div>
       <div class="modal-footer">
         <button class="btn-cancel" onclick="cerrarModalUsuario()">Cancelar</button>
@@ -1404,18 +1407,29 @@
     }
 
     function mostrarPanel() {
-      document.getElementById('login-page').style.display = 'none';
-      if (usuario.rol === 'director') {
-        document.getElementById('director-page').style.display = 'flex';
-        document.getElementById('dir-user-info').textContent = usuario.nombre;
-        cargarDatosDirector();
-        iniciarPollingDirector();
-      } else {
-        document.getElementById('instructor-page').style.display = 'flex';
-        document.getElementById('inst-user-info').textContent = usuario.nombre;
-        cargarDatosSupervisor();
-      }
+  document.getElementById('login-page').style.display = 'none';
+  const rolesDirector = ['director', 'directora', 'coordinador_general'];
+  if (rolesDirector.includes(usuario.rol)) {
+    document.getElementById('director-page').style.display = 'flex';
+    document.getElementById('dir-user-info').textContent = usuario.nombre;
+    cargarDatosDirector();
+    iniciarPollingDirector();
+
+    // ✅ Ocultar botones de acción si no es director principal
+    if (usuario.rol !== 'director') {
+      // Ocultar botón agregar docente
+      document.querySelectorAll('[onclick="abrirModalDocente()"]')
+        .forEach(b => b.style.display = 'none');
+      // Ocultar botón agregar instructor
+      document.querySelectorAll('[onclick="abrirModalUsuario()"]')
+        .forEach(b => b.style.display = 'none');
     }
+  } else {
+    document.getElementById('instructor-page').style.display = 'flex';
+    document.getElementById('inst-user-info').textContent = usuario.nombre;
+    cargarDatosSupervisor();
+  }
+}
 
     function logout() {
       if (pollingInterval) clearInterval(pollingInterval);
@@ -1493,7 +1507,14 @@
             <td><span class="badge ${u.rol === 'director' ? 'badge-red' : 'badge-amber'}">${u.rol}</span></td>
             <td><span class="badge ${u.activo ? 'badge-green' : 'badge-gray'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
           </tr>`).join('');
-
+// Ocultar botones de acción para roles de solo lectura
+        if (usuario.rol !== 'director') {
+          document.querySelectorAll('.eval-btn').forEach(b => {
+            if (b.textContent.includes('Desactivar') || b.textContent.includes('Reactivar')) {
+              b.style.display = 'none';
+            }
+          });
+        }
       } catch (err) {
         console.error('Error cargando datos:', err);
       }
@@ -2263,13 +2284,13 @@ function _generarPDFConLogo(doc, e, logoData) {
 
   // Logo
   if (logoData) {
-    doc.addImage(logoData, 'PNG', 10, 4, 40, 18);
+    doc.addImage(logoData, 'PNG', 10, 3, 28, 20);
   }
 
   // Título centrado
   doc.setFontSize(13); doc.setFont('helvetica', 'bold');
   doc.setTextColor(20, 20, 80);
-  doc.text('FICHA DE MONITOREO Y ACOMPAÑAMIENTO DOCENTE', 105, 10, { align: 'center' });
+  doc.text('FICHA DE MONITOREO Y ACOMPAÑAMIENTO DOCENTE', 120, 10, { align: 'center' });
   doc.setFontSize(9); doc.setFont('helvetica', 'normal');
   doc.setTextColor(100,100,100);
   doc.text('I.E.P. Cervantes School  —  ' + new Date().getFullYear(), 105, 16, { align: 'center' });
@@ -2292,7 +2313,7 @@ function _generarPDFConLogo(doc, e, logoData) {
 
   const datos = [
     ['Docente:', e.docente_nombre || '—',          'Observador:', e.instructor_nombre || '—'],
-    ['Área/Grado:', e.area_grado || '—',           'Fecha:', e.fecha || new Date(e.creado_en).toLocaleDateString('es-PE')],
+    ['Área/Grado:', e.area_grado || '—', 'Fecha:', e.fecha ? new Date(e.fecha).toLocaleDateString('es-PE') : new Date(e.creado_en).toLocaleDateString('es-PE')],
     ['Hora:', e.hora ? e.hora.slice(0,5) : '—',    'Tema:', e.tema_aprendizaje || '—'],
   ];
 
@@ -2578,7 +2599,6 @@ function _generarPDFConLogo(doc, e, logoData) {
   doc.text('Firma del Docente', 52, y+5, {align:'center'});
   doc.text('Firma del Coordinador Académico', 157, y+5, {align:'center'});
   doc.text(e.docente_nombre || '', 52, y+10, {align:'center'});
-  doc.text(e.instructor_nombre || '', 157, y+10, {align:'center'});
 
   // Pie en todas las páginas
   const totalPags = doc.getNumberOfPages();
