@@ -867,7 +867,7 @@
         <div class="table-card">
           <div class="table-header"><h3>Detalle completo</h3></div>
           <table>
-            <thead><tr><th>Docente</th><th>Evaluador</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
             <tbody id="tabla-reporte-detalle"></tbody>
           </table>
         </div>
@@ -1919,56 +1919,102 @@ function cerrarModal() {
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
+      // ── Cargar logo y generar PDF ──
+      const logoImg2 = new Image();
+      logoImg2.crossOrigin = 'anonymous';
+      logoImg2.src = '/Cervantes1.png';
+      logoImg2.onload = () => {
+        const canvas2 = document.createElement('canvas');
+        canvas2.width = logoImg2.width; canvas2.height = logoImg2.height;
+        canvas2.getContext('2d').drawImage(logoImg2, 0, 0);
+        _generarReportePDFConLogo(doc, evalsGuardadas, imgBarras, imgDona, fecha, canvas2.toDataURL('image/png'));
+      };
+      logoImg2.onerror = () => _generarReportePDFConLogo(doc, evalsGuardadas, imgBarras, imgDona, fecha, null);
+    }
+
+    function _generarReportePDFConLogo(doc, evalsGuardadas, imgBarras, imgDona, fecha, logoData) {
+
       // ── PÁGINA 1: Resumen general ──
-      doc.setFillColor(230, 57, 70);
-      doc.rect(0, 0, 210, 30, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16); doc.setFont('helvetica', 'bold');
-      doc.text('EduScore CS — Reporte General', 14, 13);
+      // Línea roja superior
+      doc.setFillColor(180, 0, 30);
+      doc.rect(0, 0, 210, 2, 'F');
+
+      // Logo
+      if (logoData) {
+        doc.addImage(logoData, 'PNG', 10, 3, 28, 20);
+      }
+
+      // Título centrado
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(20, 20, 80);
+      doc.text('REPORTE GENERAL DE MONITOREO DOCENTE', 120, 10, { align: 'center' });
       doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-      doc.text('I.E.P. Cervantes School  |  Generado: ' + fecha, 14, 23);
+      doc.setTextColor(100,100,100);
+      doc.text('I.E.P. Cervantes School  —  Generado: ' + fecha, 120, 16, { align: 'center' });
+
+      // Línea separadora
+      doc.setDrawColor(180, 0, 30);
+      doc.setLineWidth(0.5);
+      doc.line(10, 24, 200, 24);
+
+      let y = 30;
 
       // Stats generales
       const promedios = evalsGuardadas.map(e => parseFloat(e.puntaje_total)).filter(v => !isNaN(v));
       const promGen   = promedios.length ? (promedios.reduce((a,b)=>a+b,0)/promedios.length).toFixed(1) : '0';
-      const altos  = evalsGuardadas.filter(e => parseFloat(e.puntaje_total) >= 70).length;
-      const medios = evalsGuardadas.filter(e => parseFloat(e.puntaje_total) >= 50 && parseFloat(e.puntaje_total) < 70).length;
-      const bajos  = evalsGuardadas.filter(e => parseFloat(e.puntaje_total) < 50).length;
+
+      // Agrupar por docente para contar niveles correctamente
+      const porDocente = {};
+      evalsGuardadas.forEach(e => {
+        if (!porDocente[e.docente_nombre]) porDocente[e.docente_nombre] = [];
+        porDocente[e.docente_nombre].push(parseFloat(e.puntaje_total));
+      });
+      const promsDocentes = Object.values(porDocente).map(vals => vals.reduce((a,b)=>a+b,0)/vals.length);
+      const destacados    = promsDocentes.filter(p => p >= 90).length;
+      const logrados      = promsDocentes.filter(p => p >= 80 && p < 90).length;
+      const enProceso     = promsDocentes.filter(p => p >= 70 && p < 80).length;
+      const reqMejora     = promsDocentes.filter(p => p < 70).length;
 
       const stats = [
-        { label: 'Promedio General', valor: promGen + '%', color: [230,57,70] },
-        { label: 'Puntaje Alto >=70%', valor: altos, color: [46,204,113] },
-        { label: 'Puntaje Medio 50-69%', valor: medios, color: [243,156,18] },
-        { label: 'Puntaje Bajo <50%', valor: bajos, color: [230,57,70] },
+        { label: 'Promedio General',      valor: promGen + '%', color: [230,57,70] },
+        { label: 'Destacado 90-100%',     valor: destacados,    color: [46,204,113] },
+        { label: 'Logrado 80-89%',        valor: logrados,      color: [46,150,200] },
+        { label: 'En proceso 70-79%',     valor: enProceso,     color: [243,156,18] },
+        { label: 'Requiere mejora <70%',  valor: reqMejora,     color: [230,57,70] },
       ];
       stats.forEach((s, i) => {
-        const x = 14 + (i % 2) * 96;
-        const y = 38 + Math.floor(i / 2) * 22;
+        const cols = 3;
+        const x = 14 + (i % cols) * 62;
+        const yy = y + Math.floor(i / cols) * 22;
         doc.setFillColor(...s.color);
-        doc.roundedRect(x, y, 90, 18, 2, 2, 'F');
+        doc.roundedRect(x, yy, 58, 18, 2, 2, 'F');
         doc.setTextColor(255,255,255);
         doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text(String(s.valor), x + 45, y + 8, { align: 'center' });
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        doc.text(s.label, x + 45, y + 14, { align: 'center' });
+        doc.text(String(s.valor), x + 29, yy + 8, { align: 'center' });
+        doc.setFontSize(7.5); doc.setFont('helvetica', 'normal');
+        doc.text(s.label, x + 29, yy + 14, { align: 'center' });
       });
+      y += 50;
 
       // Gráfico barras
-      doc.setTextColor(30,30,30);
+      doc.setTextColor(20,20,80);
       doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text('Promedio por docente', 14, 88);
-      doc.addImage(imgBarras, 'PNG', 14, 92, 182, 75);
+      doc.text('Promedio por docente', 14, y);
+      y += 4;
+      doc.addImage(imgBarras, 'PNG', 14, y, 182, 70);
+      y += 75;
 
       // Gráfico dona
-      doc.text('Distribucion de puntajes', 14, 175);
-      doc.addImage(imgDona, 'PNG', 55, 179, 100, 75);
+      doc.text('Distribución de niveles', 14, y);
+      y += 4;
+      doc.addImage(imgDona, 'PNG', 55, y, 100, 70);
 
       // ── PÁGINA 2+: Un docente por página ──
       evalsGuardadas.forEach((e, idx) => {
         doc.addPage();
         const pt = parseFloat(e.puntaje_total);
-        const color = pt >= 70 ? [46,204,113] : pt >= 50 ? [243,156,18] : [230,57,70];
-        const nivel = pt >= 70 ? 'DESTACADO' : pt >= 50 ? 'EN PROCESO' : 'NECESITA MEJORA';
+        const color = pt >= 90 ? [46,204,113] : pt >= 80 ? [46,150,200] : pt >= 70 ? [243,156,18] : [230,57,70];
+        const nivel = pt >= 90 ? 'DESTACADO' : pt >= 80 ? 'LOGRADO' : pt >= 70 ? 'EN PROCESO' : 'REQUIERE MEJORA';
 
         // Header página individual
         doc.setFillColor(...color);
@@ -1977,7 +2023,7 @@ function cerrarModal() {
         doc.setFontSize(14); doc.setFont('helvetica', 'bold');
         doc.text('Reporte Individual — ' + e.docente_nombre, 14, 13);
         doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-        doc.text('Instructor: ' + e.instructor_nombre + '  |  Fecha: ' + new Date(e.creado_en).toLocaleDateString('es-PE'), 14, 23);
+        doc.text('Coord. Académico: ' + e.instructor_nombre + '  |  Fecha: ' + new Date(e.creado_en).toLocaleDateString('es-PE'), 14, 23);
 
         // Puntaje total grande
         doc.setFillColor(245,245,250);
@@ -1991,12 +2037,13 @@ function cerrarModal() {
 
         // Gráfico radar por criterios usando barras horizontales
         const criterios = [
-          { label: 'Dominio disciplinar',   valor: parseFloat(e.dominio_disciplinar)   || 0 },
-          { label: 'Practica pedagogica',   valor: parseFloat(e.practica_pedagogica)   || 0 },
-          { label: 'Clima de aula',         valor: parseFloat(e.clima_aula)            || 0 },
-          { label: 'Logro de aprendizaje',  valor: parseFloat(e.logro_aprendizaje)     || 0 },
-          { label: 'Innovacion',            valor: parseFloat(e.innovacion)            || 0 },
-          { label: 'Comunicacion/Tutoria',  valor: parseFloat(e.comunicacion_tutoria)  || 0 },
+          { label: 'Planificación y organización',       valor: parseFloat(e.dominio_disciplinar)   || 0 },
+          { label: 'Desarrollo de la sesión',            valor: parseFloat(e.practica_pedagogica)   || 0 },
+          { label: 'Uso de materiales didácticos',       valor: parseFloat(e.clima_aula)            || 0 },
+          { label: 'Evaluación formativa',               valor: parseFloat(e.logro_aprendizaje)     || 0 },
+          { label: 'Clima del aula',                     valor: parseFloat(e.innovacion)            || 0 },
+          { label: 'Responsabilidad profesional',        valor: parseFloat(e.comunicacion_tutoria)  || 0 },
+          { label: 'Presentación e identidad prof.',     valor: parseFloat(e.identidad_profesional) || 0 },
         ];
 
         doc.setFontSize(11); doc.setFont('helvetica', 'bold');
@@ -2004,9 +2051,9 @@ function cerrarModal() {
         doc.text('Detalle por criterio', 14, 76);
 
         criterios.forEach((c, i) => {
-          const y = 82 + i * 18;
+          const y = 82 + i * 16;
           const barW = (c.valor / 100) * 120;
-          const barColor = c.valor >= 70 ? [46,204,113] : c.valor >= 50 ? [243,156,18] : [230,57,70];
+          const barColor = c.valor >= 90 ? [46,204,113] : c.valor >= 80 ? [46,150,200] : c.valor >= 70 ? [243,156,18] : [230,57,70];
 
           doc.setFontSize(9); doc.setFont('helvetica', 'normal');
           doc.setTextColor(60,60,60);
@@ -2382,7 +2429,7 @@ function _generarPDFConLogo(doc, e, logoData) {
   y += 9;
 
   const datos = [
-    ['Docente:', e.docente_nombre || '—', 'Coord. Académico:', e.instructor_nombre || '—'],
+    ['Docente:', e.docente_nombre || '—',          'Observador:', e.instructor_nombre || '—'],
     ['Área/Grado:', e.area_grado || '—', 'Fecha:', e.fecha ? new Date(e.fecha).toLocaleDateString('es-PE') : new Date(e.creado_en).toLocaleDateString('es-PE')],
     ['Hora:', e.hora ? e.hora.slice(0,5) : '—',    'Tema:', e.tema_aprendizaje || '—'],
   ];
