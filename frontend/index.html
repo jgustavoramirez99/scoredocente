@@ -867,7 +867,7 @@
         <div class="table-card">
           <div class="table-header"><h3>Detalle completo</h3></div>
           <table>
-            <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Evaluador</th><th>Promedio</th><th>Fecha</th></tr></thead>
             <tbody id="tabla-reporte-detalle"></tbody>
           </table>
         </div>
@@ -2382,7 +2382,7 @@ function _generarPDFConLogo(doc, e, logoData) {
   y += 9;
 
   const datos = [
-    ['Docente:', e.docente_nombre || '—',          'Observador:', e.instructor_nombre || '—'],
+    ['Docente:', e.docente_nombre || '—', 'Coord. Académico:', e.instructor_nombre || '—'],
     ['Área/Grado:', e.area_grado || '—', 'Fecha:', e.fecha ? new Date(e.fecha).toLocaleDateString('es-PE') : new Date(e.creado_en).toLocaleDateString('es-PE')],
     ['Hora:', e.hora ? e.hora.slice(0,5) : '—',    'Tema:', e.tema_aprendizaje || '—'],
   ];
