@@ -853,11 +853,15 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
           <div class="table-card" style="padding:1.5rem">
             <div class="table-header" style="padding:0;border:none;margin-bottom:1rem"><h3>Promedio por docente</h3></div>
-            <canvas id="chart-docentes" height="220"></canvas>
+            <div style="position:relative;height:280px;overflow:hidden">
+              <canvas id="chart-docentes"></canvas>
+            </div>
           </div>
           <div class="table-card" style="padding:1.5rem">
-            <div class="table-header" style="padding:0;border:none;margin-bottom:1rem"><h3>Distribucion de puntajes</h3></div>
-            <canvas id="chart-distribucion" height="220"></canvas>
+            <div class="table-header" style="padding:0;border:none;margin-bottom:1rem"><h3>Distribución de niveles</h3></div>
+            <div style="position:relative;height:280px;overflow:hidden">
+              <canvas id="chart-distribucion"></canvas>
+            </div>
           </div>
         </div>
         <div class="table-card">
@@ -1783,71 +1787,108 @@ function cerrarModal() {
     let chartDistribucion = null;
 
     function renderizarGraficos(evaluaciones) {
-      // Stats cards
-      const promedios = evaluaciones.map(e => parseFloat(e.puntaje_total)).filter(Boolean);
-      const promGeneral = promedios.length ? (promedios.reduce((a,b)=>a+b,0)/promedios.length).toFixed(1) : 0;
-      const altos  = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 70).length;
-      const medios = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 50 && parseFloat(e.puntaje_total) < 70).length;
-      const bajos  = evaluaciones.filter(e => parseFloat(e.puntaje_total) < 50).length;
+      // ── Agrupar por docente (promedio de todas sus evaluaciones) ──
+      const porDocente = {};
+      evaluaciones.forEach(e => {
+        const nombre = e.docente_nombre;
+        if (!porDocente[nombre]) porDocente[nombre] = [];
+        porDocente[nombre].push(parseFloat(e.puntaje_total));
+      });
+      const nombresDocentes = Object.keys(porDocente);
+      const promediosDocentes = nombresDocentes.map(n => {
+        const vals = porDocente[n];
+        return parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1));
+      });
+
+      // ── Stats cards con rangos correctos ──
+      const todosPromedios = evaluaciones.map(e => parseFloat(e.puntaje_total)).filter(v => !isNaN(v) && v > 0);
+      const promGeneral = todosPromedios.length ? (todosPromedios.reduce((a,b)=>a+b,0)/todosPromedios.length).toFixed(1) : 0;
+
+      // Contar docentes (no evaluaciones) por nivel según su promedio
+      const destacados    = promediosDocentes.filter(p => p >= 90).length;
+      const logrados      = promediosDocentes.filter(p => p >= 80 && p < 90).length;
+      const enProceso     = promediosDocentes.filter(p => p >= 70 && p < 80).length;
+      const requiereMejora = promediosDocentes.filter(p => p < 70).length;
 
       document.getElementById('reporte-stats').innerHTML = `
         <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-number">${promGeneral}%</div><div class="stat-label">Promedio general</div></div>
-        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${altos}</div><div class="stat-label">Puntaje alto ≥70%</div></div>
-        <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-number" style="color:var(--amber)">${medios}</div><div class="stat-label">Puntaje medio 50-69%</div></div>
-        <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-number" style="color:var(--accent2)">${bajos}</div><div class="stat-label">Puntaje bajo &lt;50%</div></div>`;
+        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${destacados}</div><div class="stat-label">Destacado 90-100%</div></div>
+        <div class="stat-card"><div class="stat-icon">🔵</div><div class="stat-number" style="color:#2e96c8">${logrados}</div><div class="stat-label">Logrado 80-89%</div></div>
+        <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-number" style="color:var(--amber)">${enProceso}</div><div class="stat-label">En proceso 70-79%</div></div>
+        <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-number" style="color:var(--accent2)">${requiereMejora}</div><div class="stat-label">Requiere mejora &lt;70%</div></div>`;
 
-      // Tabla detalle
-      document.getElementById('tabla-reporte-detalle').innerHTML = evaluaciones.map(e => `
-        <tr>
+      // ── Tabla detalle ──
+      document.getElementById('tabla-reporte-detalle').innerHTML = evaluaciones.map(e => {
+        const pt = parseFloat(e.puntaje_total);
+        const nivel = pt >= 90 ? 'Destacado' : pt >= 80 ? 'Logrado' : pt >= 70 ? 'En proceso' : 'Req. mejora';
+        const badge = pt >= 90 ? 'badge-green' : pt >= 80 ? 'badge-green' : pt >= 70 ? 'badge-amber' : 'badge-red';
+        return `<tr>
           <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
           <td>${e.instructor_nombre}</td>
-          <td><span class="badge ${parseFloat(e.puntaje_total)>=70?'badge-green':parseFloat(e.puntaje_total)>=50?'badge-amber':'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+          <td><span class="badge ${badge}">${pt.toFixed(1)}% — ${nivel}</span></td>
           <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
-        </tr>`).join('') || '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+        </tr>`;
+      }).join('') || '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
 
-      // Grafico barras - promedio por docente
+      // ── Gráfico barras — UN promedio por docente, altura fija ──
       if (chartDocentes) chartDocentes.destroy();
       const ctxD = document.getElementById('chart-docentes').getContext('2d');
       chartDocentes = new Chart(ctxD, {
         type: 'bar',
         data: {
-          labels: evaluaciones.map(e => e.docente_nombre.split(' ')[0] + ' ' + (e.docente_nombre.split(' ')[1]||'')),
+          labels: nombresDocentes.map(n => n.split(' ').slice(0,2).join(' ')),
           datasets: [{
             label: 'Promedio',
-            data: evaluaciones.map(e => parseFloat(e.puntaje_total).toFixed(1)),
-            backgroundColor: evaluaciones.map(e =>
-              parseFloat(e.puntaje_total) >= 70 ? 'rgba(46,204,113,0.7)' :
-              parseFloat(e.puntaje_total) >= 50 ? 'rgba(243,156,18,0.7)' : 'rgba(230,57,70,0.7)'),
+            data: promediosDocentes,
+            backgroundColor: promediosDocentes.map(p =>
+              p >= 90 ? 'rgba(46,204,113,0.8)' :
+              p >= 80 ? 'rgba(46,150,200,0.8)' :
+              p >= 70 ? 'rgba(243,156,18,0.8)' : 'rgba(230,57,70,0.8)'),
             borderRadius: 6,
           }]
         },
         options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + '%' } }
+          },
           scales: {
-            y: { min: 0, max: 100, ticks: { color: '#9090a8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', maxRotation: 45 }, grid: { display: false } }
+            y: { min: 0, max: 100,
+              ticks: { color: '#9090a8', callback: v => v + '%' },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            x: { ticks: { color: '#9090a8', maxRotation: 35, font: { size: 11 } }, grid: { display: false } }
           }
         }
       });
 
-      // Grafico dona - distribucion
+      // ── Gráfico dona — niveles correctos ──
       if (chartDistribucion) chartDistribucion.destroy();
       const ctxDist = document.getElementById('chart-distribucion').getContext('2d');
       chartDistribucion = new Chart(ctxDist, {
         type: 'doughnut',
         data: {
-          labels: ['Alto ≥70%', 'Medio 50-69%', 'Bajo <50%'],
+          labels: ['Destacado 90-100%', 'Logrado 80-89%', 'En proceso 70-79%', 'Req. mejora <70%'],
           datasets: [{
-            data: [altos, medios, bajos],
-            backgroundColor: ['rgba(46,204,113,0.8)', 'rgba(243,156,18,0.8)', 'rgba(230,57,70,0.8)'],
+            data: [destacados, logrados, enProceso, requiereMejora],
+            backgroundColor: [
+              'rgba(46,204,113,0.85)',
+              'rgba(46,150,200,0.85)',
+              'rgba(243,156,18,0.85)',
+              'rgba(230,57,70,0.85)'
+            ],
             borderWidth: 0,
           }]
         },
         options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#9090a8', padding: 16, font: { size: 12 } } } },
-          cutout: '65%'
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#9090a8', padding: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' docente(s)' } }
+          },
+          cutout: '60%'
         }
       });
     }
