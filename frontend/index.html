@@ -1292,6 +1292,29 @@
         </div>
       </div>
 
+      <!-- G. PRESENTACIÓN E IDENTIDAD PROFESIONAL (máx 8) -->
+      <div class="eval-seccion">
+        <div class="eval-seccion-title">G. Presentación e identidad profesional <span id="sub-pres" class="eval-subtotal">0/8</span></div>
+        <div class="eval-indicador">
+          <span>Puntualidad: Asiste y llega puntualmente a sus clases y reuniones institucionales.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="pres1" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="pres1" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="pres1" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="pres1" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+        <div class="eval-indicador">
+          <span>Presentación personal: Mantiene una presentación personal adecuada y acorde a las normas institucionales.</span>
+          <div class="eval-radio-group">
+            <label><input type="radio" name="pres2" value="1" onchange="calcSubtotal()"> 1</label>
+            <label><input type="radio" name="pres2" value="2" onchange="calcSubtotal()"> 2</label>
+            <label><input type="radio" name="pres2" value="3" onchange="calcSubtotal()"> 3</label>
+            <label><input type="radio" name="pres2" value="4" onchange="calcSubtotal()"> 4</label>
+          </div>
+        </div>
+      </div>
+
       <!-- DATOS ADICIONALES -->
       <div class="eval-grid" style="margin-bottom:0.75rem">
         <div class="form-group">
@@ -1657,13 +1680,15 @@ function cerrarModal() {
         clima_ind3 = getRadio('clima3');
   const resp_ind1 = getRadio('resp1'), resp_ind2 = getRadio('resp2'),
         resp_ind3 = getRadio('resp3'), resp_ind4 = getRadio('resp4');
+  const pres_ind1 = getRadio('pres1'), pres_ind2 = getRadio('pres2');
 
   const todos = [plan_ind1, plan_ind2, plan_ind3, plan_ind4,
                  des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
                  mat_ind1, mat_ind2, mat_ind3, mat_ind4,
                  eval_ind1, eval_ind2, eval_ind3, eval_ind4,
                  clima_ind1, clima_ind2, clima_ind3,
-                 resp_ind1, resp_ind2, resp_ind3, resp_ind4];
+                 resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+                 pres_ind1, pres_ind2];
 
   if (todos.some(v => v === null)) {
     alert('⚠️ Debes marcar todos los indicadores antes de guardar');
@@ -1677,6 +1702,7 @@ function cerrarModal() {
   const logro_aprendizaje     = ((eval_ind1 + eval_ind2 + eval_ind3 + eval_ind4) / 16 * 100);
   const innovacion            = ((clima_ind1 + clima_ind2 + clima_ind3) / 12 * 100);
   const comunicacion_tutoria  = ((resp_ind1 + resp_ind2 + resp_ind3 + resp_ind4) / 16 * 100);
+  const identidad_profesional = ((pres_ind1 + pres_ind2) / 8 * 100);
 
   try {
     const res = await fetch('/api/evaluaciones', {
@@ -1685,7 +1711,7 @@ function cerrarModal() {
       body: JSON.stringify({
   docente_id,
   dominio_disciplinar, practica_pedagogica, clima_aula,
-  logro_aprendizaje, innovacion, comunicacion_tutoria,
+  logro_aprendizaje, innovacion, comunicacion_tutoria, identidad_profesional,
   observacion, fecha_eval, hora_eval,
   // indicadores individuales
   plan_ind1, plan_ind2, plan_ind3, plan_ind4,
@@ -1694,6 +1720,7 @@ function cerrarModal() {
   eval_ind1, eval_ind2, eval_ind3, eval_ind4,
   clima_ind1, clima_ind2, clima_ind3,
   resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+  pres_ind1, pres_ind2,
   // campos adicionales
   area_grado:        document.getElementById('eval-area').value,
   tema_aprendizaje:  document.getElementById('eval-tema').value,
@@ -1727,6 +1754,7 @@ function cerrarModal() {
       const evl  = getVal('eval1')+getVal('eval2')+getVal('eval3')+getVal('eval4');
       const cli  = getVal('clima1')+getVal('clima2')+getVal('clima3');
       const resp = getVal('resp1')+getVal('resp2')+getVal('resp3')+getVal('resp4');
+      const pres = getVal('pres1')+getVal('pres2');
 
       document.getElementById('sub-plan').textContent  = plan  + '/16';
       document.getElementById('sub-des').textContent   = des   + '/20';
@@ -1734,6 +1762,7 @@ function cerrarModal() {
       document.getElementById('sub-eval').textContent  = evl   + '/16';
       document.getElementById('sub-clima').textContent = cli   + '/12';
       document.getElementById('sub-resp').textContent  = resp  + '/16';
+      document.getElementById('sub-pres').textContent  = pres  + '/8';
     }
     async function eliminarEvaluacion(id) {
       if (!confirm('¿Seguro que quieres eliminar esta evaluación?')) return;
@@ -2397,6 +2426,10 @@ function _generarPDFConLogo(doc, e, logoData) {
       { label: 'Participa en procesos de mejora continua.', val: e.resp_ind3 },
       { label: 'Cumple los acuerdos y disposiciones institucionales.', val: e.resp_ind4 },
     ]},
+    { titulo: 'G. PRESENTACIÓN E IDENTIDAD PROFESIONAL', max: 8, items: [
+      { label: 'Puntualidad: Asiste y llega puntualmente a sus clases y reuniones institucionales.', val: e.pres_ind1 },
+      { label: 'Presentación personal: Mantiene una presentación personal adecuada y acorde a las normas institucionales.', val: e.pres_ind2 },
+    ]},
   ];
 
   // Cabecera de tabla
@@ -2487,6 +2520,7 @@ function _generarPDFConLogo(doc, e, logoData) {
     ['Evaluación formativa', 20, e.eval_ind1+e.eval_ind2+e.eval_ind3+e.eval_ind4],
     ['Clima del aula', 12, e.clima_ind1+e.clima_ind2+e.clima_ind3],
     ['Responsabilidad profesional', 16, e.resp_ind1+e.resp_ind2+e.resp_ind3+e.resp_ind4],
+    ['Presentación e identidad profesional', 8, (e.pres_ind1||0)+(e.pres_ind2||0)],
   ];
 
   // Cabecera tabla resultado
@@ -2516,8 +2550,8 @@ function _generarPDFConLogo(doc, e, logoData) {
   doc.setFillColor(50,50,100);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont('helvetica','bold');
-  doc.text('TOTAL', 13, y+5);
-  doc.text('96', 148, y+5, {align:'center'});
+  doc.text('TOTAL (sobre 108 → 100%)', 13, y+5);
+  doc.text('108', 148, y+5, {align:'center'});
   doc.text(pt.toFixed(1) + '%', 192, y+5, {align:'right'});
   y += 10;
 

@@ -8,7 +8,7 @@ router.post('/', verificarToken, async (req, res) => {
   const {
     docente_id,
     dominio_disciplinar, practica_pedagogica, clima_aula,
-    logro_aprendizaje, innovacion, comunicacion_tutoria,
+    logro_aprendizaje, innovacion, comunicacion_tutoria, identidad_profesional,
     observacion, fecha_eval, hora_eval,
     // indicadores individuales
     plan_ind1, plan_ind2, plan_ind3, plan_ind4,
@@ -17,6 +17,7 @@ router.post('/', verificarToken, async (req, res) => {
     eval_ind1, eval_ind2, eval_ind3, eval_ind4,
     clima_ind1, clima_ind2, clima_ind3,
     resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+    pres_ind1, pres_ind2,
     // campos adicionales
     area_grado, tema_aprendizaje,
     fortaleza1, fortaleza2, fortaleza3,
@@ -24,22 +25,30 @@ router.post('/', verificarToken, async (req, res) => {
     compromisos, recomendaciones
   } = req.body;
 
-  // Redondear a entero porque las columnas son INTEGER
   const dom  = Math.round(dominio_disciplinar);
   const prac = Math.round(practica_pedagogica);
   const clim = Math.round(clima_aula);
   const logr = Math.round(logro_aprendizaje);
   const inn  = Math.round(innovacion);
   const com  = Math.round(comunicacion_tutoria);
+  const iden = Math.round(identidad_profesional || 0);
 
-  const puntaje_total = ((dom + prac + clim + logr + inn + com) / 6).toFixed(2);
+  // Puntaje real sobre 108, convertido a porcentaje sobre 100
+  const suma_raw = (parseInt(plan_ind1)||0)+(parseInt(plan_ind2)||0)+(parseInt(plan_ind3)||0)+(parseInt(plan_ind4)||0)
+                 + (parseInt(des_ind1)||0)+(parseInt(des_ind2)||0)+(parseInt(des_ind3)||0)+(parseInt(des_ind4)||0)+(parseInt(des_ind5)||0)
+                 + (parseInt(mat_ind1)||0)+(parseInt(mat_ind2)||0)+(parseInt(mat_ind3)||0)+(parseInt(mat_ind4)||0)
+                 + (parseInt(eval_ind1)||0)+(parseInt(eval_ind2)||0)+(parseInt(eval_ind3)||0)+(parseInt(eval_ind4)||0)
+                 + (parseInt(clima_ind1)||0)+(parseInt(clima_ind2)||0)+(parseInt(clima_ind3)||0)
+                 + (parseInt(resp_ind1)||0)+(parseInt(resp_ind2)||0)+(parseInt(resp_ind3)||0)+(parseInt(resp_ind4)||0)
+                 + (parseInt(pres_ind1)||0)+(parseInt(pres_ind2)||0);
+  const puntaje_total = (suma_raw / 108 * 100).toFixed(2);
 
   try {
     const result = await db.query(
       `INSERT INTO evaluaciones 
         (docente_id, supervisor_id,
          dominio_disciplinar, practica_pedagogica, clima_aula,
-         logro_aprendizaje, innovacion, comunicacion_tutoria,
+         logro_aprendizaje, innovacion, comunicacion_tutoria, identidad_profesional,
          observacion, puntaje_total, fecha, hora,
          plan_ind1, plan_ind2, plan_ind3, plan_ind4,
          des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
@@ -47,20 +56,22 @@ router.post('/', verificarToken, async (req, res) => {
          eval_ind1, eval_ind2, eval_ind3, eval_ind4,
          clima_ind1, clima_ind2, clima_ind3,
          resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+         pres_ind1, pres_ind2,
          area_grado, tema_aprendizaje,
          fortaleza1, fortaleza2, fortaleza3,
          mejora1, mejora2, mejora3,
          compromisos, recomendaciones)
        VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-         $13,$14,$15,$16,$17,$18,$19,$20,$21,
-         $22,$23,$24,$25,$26,$27,$28,$29,
-         $30,$31,$32,$33,$34,$35,$36,
-         $37,$38,$39,$40,$41,$42,$43,$44,$45,$46
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+         $14,$15,$16,$17,$18,$19,$20,$21,$22,
+         $23,$24,$25,$26,$27,$28,$29,$30,
+         $31,$32,$33,$34,$35,$36,$37,
+         $38,$39,
+         $40,$41,$42,$43,$44,$45,$46,$47,$48,$49
        ) RETURNING *`,
       [
         docente_id, req.usuario.id,
-        dom, prac, clim, logr, inn, com,
+        dom, prac, clim, logr, inn, com, iden,
         observacion, puntaje_total, fecha_eval, hora_eval,
         plan_ind1, plan_ind2, plan_ind3, plan_ind4,
         des_ind1, des_ind2, des_ind3, des_ind4, des_ind5,
@@ -68,6 +79,7 @@ router.post('/', verificarToken, async (req, res) => {
         eval_ind1, eval_ind2, eval_ind3, eval_ind4,
         clima_ind1, clima_ind2, clima_ind3,
         resp_ind1, resp_ind2, resp_ind3, resp_ind4,
+        pres_ind1, pres_ind2,
         area_grado, tema_aprendizaje,
         fortaleza1, fortaleza2, fortaleza3,
         mejora1, mejora2, mejora3,
