@@ -943,7 +943,7 @@
         <div class="table-card">
           <div class="table-header"><h3>Mis evaluaciones</h3></div>
           <table>
-            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>Docente</th><th>Promedio</th><th>Fecha</th><th>Ver</th><th>Acción</th></tr></thead>
             <tbody id="tabla-sup-historial"><tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
@@ -1567,14 +1567,15 @@
         const evaluaciones = await resEval.json();
 
         document.getElementById('tabla-sup-historial').innerHTML = evaluaciones.length
-          ? evaluaciones.map(e => `
-            <tr>
-              <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
-              <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
-              <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
-              <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacion(${e.id})">🗑 Eliminar</button></td>
-            </tr>`).join('')
-          : '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+  ? evaluaciones.map(e => `
+    <tr>
+      <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+      <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+      <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+      <td><button class="eval-btn" onclick="verFormularioDirector(${e.id})">🔍 Ver</button></td>
+      <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacion(${e.id})">🗑 Eliminar</button></td>
+    </tr>`).join('')
+  : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
 
         actualizarReporteSupervisor(evaluaciones);
 

@@ -146,9 +146,6 @@ router.get('/mias', verificarToken, async (req, res) => {
 // ── NUEVO ──────────────────────────────────────────────
 // GET /api/evaluaciones/:id — detalle completo (solo director)
 router.get('/:id', verificarToken, async (req, res) => {
-  if (req.usuario.rol !== 'director') {
-    return res.status(403).json({ error: 'Solo el director puede ver el detalle' });
-  }
   try {
     const result = await db.query(
       `SELECT e.*,
@@ -163,12 +160,19 @@ router.get('/:id', verificarToken, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Evaluación no encontrada' });
     }
-    res.json(result.rows[0]);
+    const fila = result.rows[0];
+    const esDirector = ['director', 'directora', 'coordinador_general'].includes(req.usuario.rol);
+    const esDueno = fila.supervisor_id === req.usuario.id;
+    if (!esDirector && !esDueno) {
+      return res.status(403).json({ error: 'No tienes permiso para ver esta evaluación' });
+    }
+    return res.json(fila);
   } catch (err) {
     console.error('Error al obtener evaluación:', err);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+    
 // ──────────────────────────────────────────────────────
 
 // DELETE /api/evaluaciones/:id
