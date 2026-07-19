@@ -165,7 +165,7 @@
     /* ══════════════════════════════
        LAYOUT
     ══════════════════════════════ */
-    #director-page, #instructor-page {
+    #director-page, #instructor-page, #auxiliar-page {
       display: none;
       min-height: 100vh;
     }
@@ -726,6 +726,8 @@
       <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
       <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
       <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
+      <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
+      <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -892,6 +894,86 @@
         </div>
       </div>
 
+      <div class="section" id="section-apoderados">
+        <div class="page-header">
+          <div class="page-title">Reporte de Apoderados</div>
+          <div class="page-subtitle">Estado del registro de celulares por salón</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🧒</div>
+            <div class="stat-number" id="stat-apod-total">—</div>
+            <div class="stat-label">Total alumnos</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="stat-apod-con">—</div>
+            <div class="stat-label">Con celular registrado</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-number" id="stat-apod-sin">—</div>
+            <div class="stat-label">Sin celular registrado</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-number" id="stat-apod-pct">—</div>
+            <div class="stat-label">% completado</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Resumen por salón</h3></div>
+          <table>
+            <thead><tr><th>Salón</th><th>Nivel</th><th>Total</th><th>Con celular</th><th>Sin celular</th></tr></thead>
+            <tbody id="tabla-apod-resumen"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Detalle de alumnos</h3></div>
+          <table>
+            <thead><tr><th>Salón</th><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th></tr></thead>
+            <tbody id="tabla-apod-detalle"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-asistencia">
+        <div class="page-header">
+          <div class="page-title">Asistencia</div>
+          <div class="page-subtitle">Consulta o corrige la asistencia registrada por el auxiliar en cualquier salón y fecha</div>
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1rem">
+          <div class="form-group" style="max-width:280px">
+            <label>Salón</label>
+            <select id="dir-asis-salon" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:200px">
+            <label>Fecha</label>
+            <input type="date" id="dir-asis-fecha" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          </div>
+          <div class="form-group" style="align-self:flex-end">
+            <button class="eval-btn" onclick="cargarAsistenciaDirector()">🔍 Ver / editar</button>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Registro del día</h3></div>
+          <table>
+            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Observación</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-dir-asistencia"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona salón y fecha</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="table-card" style="margin-top:1.5rem">
+          <div class="table-header"><h3>Historial reciente de faltas / tardanzas</h3></div>
+          <table>
+            <thead><tr><th>Fecha</th><th>Salón</th><th>Alumno</th><th>Estado</th><th>Observación</th></tr></thead>
+            <tbody id="tabla-dir-asis-historial"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -955,7 +1037,52 @@
 
     </div>
   </div>
-  
+
+  <!-- PANEL AUXILIAR -->
+  <div id="auxiliar-page">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <img src="/icon-192.png" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+          <div class="brand" style="gap:0">ScoreDocente</div>
+        </div>
+        <div class="role-tag">Panel Auxiliar</div>
+      </div>
+      <div class="nav-section">Asistencia</div>
+      <div class="nav-item active" onclick="showSectionAux('aux-asistencia', this)">🗓 Asistencia de hoy</div>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar">👤</div>
+          <div class="user-name" id="aux-user-info"></div>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+          <span>↩</span> Cerrar sesión
+        </button>
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="section active" id="section-aux-asistencia">
+        <div class="page-header">
+          <div class="page-title">Asistencia de hoy — <span id="aux-fecha-hoy"></span></div>
+          <div class="page-subtitle">Selecciona un salón, marca la asistencia de cada alumno y registra el celular u observación. Solo puedes registrar el día de hoy.</div>
+        </div>
+        <div class="form-group" style="max-width:320px;margin-bottom:1rem">
+          <label>Salón</label>
+          <select id="aux-salon-select" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none" onchange="cargarAlumnosAuxiliar()">
+            <option value="">Selecciona un salón...</option>
+          </select>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Lista de asistencia</h3></div>
+          <table>
+            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Observación</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-aux-alumnos"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL AGREGAR DOCENTE -->
   <div class="modal" id="modal-docente">
     <div class="modal-card">
@@ -1020,6 +1147,7 @@
         <label>Rol</label>
         <select id="usu-rol" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
   <option value="supervisor">Instructor</option>
+  <option value="auxiliar">Auxiliar</option>
   <option value="coordinador_general">Coordinador General</option>
   <option value="coordinador_academico">Coordinador Académico</option>
   <option value="directora">Director(a)</option>
@@ -1436,7 +1564,11 @@
     function mostrarPanel() {
   document.getElementById('login-page').style.display = 'none';
   const rolesDirector = ['director', 'directora', 'coordinador_general'];
-  if (rolesDirector.includes(usuario.rol)) {
+  if (usuario.rol === 'auxiliar') {
+    document.getElementById('auxiliar-page').style.display = 'flex';
+    document.getElementById('aux-user-info').textContent = usuario.nombre;
+    cargarDatosAuxiliar();
+  } else if (rolesDirector.includes(usuario.rol)) {
     document.getElementById('director-page').style.display = 'flex';
     document.getElementById('dir-user-info').textContent = usuario.nombre;
     cargarDatosDirector();
@@ -1450,6 +1582,11 @@
       // Ocultar botón agregar instructor
       document.querySelectorAll('[onclick="abrirModalUsuario()"]')
         .forEach(b => b.style.display = 'none');
+      // ✅ Reporte de Apoderados: solo lo ve el Gerente General
+      const navApod = document.getElementById('nav-apoderados');
+      if (navApod) navApod.style.display = 'none';
+      const navAsis = document.getElementById('nav-asistencia');
+      if (navAsis) navAsis.style.display = 'none';
     }
   } else {
     document.getElementById('instructor-page').style.display = 'flex';
@@ -1469,11 +1606,20 @@
       document.querySelectorAll('#director-page .nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('section-' + id).classList.add('active');
       el.classList.add('active');
+      if (id === 'apoderados') cargarReporteApoderados();
+      if (id === 'asistencia') cargarSalonesAsistenciaDirector();
     }
 
     function showSectionSup(id, el) {
       document.querySelectorAll('#instructor-page .section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('#instructor-page .nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('section-' + id).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function showSectionAux(id, el) {
+      document.querySelectorAll('#auxiliar-page .section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('#auxiliar-page .nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('section-' + id).classList.add('active');
       el.classList.add('active');
     }
@@ -1581,6 +1727,239 @@
 
       } catch (err) {
         console.error('Error cargando datos:', err);
+      }
+    }
+
+    // ══════════════════════════════
+    //  PANEL AUXILIAR — Asistencia de hoy
+    // ══════════════════════════════
+    const ESTADOS_ASISTENCIA = [
+      { valor: '', texto: 'Sin marcar' },
+      { valor: 'P', texto: 'Presente' },
+      { valor: 'FI', texto: 'Falta Injustificada' },
+      { valor: 'FJ', texto: 'Falta Justificada' },
+      { valor: 'TI', texto: 'Tardanza Injustificada' },
+      { valor: 'TJ', texto: 'Tardanza Justificada' }
+    ];
+
+    function fechaHoyISO() {
+      const d = new Date();
+      const off = d.getTimezoneOffset();
+      return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+    }
+
+    function opcionesEstado(seleccionado) {
+      return ESTADOS_ASISTENCIA.map(e =>
+        `<option value="${e.valor}" ${e.valor === (seleccionado || '') ? 'selected' : ''}>${e.texto}</option>`
+      ).join('');
+    }
+
+    async function cargarDatosAuxiliar() {
+      document.getElementById('aux-fecha-hoy').textContent =
+        new Date().toLocaleDateString('es-PE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/alumnos/salones', { headers });
+        const salones = await res.json();
+        const select = document.getElementById('aux-salon-select');
+        select.innerHTML = '<option value="">Selecciona un salón...</option>' +
+          salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+      } catch (err) {
+        console.error('Error cargando salones:', err);
+      }
+    }
+
+    async function cargarAlumnosAuxiliar() {
+      const salonId = document.getElementById('aux-salon-select').value;
+      const tbody = document.getElementById('tabla-aux-alumnos');
+      if (!salonId) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr>';
+        return;
+      }
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/asistencias?salon_id=' + salonId + '&fecha=' + fechaHoyISO(), { headers });
+        const data = await res.json();
+        const alumnos = data.alumnos || [];
+        tbody.innerHTML = alumnos.length ? alumnos.map(a => `
+          <tr>
+            <td>${a.numero ?? '—'}</td>
+            <td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>
+            <td><input type="tel" id="cel-${a.alumno_id}" value="${a.celular_apoderado || ''}" placeholder="Ej: 987654321"
+                style="width:135px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+            <td><select id="est-${a.alumno_id}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+                ${opcionesEstado(a.estado)}</select></td>
+            <td><input type="text" id="obs-${a.alumno_id}" value="${(a.observacion || '').replace(/"/g,'&quot;')}" placeholder="Ej: Respondió el papá, alumno con gripe"
+                style="width:220px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+            <td><button class="eval-btn" onclick="guardarAsistenciaAlumno(${a.alumno_id})">💾 Guardar</button></td>
+          </tr>`).join('') : '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando alumnos:', err);
+      }
+    }
+
+    async function guardarAsistenciaAlumno(alumnoId) {
+      const celInput = document.getElementById('cel-' + alumnoId);
+      const estado = document.getElementById('est-' + alumnoId).value;
+      const observacion = document.getElementById('obs-' + alumnoId).value.trim();
+      const celular_apoderado = celInput.value.trim();
+      try {
+        // 1) Actualiza celular del apoderado (si cambió o si estaba vacío)
+        await fetch('/api/alumnos/' + alumnoId + '/celular', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ celular_apoderado })
+        });
+        // 2) Guarda la asistencia + observación del día de hoy
+        const res = await fetch('/api/asistencias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ alumno_id: alumnoId, estado: estado || null, observacion: observacion || null })
+        });
+        if (!res.ok) throw new Error();
+        celInput.style.borderColor = 'var(--green)';
+        setTimeout(() => celInput.style.borderColor = 'var(--border2)', 1200);
+      } catch (err) {
+        alert('No se pudo guardar. Verifica tu conexión e intenta de nuevo.');
+      }
+    }
+
+    // ══════════════════════════════
+    //  REPORTE DE APODERADOS — solo Gerente General
+    // ══════════════════════════════
+    async function cargarReporteApoderados() {
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/alumnos/reporte', { headers });
+        const { resumen, detalle } = await res.json();
+
+        const totalAlumnos = resumen.reduce((a, r) => a + Number(r.total_alumnos), 0);
+        const totalConCel = resumen.reduce((a, r) => a + Number(r.con_celular), 0);
+        const totalSinCel = resumen.reduce((a, r) => a + Number(r.sin_celular), 0);
+        const pct = totalAlumnos ? ((totalConCel / totalAlumnos) * 100).toFixed(1) + '%' : '—';
+
+        document.getElementById('stat-apod-total').textContent = totalAlumnos;
+        document.getElementById('stat-apod-con').textContent = totalConCel;
+        document.getElementById('stat-apod-sin').textContent = totalSinCel;
+        document.getElementById('stat-apod-pct').textContent = pct;
+
+        document.getElementById('tabla-apod-resumen').innerHTML = resumen.map(r => `
+          <tr>
+            <td style="color:var(--text);font-weight:500">${r.salon}</td>
+            <td>${r.nivel}</td>
+            <td>${r.total_alumnos}</td>
+            <td><span class="badge badge-green">${r.con_celular}</span></td>
+            <td><span class="badge ${r.sin_celular > 0 ? 'badge-red' : 'badge-green'}">${r.sin_celular}</span></td>
+          </tr>`).join('');
+
+        document.getElementById('tabla-apod-detalle').innerHTML = detalle.map(a => `
+          <tr>
+            <td>${a.salon}</td>
+            <td>${a.numero ?? '—'}</td>
+            <td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>
+            <td>${a.celular_apoderado ? a.celular_apoderado : '<span class="badge badge-red">Sin registrar</span>'}</td>
+          </tr>`).join('');
+      } catch (err) {
+        console.error('Error cargando reporte de apoderados:', err);
+      }
+    }
+
+    // ══════════════════════════════
+    //  ASISTENCIA (DIRECTOR) — ver / corregir cualquier día
+    // ══════════════════════════════
+    async function cargarSalonesAsistenciaDirector() {
+      const select = document.getElementById('dir-asis-salon');
+      if (select.dataset.cargado) { cargarHistorialAsistenciaDirector(); return; }
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/alumnos/salones', { headers });
+        const salones = await res.json();
+        select.innerHTML = '<option value="">Selecciona un salón...</option>' +
+          salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        select.dataset.cargado = '1';
+        document.getElementById('dir-asis-fecha').value = fechaHoyISO();
+        cargarHistorialAsistenciaDirector();
+      } catch (err) {
+        console.error('Error cargando salones:', err);
+      }
+    }
+
+    async function cargarAsistenciaDirector() {
+      const salonId = document.getElementById('dir-asis-salon').value;
+      const fecha = document.getElementById('dir-asis-fecha').value;
+      const tbody = document.getElementById('tabla-dir-asistencia');
+      if (!salonId || !fecha) {
+        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona salón y fecha</p></div></td></tr>';
+        return;
+      }
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/asistencias?salon_id=' + salonId + '&fecha=' + fecha, { headers });
+        const data = await res.json();
+        const alumnos = data.alumnos || [];
+        tbody.innerHTML = alumnos.length ? alumnos.map(a => `
+          <tr>
+            <td>${a.numero ?? '—'}</td>
+            <td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>
+            <td><input type="tel" id="dcel-${a.alumno_id}" value="${a.celular_apoderado || ''}"
+                style="width:135px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+            <td><select id="dest-${a.alumno_id}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+                ${opcionesEstado(a.estado)}</select></td>
+            <td><input type="text" id="dobs-${a.alumno_id}" value="${(a.observacion || '').replace(/"/g,'&quot;')}"
+                style="width:220px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+            <td><button class="eval-btn" onclick="guardarAsistenciaDirector(${a.alumno_id})">💾 Guardar</button></td>
+          </tr>`).join('') : '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando asistencia:', err);
+      }
+    }
+
+    async function guardarAsistenciaDirector(alumnoId) {
+      const fecha = document.getElementById('dir-asis-fecha').value;
+      const celInput = document.getElementById('dcel-' + alumnoId);
+      const estado = document.getElementById('dest-' + alumnoId).value;
+      const observacion = document.getElementById('dobs-' + alumnoId).value.trim();
+      const celular_apoderado = celInput.value.trim();
+      try {
+        await fetch('/api/alumnos/' + alumnoId + '/celular', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ celular_apoderado })
+        });
+        const res = await fetch('/api/asistencias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ alumno_id: alumnoId, fecha, estado: estado || null, observacion: observacion || null })
+        });
+        if (!res.ok) throw new Error();
+        celInput.style.borderColor = 'var(--green)';
+        setTimeout(() => celInput.style.borderColor = 'var(--border2)', 1200);
+        cargarHistorialAsistenciaDirector();
+      } catch (err) {
+        alert('No se pudo guardar. Intenta de nuevo.');
+      }
+    }
+
+    async function cargarHistorialAsistenciaDirector() {
+      const tbody = document.getElementById('tabla-dir-asis-historial');
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const hoy = fechaHoyISO();
+        const hace7 = new Date(Date.now() - 7 * 86400000);
+        const off = hace7.getTimezoneOffset();
+        const desde = new Date(hace7.getTime() - off * 60000).toISOString().slice(0, 10);
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hoy}`, { headers });
+        const registros = (await res.json()).filter(r => r.estado && r.estado !== 'P');
+        tbody.innerHTML = registros.length ? registros.map(r => `
+          <tr>
+            <td>${r.fecha}</td>
+            <td>${r.salon}</td>
+            <td style="color:var(--text);font-weight:500">${r.apellidos_nombres}</td>
+            <td><span class="badge ${r.estado === 'FI' ? 'badge-red' : 'badge-amber'}">${r.estado}</span></td>
+            <td>${r.observacion || '—'}</td>
+          </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>Sin faltas ni tardanzas en los últimos 7 días</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando historial de asistencia:', err);
       }
     }
 

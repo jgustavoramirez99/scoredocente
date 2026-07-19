@@ -15,6 +15,10 @@ const docentesRouter = require('./routes/docentes');
 app.use('/api/docentes', docentesRouter);
 const evaluacionesRouter = require('./routes/evaluaciones');
 app.use('/api/evaluaciones', evaluacionesRouter);
+const alumnosRouter = require('./routes/alumnos');
+app.use('/api/alumnos', alumnosRouter);
+const asistenciasRouter = require('./routes/asistencias');
+app.use('/api/asistencias', asistenciasRouter);
 app.use('/api/auth', authRouter);
 
 app.get('/{*path}', (req, res) => {
