@@ -25,6 +25,8 @@
       --amber-bg: rgba(243,156,18,0.1);
       --red: #e63946;
       --red-bg: rgba(230,57,70,0.1);
+      --gold: #D4AF37;
+      --gold-bg: rgba(212,175,55,0.15);
       --radius: 12px;
       --sidebar-w: 220px;
     }
@@ -476,6 +478,7 @@
     .badge-red   { background: var(--red-bg);   color: var(--accent2); }
     .badge-amber { background: var(--amber-bg); color: var(--amber); }
     .badge-gray  { background: var(--surface3); color: var(--text3); }
+    .badge-gold  { background: var(--gold-bg);  color: var(--gold); }
 
     /* ── SECTIONS ── */
     .section { display: none; }
@@ -2216,16 +2219,16 @@ function cerrarModal() {
 
       document.getElementById('reporte-stats').innerHTML = `
         <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-number">${promGeneral}%</div><div class="stat-label">Promedio general</div></div>
-        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${destacados}</div><div class="stat-label">Destacado 90-100%</div></div>
-        <div class="stat-card"><div class="stat-icon">🔵</div><div class="stat-number" style="color:#2e96c8">${logrados}</div><div class="stat-label">Logrado 80-89%</div></div>
-        <div class="stat-card"><div class="stat-icon">🟡</div><div class="stat-number" style="color:var(--amber)">${enProceso}</div><div class="stat-label">En proceso 70-79%</div></div>
+        <div class="stat-card"><div class="stat-icon">🥇</div><div class="stat-number" style="color:var(--gold)">${destacados}</div><div class="stat-label">Destacado 90-100%</div></div>
+        <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-number" style="color:var(--green)">${logrados}</div><div class="stat-label">Logrado 80-89%</div></div>
+        <div class="stat-card"><div class="stat-icon">🟠</div><div class="stat-number" style="color:var(--amber)">${enProceso}</div><div class="stat-label">En proceso 70-79%</div></div>
         <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-number" style="color:var(--accent2)">${requiereMejora}</div><div class="stat-label">Requiere mejora &lt;70%</div></div>`;
 
       // ── Tabla detalle ──
       document.getElementById('tabla-reporte-detalle').innerHTML = evaluaciones.map(e => {
         const pt = parseFloat(e.puntaje_total);
         const nivel = pt >= 90 ? 'Destacado' : pt >= 80 ? 'Logrado' : pt >= 70 ? 'En proceso' : 'Req. mejora';
-        const badge = pt >= 90 ? 'badge-green' : pt >= 80 ? 'badge-green' : pt >= 70 ? 'badge-amber' : 'badge-red';
+        const badge = pt >= 90 ? 'badge-gold' : pt >= 80 ? 'badge-green' : pt >= 70 ? 'badge-amber' : 'badge-red';
         return `<tr>
           <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
           <td>${e.instructor_nombre}</td>
@@ -2245,8 +2248,8 @@ function cerrarModal() {
             label: 'Promedio',
             data: promediosDocentes,
             backgroundColor: promediosDocentes.map(p =>
-              p >= 90 ? 'rgba(46,204,113,0.8)' :
-              p >= 80 ? 'rgba(46,150,200,0.8)' :
+              p >= 90 ? 'rgba(212,175,55,0.85)' :
+              p >= 80 ? 'rgba(46,204,113,0.8)' :
               p >= 70 ? 'rgba(243,156,18,0.8)' : 'rgba(230,57,70,0.8)'),
             borderRadius: 6,
           }]
@@ -2277,8 +2280,8 @@ function cerrarModal() {
           datasets: [{
             data: [destacados, logrados, enProceso, requiereMejora],
             backgroundColor: [
+              'rgba(212,175,55,0.85)',
               'rgba(46,204,113,0.85)',
-              'rgba(46,150,200,0.85)',
               'rgba(243,156,18,0.85)',
               'rgba(230,57,70,0.85)'
             ],
@@ -2381,8 +2384,8 @@ function cerrarModal() {
 
       const stats = [
         { label: 'Promedio General',      valor: promGen + '%', color: [230,57,70] },
-        { label: 'Destacado 90-100%',     valor: destacados,    color: [46,204,113] },
-        { label: 'Logrado 80-89%',        valor: logrados,      color: [46,150,200] },
+        { label: 'Destacado 90-100%',     valor: destacados,    color: [212,175,55] },
+        { label: 'Logrado 80-89%',        valor: logrados,      color: [46,204,113] },
         { label: 'En proceso 70-79%',     valor: enProceso,     color: [243,156,18] },
         { label: 'Requiere mejora <70%',  valor: reqMejora,     color: [230,57,70] },
       ];
@@ -2417,7 +2420,7 @@ function cerrarModal() {
       evalsGuardadas.forEach((e, idx) => {
         doc.addPage();
         const pt = parseFloat(e.puntaje_total);
-        const color = pt >= 90 ? [46,204,113] : pt >= 80 ? [46,150,200] : pt >= 70 ? [243,156,18] : [230,57,70];
+        const color = pt >= 90 ? [212,175,55] : pt >= 80 ? [46,204,113] : pt >= 70 ? [243,156,18] : [230,57,70];
         const nivel = pt >= 90 ? 'DESTACADO' : pt >= 80 ? 'LOGRADO' : pt >= 70 ? 'EN PROCESO' : 'REQUIERE MEJORA';
 
         // Header página individual
@@ -2457,7 +2460,7 @@ function cerrarModal() {
         criterios.forEach((c, i) => {
           const y = 82 + i * 16;
           const barW = (c.valor / 100) * 120;
-          const barColor = c.valor >= 90 ? [46,204,113] : c.valor >= 80 ? [46,150,200] : c.valor >= 70 ? [243,156,18] : [230,57,70];
+          const barColor = c.valor >= 90 ? [212,175,55] : c.valor >= 80 ? [46,204,113] : c.valor >= 70 ? [243,156,18] : [230,57,70];
 
           doc.setFontSize(9); doc.setFont('helvetica', 'normal');
           doc.setTextColor(60,60,60);
@@ -2737,7 +2740,7 @@ async function verFormularioDirector(id) {
 
     const html = criterios.map(sec => {
       const subtotal = sec.items.reduce((a, i) => a + (parseInt(i.val) || 0), 0);
-      const color = subtotal / sec.max >= 0.7 ? 'var(--green)' : subtotal / sec.max >= 0.5 ? 'var(--amber)' : 'var(--accent2)';
+      const color = subtotal / sec.max >= 0.9 ? 'var(--gold)' : subtotal / sec.max >= 0.8 ? 'var(--green)' : subtotal / sec.max >= 0.7 ? 'var(--amber)' : 'var(--accent2)';
       return `
         <div class="eval-seccion" style="margin-bottom:0.75rem">
           <div class="eval-seccion-title">
@@ -2794,7 +2797,7 @@ function descargarFormularioPDF() {
 function _generarPDFConLogo(doc, e, logoData) {
   const pt = parseFloat(e.puntaje_total);
   const nivel = pt >= 90 ? 'DESTACADO' : pt >= 80 ? 'LOGRADO' : pt >= 70 ? 'EN PROCESO' : 'REQUIERE MEJORA';
-  const colorNivel = pt >= 90 ? [46,204,113] : pt >= 80 ? [46,150,200] : pt >= 70 ? [243,156,18] : [230,57,70];
+  const colorNivel = pt >= 90 ? [212,175,55] : pt >= 80 ? [46,204,113] : pt >= 70 ? [243,156,18] : [230,57,70];
 
   // ════════════════════════════════
   // ENCABEZADO
@@ -2862,7 +2865,7 @@ function _generarPDFConLogo(doc, e, logoData) {
   y += 8;
 
   const escala = [['4','Destacado'],['3','Logrado'],['2','En proceso'],['1','Inicio']];
-  const colores = [[46,204,113],[46,150,200],[243,156,18],[230,57,70]];
+  const colores = [[212,175,55],[46,204,113],[243,156,18],[230,57,70]];
   escala.forEach((item, i) => {
     const x = 12 + i * 47;
     doc.setFillColor(...colores[i]);
@@ -2946,7 +2949,7 @@ function _generarPDFConLogo(doc, e, logoData) {
 
     const subtotal = sec.items.reduce((a,i) => a + (parseInt(i.val)||0), 0);
     const pct = subtotal / sec.max;
-    const [r,g,b] = pct >= 0.9 ? [46,204,113] : pct >= 0.8 ? [46,150,200] : pct >= 0.7 ? [243,156,18] : [230,57,70];
+    const [r,g,b] = pct >= 0.9 ? [212,175,55] : pct >= 0.8 ? [46,204,113] : pct >= 0.7 ? [243,156,18] : [230,57,70];
 
     // Título sección
     doc.setFillColor(r,g,b);
