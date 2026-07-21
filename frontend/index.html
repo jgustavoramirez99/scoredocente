@@ -167,7 +167,7 @@
     /* ══════════════════════════════
        LAYOUT
     ══════════════════════════════ */
-    #director-page, #instructor-page, #auxiliar-page {
+    #director-page, #instructor-page, #auxiliar-page, #psicologa-page {
       display: none;
       min-height: 100vh;
     }
@@ -743,6 +743,7 @@
       <div class="nav-item active" onclick="showSection('resumen', this)">📊 Resumen</div>
       <div class="nav-item" onclick="showSection('docentes', this)">👨‍🏫 Docentes</div>
       <div class="nav-item" onclick="showSection('evaluaciones', this)">📋 Evaluaciones</div>
+      <div class="nav-item" onclick="showSection('tutoria', this)">📘 Tutoría</div>
       <div class="nav-section">Análisis</div>
       <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
       <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
@@ -814,7 +815,7 @@
         <div class="table-card">
           <div class="table-header"><h3>Lista de docentes</h3></div>
           <table>
-            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Tipo</th><th>Acción</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Tipo</th><th>Tutor</th><th>Acción</th></tr></thead>
             <tbody id="tabla-docentes"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
@@ -859,6 +860,23 @@
           <table>
             <thead><tr><th>Docente</th><th>Instructor</th><th>Promedio</th><th>Fecha</th><th>Hora</th><th>Detalle</th></tr></thead>
             <tbody id="tabla-evaluaciones"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-tutoria">
+        <div class="page-header">
+          <div class="page-title">Evaluaciones de Tutoría</div>
+          <div class="page-subtitle">Evaluaciones realizadas por la Psicóloga a los docentes tutores</div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Historial de evaluaciones de tutoría</h3>
+            <div class="live-badge"><div class="live-dot"></div>En vivo</div>
+          </div>
+          <table>
+            <thead><tr><th>Docente Tutor</th><th>Promedio</th><th>Fecha</th><th>Detalle</th></tr></thead>
+            <tbody id="tabla-tutoria"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1106,7 +1124,60 @@
       </div>
     </div>
   </div>
+  <!-- PANEL PSICÓLOGA -->
+<div id="psicologa-page">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;min-width:0;overflow:hidden;width:100%">
+        <img src="/icon-192.png" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;">
+        <div class="brand" style="gap:0">ScoreDocente</div>
+      </div>
+      <div class="role-tag">Panel Psicología</div>
+    </div>
+    <div class="nav-section">Tutoría</div>
+    <div class="nav-item active" onclick="showSectionPsico('psico-tutores', this)">📘 Tutores</div>
+    <div class="nav-item" onclick="showSectionPsico('psico-historial', this)">📋 Historial</div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">👤</div>
+        <div class="user-name" id="psico-user-info"></div>
+      </div>
+      <button class="logout-btn" onclick="logout()"><span>↩</span> Cerrar sesión</button>
+      <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
+    </div>
+  </div>
+  <div class="main-content">
 
+    <div class="section active" id="section-psico-tutores">
+      <div class="page-header">
+        <div class="page-title">Tutores a Evaluar</div>
+        <div class="page-subtitle">Docentes tutores pendientes de evaluación</div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Lista de tutores</h3></div>
+        <table>
+          <thead><tr><th>Nombre</th><th>Curso</th><th>Acción</th></tr></thead>
+          <tbody id="tabla-psico-tutores"><tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section" id="section-psico-historial">
+      <div class="page-header">
+        <div class="page-title">Historial</div>
+        <div class="page-subtitle">Mis evaluaciones de tutoría</div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Mis evaluaciones</h3></div>
+        <table>
+          <thead><tr><th>Docente</th><th>Puntaje</th><th>Fecha</th><th>Acción</th></tr></thead>
+          <tbody id="tabla-psico-historial"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
   <!-- MODAL AGREGAR DOCENTE -->
   <div class="modal" id="modal-docente">
     <div class="modal-card">
@@ -1176,6 +1247,7 @@
   <option value="coordinador_academico">Coordinador Académico</option>
   <option value="directora">Director(a)</option>
   <option value="director">Gerente General</option>
+  <option value="psicologa">Psicóloga</option>
 </select>
       </div>
       <div class="modal-footer">
@@ -1531,7 +1603,253 @@
       </div>
     </div>
   </div>
+      <!-- MODAL EVALUACIÓN TUTOR -->
+<div class="modal" id="modal-evaluacion-tutor">
+  <div class="modal-card" style="max-width:680px;max-height:90vh;overflow-y:auto">
+    <div class="modal-title">Evaluar tutoría</div>
+    <div class="modal-subtitle" id="modal-tutor-nombre-sub">Completa los puntajes</div>
+    <input type="hidden" id="modal-tutor-docente-id">
 
+    <div class="eval-grid" style="margin-bottom:0.75rem">
+      <div class="form-group"><label>Fecha</label><input type="date" id="tutor-eval-fecha"></div>
+      <div class="form-group"><label>Hora</label><input type="time" id="tutor-eval-hora"></div>
+    </div>
+
+    <!-- 1. PLANIFICACIÓN BIMESTRAL Y SESIONES DE TUTORÍA -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">1. Planificación bimestral y sesiones de tutoría <span id="tutor-sub-planif" class="eval-subtotal">0/20</span></div>
+      <div class="eval-indicador"><span>Presenta la planificación bimestral dentro del plazo establecido.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="planif1" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="planif1" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="planif1" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="planif1" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Diseña sesiones de tutoría alineadas a las necesidades del aula.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="planif2" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="planif2" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="planif2" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="planif2" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Las sesiones contienen estructura y coherencia.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="planif3" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="planif3" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="planif3" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="planif3" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Presenta evidencias de los trabajos de la sesión.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="planif4" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="planif4" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="planif4" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="planif4" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Mantiene actualizada la carpeta de tutoría.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="planif5" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="planif5" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="planif5" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="planif5" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+    </div>
+
+    <!-- 2. DESARROLLO DE LA SESIÓN DE TUTORÍA -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">2. Desarrollo de la sesión de tutoría <span id="tutor-sub-sesion" class="eval-subtotal">0/20</span></div>
+      <div class="eval-indicador"><span>Desarrolla la sesión respetando la estructura.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="sesion1" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="sesion1" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="sesion1" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="sesion1" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Emplea estrategias metodológicas que promueven la participación.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="sesion2" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="sesion2" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="sesion2" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="sesion2" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Promoción de un clima favorable para el aprendizaje.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="sesion3" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="sesion3" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="sesion3" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="sesion3" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Logra el propósito de la sesión.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="sesion4" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="sesion4" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="sesion4" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="sesion4" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Utiliza recursos y materiales que favorecen el objetivo de la sesión.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="sesion5" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="sesion5" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="sesion5" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="sesion5" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+    </div>
+
+    <!-- 3. ACOMPAÑAMIENTO TUTORIAL CON LOS ESTUDIANTES -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">3. Acompañamiento tutorial con los estudiantes <span id="tutor-sub-acomp" class="eval-subtotal">0/20</span></div>
+      <div class="eval-indicador"><span>Detección de las necesidades socioemocionales y académicas.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="acomp1" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="acomp1" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="acomp1" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="acomp1" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Realiza entrevistas y acompañamiento individual con los estudiantes.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="acomp2" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="acomp2" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="acomp2" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="acomp2" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Registro y seguimiento de casos.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="acomp3" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="acomp3" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="acomp3" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="acomp3" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Derivación a instancias de apoyo.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="acomp4" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="acomp4" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="acomp4" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="acomp4" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Adecuado manejo de la información durante el proceso del acompañamiento.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="acomp5" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="acomp5" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="acomp5" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="acomp5" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+    </div>
+
+    <!-- 4. ENTREVISTA CON LOS PADRES DE FAMILIA -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">4. Entrevista con los padres de familia <span id="tutor-sub-padres" class="eval-subtotal">0/20</span></div>
+      <div class="eval-indicador"><span>Convocatoria oportuna a los padres de familia.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="padres1" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="padres1" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="padres1" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="padres1" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Registra acuerdos y compromisos establecidos en la entrevista.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="padres2" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="padres2" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="padres2" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="padres2" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Realiza seguimiento a los acuerdos establecidos.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="padres3" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="padres3" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="padres3" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="padres3" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Comunicación afectiva con los padres de familia.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="padres4" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="padres4" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="padres4" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="padres4" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Orienta a los padres para fortalecer el acompañamiento del estudiante desde el hogar.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="padres5" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="padres5" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="padres5" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="padres5" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+    </div>
+
+    <!-- 5. PRESENTACIÓN PERSONAL DE ESTUDIANTES Y AMBIENTACIÓN DE AULA -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">5. Presentación personal de estudiantes y ambientación de aula <span id="tutor-sub-present" class="eval-subtotal">0/20</span></div>
+      <div class="eval-indicador"><span>Promueve una buena presentación personal de sus estudiantes.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="present1" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="present1" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="present1" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="present1" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Promoción de un clima de convivencia positiva.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="present2" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="present2" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="present2" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="present2" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Organiza y mantiene el aula limpia.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="present3" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="present3" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="present3" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="present3" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Intervención oportuna en el clima del aula.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="present4" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="present4" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="present4" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="present4" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+      <div class="eval-indicador"><span>Propone estrategias de mejora para los estudiantes que presentan dificultades académicas.</span>
+        <div class="eval-radio-group">
+          <label><input type="radio" name="present5" value="1" onchange="calcSubtotalTutor()"> 1</label>
+          <label><input type="radio" name="present5" value="2" onchange="calcSubtotalTutor()"> 2</label>
+          <label><input type="radio" name="present5" value="3" onchange="calcSubtotalTutor()"> 3</label>
+          <label><input type="radio" name="present5" value="4" onchange="calcSubtotalTutor()"> 4</label>
+        </div></div>
+    </div>
+
+    <!-- FORTALEZAS -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">Fortalezas identificadas</div>
+      <div class="form-group" style="margin-bottom:0.5rem"><input type="text" id="tutor-fortaleza1" placeholder="Fortaleza 1"></div>
+      <div class="form-group" style="margin-bottom:0.5rem"><input type="text" id="tutor-fortaleza2" placeholder="Fortaleza 2"></div>
+      <div class="form-group"><input type="text" id="tutor-fortaleza3" placeholder="Fortaleza 3"></div>
+    </div>
+
+    <!-- MEJORA -->
+    <div class="eval-seccion">
+      <div class="eval-seccion-title">Aspectos de mejora</div>
+      <div class="form-group" style="margin-bottom:0.5rem"><input type="text" id="tutor-mejora1" placeholder="Aspecto de mejora 1"></div>
+      <div class="form-group" style="margin-bottom:0.5rem"><input type="text" id="tutor-mejora2" placeholder="Aspecto de mejora 2"></div>
+      <div class="form-group"><input type="text" id="tutor-mejora3" placeholder="Aspecto de mejora 3"></div>
+    </div>
+
+    <div class="form-group" style="margin-top:0.75rem">
+      <label>Compromisos del docente tutor</label>
+      <textarea id="tutor-compromisos" rows="2" placeholder="Compromisos asumidos..."></textarea>
+    </div>
+    <div class="form-group" style="margin-top:0.75rem">
+      <label>Recomendaciones</label>
+      <textarea id="tutor-recomendaciones" rows="2" placeholder="Recomendaciones..."></textarea>
+    </div>
+    <div class="form-group" style="margin-top:0.75rem">
+      <label>Observación adicional (opcional)</label>
+      <textarea id="tutor-observacion" rows="2" placeholder="Comentarios adicionales..."></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalTutor()">Cancelar</button>
+      <button class="btn-save" onclick="guardarEvaluacionTutor()">Guardar evaluación</button>
+    </div>
+  </div>
+</div>
   <script>
     let usuario = null;
     let token = null;
@@ -1612,7 +1930,11 @@
       const navAsis = document.getElementById('nav-asistencia');
       if (navAsis) navAsis.style.display = 'none';
     }
-  } else {
+    } else if (usuario.rol === 'psicologa') {
+  document.getElementById('psicologa-page').style.display = 'flex';
+  document.getElementById('psico-user-info').textContent = usuario.nombre;
+  cargarDatosPsicologa();
+  } else {  
     document.getElementById('instructor-page').style.display = 'flex';
     document.getElementById('inst-user-info').textContent = usuario.nombre;
     cargarDatosSupervisor();
@@ -1632,6 +1954,7 @@
       el.classList.add('active');
       if (id === 'apoderados') cargarReporteApoderados();
       if (id === 'asistencia') cargarSalonesAsistenciaDirector();
+      if (id === 'tutoria') cargarTutoriaDirector();
     }
 
     function showSectionSup(id, el) {
@@ -1657,15 +1980,21 @@
         document.getElementById('stat-docentes').textContent = docentes.length || 0;
 
        document.getElementById('tabla-docentes').innerHTML = docentes.length
-          ? docentes.map(d => `
-            <tr>
-              <td style="color:var(--text);font-weight:500">${d.nombre} ${d.apellido}</td>
-              <td>${d.curso || '—'}</td>
-              <td>${d.nivel || '—'}</td>
-              <td><span class="badge badge-amber">${d.tipo || 'Docente'}</span></td>
-              <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="desactivarDocente(${d.id},'${d.nombre} ${d.apellido}')">Desactivar</button></td>
-            </tr>`).join('')
-          : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
+  ? docentes.map(d => `
+    <tr>
+      <td style="color:var(--text);font-weight:500">${d.nombre} ${d.apellido}</td>
+      <td>${d.curso || '—'}</td>
+      <td>${d.nivel || '—'}</td>
+      <td><span class="badge badge-amber">${d.tipo || 'Docente'}</span></td>
+      <td>
+        <button class="eval-btn" style="${d.es_tutor ? 'background:var(--green-bg);color:var(--green);border-color:rgba(46,204,113,0.25)' : ''}"
+          onclick="toggleTutor(${d.id}, ${d.es_tutor})">
+          ${d.es_tutor ? '✅ Es tutor' : '☐ Marcar tutor'}
+        </button>
+      </td>
+      <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="desactivarDocente(${d.id},'${d.nombre} ${d.apellido}')">Desactivar</button></td>
+    </tr>`).join('')
+  : '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
         cargarHistorial();
 
         const resEval = await fetch('/api/evaluaciones', { headers });
@@ -1716,7 +2045,141 @@
         console.error('Error cargando datos:', err);
       }
     }
+    async function cargarDatosPsicologa() {
+  try {
+    const headers = { 'Authorization': 'Bearer ' + token };
 
+    const resDoc = await fetch('/api/evaluaciones-tutor/pendientes', { headers });
+    const tutores = await resDoc.json();
+
+    document.getElementById('tabla-psico-tutores').innerHTML = tutores.length
+      ? tutores.map(d => `
+        <tr>
+          <td>${d.nombre} ${d.apellido}</td>
+          <td>${d.curso || '—'}</td>
+          <td><button class="eval-btn" onclick="evaluarTutor(${d.id}, '${d.nombre} ${d.apellido}')">📘 Evaluar</button></td>
+        </tr>`).join('')
+      : '<tr><td colspan="3"><div class="empty-state"><p>Ya evaluaste a todos los tutores hoy</p></div></td></tr>';
+
+    const resEval = await fetch('/api/evaluaciones-tutor/mias', { headers });
+    const evaluaciones = await resEval.json();
+    document.getElementById('tabla-psico-historial').innerHTML = evaluaciones.length
+  ? evaluaciones.map(e => `
+    <tr>
+      <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+      <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+      <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+      <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacionTutor(${e.id})">🗑 Eliminar</button></td>
+    </tr>`).join('')
+  : '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+  } catch (err) {
+    console.error('Error cargando datos:', err);
+  }
+}
+async function eliminarEvaluacionTutor(id) {
+  if (!confirm('¿Seguro que quieres eliminar esta evaluación?')) return;
+  try {
+    const res = await fetch('/api/evaluaciones-tutor/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok) { alert('Error: ' + data.error); return; }
+    alert('✅ Evaluación eliminada');
+    cargarDatosPsicologa();
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
+function showSectionPsico(id, el) {
+  document.querySelectorAll('#psicologa-page .section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#psicologa-page .nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+function evaluarTutor(id, nombre) {
+  document.getElementById('modal-tutor-nombre-sub').textContent = nombre;
+  document.getElementById('modal-tutor-docente-id').value = id;
+  document.querySelectorAll('#modal-evaluacion-tutor input[type="radio"]').forEach(r => r.checked = false);
+  ['tutor-observacion','tutor-fortaleza1','tutor-fortaleza2','tutor-fortaleza3',
+   'tutor-mejora1','tutor-mejora2','tutor-mejora3','tutor-compromisos','tutor-recomendaciones']
+    .forEach(id => document.getElementById(id).value = '');
+  ['tutor-sub-planif','tutor-sub-sesion','tutor-sub-acomp','tutor-sub-padres','tutor-sub-present']
+    .forEach(id => document.getElementById(id).textContent = '0/20');
+
+  const ahora = new Date();
+  document.getElementById('tutor-eval-fecha').value = ahora.toISOString().split('T')[0];
+  document.getElementById('tutor-eval-hora').value = ahora.toTimeString().slice(0,5);
+
+  document.getElementById('modal-evaluacion-tutor').style.display = 'flex';
+}
+
+function cerrarModalTutor() {
+  document.getElementById('modal-evaluacion-tutor').style.display = 'none';
+}
+
+function calcSubtotalTutor() {
+  const getVal = name => {
+    const sel = document.querySelector(`input[name="${name}"]:checked`);
+    return sel ? parseInt(sel.value) : 0;
+  };
+  const sumaGrupo = prefijo => [1,2,3,4,5].reduce((a,n) => a + getVal(prefijo + n), 0);
+
+  document.getElementById('tutor-sub-planif').textContent  = sumaGrupo('planif')  + '/20';
+  document.getElementById('tutor-sub-sesion').textContent  = sumaGrupo('sesion')  + '/20';
+  document.getElementById('tutor-sub-acomp').textContent   = sumaGrupo('acomp')   + '/20';
+  document.getElementById('tutor-sub-padres').textContent  = sumaGrupo('padres')  + '/20';
+  document.getElementById('tutor-sub-present').textContent = sumaGrupo('present') + '/20';
+}
+
+async function guardarEvaluacionTutor() {
+  const docente_id  = document.getElementById('modal-tutor-docente-id').value;
+  const fecha_eval   = document.getElementById('tutor-eval-fecha').value;
+  const hora_eval    = document.getElementById('tutor-eval-hora').value;
+  const observacion  = document.getElementById('tutor-observacion').value;
+
+  const getRadio = name => {
+    const sel = document.querySelector(`input[name="${name}"]:checked`);
+    return sel ? parseInt(sel.value) : null;
+  };
+
+  const campos = {};
+  ['planif','sesion','acomp','padres','present'].forEach(prefijo => {
+    for (let i = 1; i <= 5; i++) campos[prefijo + '_ind' + i] = getRadio(prefijo + i);
+  });
+
+  if (Object.values(campos).some(v => v === null)) {
+    alert('⚠️ Debes marcar todos los indicadores antes de guardar');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/evaluaciones-tutor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({
+        docente_id, fecha_eval, hora_eval, observacion,
+        ...campos,
+        fortaleza1: document.getElementById('tutor-fortaleza1').value,
+        fortaleza2: document.getElementById('tutor-fortaleza2').value,
+        fortaleza3: document.getElementById('tutor-fortaleza3').value,
+        mejora1: document.getElementById('tutor-mejora1').value,
+        mejora2: document.getElementById('tutor-mejora2').value,
+        mejora3: document.getElementById('tutor-mejora3').value,
+        compromisos: document.getElementById('tutor-compromisos').value,
+        recomendaciones: document.getElementById('tutor-recomendaciones').value,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert('Error: ' + data.error); return; }
+    alert('✅ Evaluación de tutoría guardada! Puntaje: ' + data.promedio + '%');
+    cerrarModalTutor();
+    cargarDatosPsicologa();
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
     async function cargarDatosSupervisor() {
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
@@ -2569,7 +3032,19 @@ function cerrarModal() {
         alert('Error de conexión');
       }
     }
-
+    async function toggleTutor(id, actual) {
+  try {
+    const res = await fetch(`/api/docentes/${id}/tutor`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ es_tutor: !actual })
+    });
+    if (!res.ok) { alert('Error al actualizar'); return; }
+    cargarDatosDirector();
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
     async function cargarHistorial() {
       try {
         const res = await fetch('/api/docentes/historial', {
@@ -2677,6 +3152,15 @@ function cerrarModal() {
     }
     // ── VER FORMULARIO COMPLETO (DIRECTOR) ──
 let _evalDetalle = null;
+let _tipoDetalleActual = 'docente';
+
+function descargarFormularioPDFUniversal() {
+  if (_tipoDetalleActual === 'tutor') {
+    descargarFormularioTutorPDF();
+  } else {
+    descargarFormularioPDF();
+  }
+}
 
 async function verFormularioDirector(id) {
   try {
@@ -2686,6 +3170,7 @@ async function verFormularioDirector(id) {
     if (!res.ok) { alert('No se pudo cargar la evaluación'); return; }
     const e = await res.json();
     _evalDetalle = e;
+    _tipoDetalleActual = 'docente';
 
     document.getElementById('detalle-titulo').textContent = 'Evaluación: ' + (e.docente_nombre || '');
     document.getElementById('detalle-subtitulo').textContent =
@@ -3140,6 +3625,261 @@ function _generarPDFConLogo(doc, e, logoData) {
   doc.save('Ficha_Monitoreo_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
 }
 
+// ══════════════════════════════════════════
+// EVALUACIONES DE TUTORÍA (vista Director / Gerente General)
+// ══════════════════════════════════════════
+async function cargarTutoriaDirector() {
+  try {
+    const res = await fetch('/api/evaluaciones-tutor', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) { document.getElementById('tabla-tutoria').innerHTML =
+      '<tr><td colspan="4"><div class="empty-state"><p>No se pudo cargar</p></div></td></tr>'; return; }
+    const evaluaciones = await res.json();
+    document.getElementById('tabla-tutoria').innerHTML = evaluaciones.length
+      ? evaluaciones.map(e => `
+        <tr>
+          <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+          <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+          <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+          <td><button class="eval-btn" onclick="verFormularioTutorDirector(${e.id})">🔍 Ver</button></td>
+        </tr>`).join('')
+      : '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones de tutoría aún</p></div></td></tr>';
+  } catch (err) {
+    console.error('Error cargando tutoría:', err);
+  }
+}
+
+let _evalTutorDetalle = null;
+
+async function verFormularioTutorDirector(id) {
+  try {
+    const res = await fetch('/api/evaluaciones-tutor/' + id, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) { alert('No se pudo cargar la evaluación'); return; }
+    const e = await res.json();
+    _evalTutorDetalle = e;
+    _tipoDetalleActual = 'tutor';
+
+    document.getElementById('detalle-titulo').textContent = 'Tutoría: ' + (e.docente_nombre || '');
+    document.getElementById('detalle-subtitulo').textContent =
+      'Evaluado por: Psicóloga  |  Fecha: ' + (e.fecha_eval || new Date(e.creado_en).toLocaleDateString('es-PE')) +
+      '  |  Promedio: ' + parseFloat(e.puntaje_total).toFixed(1) + '%';
+
+    const criterios = [
+      { titulo: '1. Planificación bimestral y sesiones de tutoría', max: 20,
+        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['planif_ind' + n] })) },
+      { titulo: '2. Desarrollo de la sesión de tutoría', max: 20,
+        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['sesion_ind' + n] })) },
+      { titulo: '3. Acompañamiento tutorial con los estudiantes', max: 20,
+        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['acomp_ind' + n] })) },
+      { titulo: '4. Entrevista con los padres de familia', max: 20,
+        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['padres_ind' + n] })) },
+      { titulo: '5. Presentación personal de estudiantes y ambientación de aula', max: 20,
+        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['present_ind' + n] })) },
+    ];
+
+    const html = criterios.map(sec => {
+      const subtotal = sec.items.reduce((a, i) => a + (parseInt(i.val) || 0), 0);
+      const color = subtotal / sec.max >= 0.9 ? 'var(--gold)' : subtotal / sec.max >= 0.8 ? 'var(--green)' : subtotal / sec.max >= 0.7 ? 'var(--amber)' : 'var(--accent2)';
+      return `
+        <div class="eval-seccion" style="margin-bottom:0.75rem">
+          <div class="eval-seccion-title">
+            ${sec.titulo}
+            <span class="eval-subtotal" style="background:${color}">${subtotal}/${sec.max}</span>
+          </div>
+          ${sec.items.map(it => `
+            <div class="eval-indicador">
+              <span>${it.label}</span>
+              <span style="font-weight:700;color:var(--text);min-width:24px;text-align:center">${it.val || '—'}</span>
+            </div>`).join('')}
+        </div>`;
+    }).join('');
+
+    const obs = e.observacion
+      ? `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:1rem;margin-top:1rem">
+           <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Observación</div>
+           <div style="font-size:14px;color:var(--text)">${e.observacion}</div>
+         </div>` : '';
+
+    document.getElementById('detalle-contenido').innerHTML = html + obs;
+    document.getElementById('modal-detalle-eval').style.display = 'flex';
+  } catch(err) {
+    alert('Error al cargar el formulario');
+    console.error(err);
+  }
+}
+
+function descargarFormularioTutorPDF() {
+  if (!_evalTutorDetalle) return;
+  const e = _evalTutorDetalle;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.src = '/Cervantes1.png';
+  logoImg.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = logoImg.width; canvas.height = logoImg.height;
+    canvas.getContext('2d').drawImage(logoImg, 0, 0);
+    const logoData = canvas.toDataURL('image/png');
+    _generarPDFTutorConLogo(doc, e, logoData);
+  };
+  logoImg.onerror = () => _generarPDFTutorConLogo(doc, e, null);
+}
+
+function _generarPDFTutorConLogo(doc, e, logoData) {
+  const pt = parseFloat(e.puntaje_total);
+  const nivel = pt >= 90 ? 'DESTACADO' : pt >= 80 ? 'LOGRADO' : pt >= 70 ? 'EN PROCESO' : 'REQUIERE MEJORA';
+  const colorNivel = pt >= 90 ? [212,175,55] : pt >= 80 ? [46,204,113] : pt >= 70 ? [243,156,18] : [230,57,70];
+
+  doc.setFillColor(180, 0, 30);
+  doc.rect(0, 0, 210, 2, 'F');
+
+  if (logoData) {
+    doc.addImage(logoData, 'PNG', 10, 3, 28, 20);
+  }
+
+  doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(20, 20, 80);
+  doc.text('FICHA DE MONITOREO Y ACOMPAÑAMIENTO DE TUTORÍA', 120, 10, { align: 'center' });
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100,100,100);
+  doc.text('I.E.P. Cervantes School  —  ' + new Date().getFullYear(), 105, 16, { align: 'center' });
+
+  doc.setDrawColor(180, 0, 30);
+  doc.setLineWidth(0.5);
+  doc.line(10, 24, 200, 24);
+
+  let y = 30;
+  doc.setFillColor(220, 220, 235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(20, 20, 80);
+  doc.text('I. DATOS GENERALES', 13, y + 4.5);
+  y += 9;
+
+  const datos = [
+    ['Docente Tutor:', e.docente_nombre || '—', 'Observador:', 'Psicóloga Nicole Ramos'],
+    ['Fecha:', e.fecha_eval ? new Date(e.fecha_eval).toLocaleDateString('es-PE') : new Date(e.creado_en).toLocaleDateString('es-PE'), 'Hora:', e.hora_eval ? e.hora_eval.slice(0,5) : '—'],
+  ];
+
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
+  datos.forEach(fila => {
+    doc.setFont('helvetica', 'bold'); doc.text(fila[0], 13, y);
+    doc.setFont('helvetica', 'normal'); doc.text(String(fila[1]), 40, y);
+    doc.setFont('helvetica', 'bold'); doc.text(fila[2], 110, y);
+    doc.setFont('helvetica', 'normal'); doc.text(String(fila[3]), 140, y);
+    y += 6;
+  });
+  y += 4;
+
+  const criterios = [
+    { titulo: '1. PLANIFICACIÓN BIMESTRAL Y SESIONES DE TUTORÍA', max: 20, prefijo: 'planif' },
+    { titulo: '2. DESARROLLO DE LA SESIÓN DE TUTORÍA', max: 20, prefijo: 'sesion' },
+    { titulo: '3. ACOMPAÑAMIENTO TUTORIAL CON LOS ESTUDIANTES', max: 20, prefijo: 'acomp' },
+    { titulo: '4. ENTREVISTA CON LOS PADRES DE FAMILIA', max: 20, prefijo: 'padres' },
+    { titulo: '5. PRESENTACIÓN PERSONAL Y AMBIENTACIÓN DE AULA', max: 20, prefijo: 'present' },
+  ];
+
+  criterios.forEach(sec => {
+    const vals = [1,2,3,4,5].map(n => parseInt(e[sec.prefijo + '_ind' + n]) || 0);
+    const subtotal = vals.reduce((a,b) => a+b, 0);
+    const color = subtotal/sec.max >= 0.9 ? [212,175,55] : subtotal/sec.max >= 0.8 ? [46,204,113] : subtotal/sec.max >= 0.7 ? [243,156,18] : [230,57,70];
+
+    if (y > 260) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+    doc.setFillColor(...color);
+    doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(255,255,255);
+    doc.text(sec.titulo, 13, y+4.2);
+    doc.text('Subtotal: ' + subtotal + '/' + sec.max, 197, y+4.2, { align: 'right' });
+    y += 8;
+
+    vals.forEach((v, i) => {
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
+      doc.text('Indicador ' + (i+1), 13, y);
+      doc.text(String(v || '—'), 195, y, { align: 'right' });
+      y += 5;
+    });
+    y += 3;
+  });
+
+  if (y > 240) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+  y += 3;
+  doc.setFillColor(...colorNivel);
+  doc.roundedRect(10, y, 190, 10, 1, 1, 'F');
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(255,255,255);
+  doc.text('PUNTAJE TOTAL: ' + pt.toFixed(1) + '%   —   NIVEL: ' + nivel, 105, y+6.5, { align: 'center' });
+  y += 16;
+
+  const drawSeccionTexto = (titulo, items, yPos) => {
+    if (yPos > 250) { doc.addPage(); yPos = 15; _dibujarPie(doc); }
+    doc.setFillColor(220, 220, 235);
+    doc.roundedRect(10, yPos, 190, 6, 1, 1, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20,20,80);
+    doc.text(titulo, 13, yPos+4.5);
+    yPos += 9;
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
+    items.filter(Boolean).forEach((it, i) => {
+      doc.text((i+1) + '. ' + it, 13, yPos);
+      yPos += 5;
+    });
+    if (!items.filter(Boolean).length) { doc.text('—', 13, yPos); yPos += 5; }
+    return yPos + 3;
+  };
+
+  const drawSeccionLibre = (titulo, texto, yPos) => {
+    if (yPos > 250) { doc.addPage(); yPos = 15; _dibujarPie(doc); }
+    doc.setFillColor(220, 220, 235);
+    doc.roundedRect(10, yPos, 190, 6, 1, 1, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20,20,80);
+    doc.text(titulo, 13, yPos+4.5);
+    yPos += 9;
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
+    const lineas = doc.splitTextToSize(texto || '—', 184);
+    doc.text(lineas, 13, yPos);
+    return yPos + 22;
+  };
+
+  y = drawSeccionTexto('FORTALEZAS IDENTIFICADAS', [e.fortaleza1, e.fortaleza2, e.fortaleza3], y);
+  if (y > 230) { doc.addPage(); y = 15; _dibujarPie(doc); }
+  y = drawSeccionTexto('ASPECTOS DE MEJORA', [e.mejora1, e.mejora2, e.mejora3], y);
+  if (y > 230) { doc.addPage(); y = 15; _dibujarPie(doc); }
+  y = drawSeccionLibre('COMPROMISOS DEL DOCENTE TUTOR', e.compromisos, y);
+  y = drawSeccionLibre('RECOMENDACIONES DE LA PSICÓLOGA', e.recomendaciones, y);
+
+  if (e.observacion) {
+    y = drawSeccionLibre('Observación adicional', e.observacion, y);
+  }
+
+  // ════════════════════════════════
+  // FIRMAS
+  // ════════════════════════════════
+  if (y > 255) { doc.addPage(); y = 15; _dibujarPie(doc); }
+  y += 8;
+  doc.setDrawColor(60,60,80);
+  doc.line(20, y, 85, y);
+  doc.line(125, y, 190, y);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text('Firma del Docente Tutor', 52, y+5, {align:'center'});
+  doc.text('Firma de la Psicóloga', 157, y+5, {align:'center'});
+  doc.text(e.docente_nombre || '', 52, y+10, {align:'center'});
+  doc.text('Psicóloga Nicole Ramos', 157, y+10, {align:'center'});
+
+  const totalPags = doc.getNumberOfPages();
+  for (let i=1; i<=totalPags; i++) {
+    doc.setPage(i);
+    _dibujarPie(doc, i, totalPags);
+  }
+
+  const fecha = (e.fecha_eval || new Date(e.creado_en).toLocaleDateString('es-PE')).replace(/\//g,'-');
+  doc.save('Ficha_Tutoria_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
+}
+
 function _dibujarPie(doc, pag, total) {
   doc.setFillColor(20,20,80);
   doc.rect(0, 287, 210, 10, 'F');
@@ -3158,7 +3898,7 @@ function _dibujarPie(doc, pag, total) {
         <div class="modal-subtitle" id="detalle-subtitulo"></div>
       </div>
       <div style="display:flex;gap:0.5rem">
-        <button onclick="descargarFormularioPDF()" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📄 PDF</button>
+        <button onclick="descargarFormularioPDFUniversal()" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📄 PDF</button>
         <button onclick="cerrarModalDetalle()" style="padding:8px 14px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">✕</button>
       </div>
     </div>

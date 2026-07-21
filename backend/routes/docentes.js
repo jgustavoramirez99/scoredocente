@@ -7,7 +7,7 @@ const { verificarToken } = require('./auth');
 router.get('/pendientes', verificarToken, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, nombre, apellido, curso, nivel, tipo
+      `SELECT id, nombre, apellido, curso, nivel, tipo, es_tutor
        FROM docentes 
        WHERE activo = true 
        AND id NOT IN (
@@ -28,7 +28,7 @@ router.get('/pendientes', verificarToken, async (req, res) => {
 router.get('/', verificarToken, async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT id, nombre, apellido, curso, nivel, tipo, activo FROM docentes WHERE activo = true ORDER BY nombre'
+      'SELECT id, nombre, apellido, curso, nivel, tipo, activo, es_tutor FROM docentes WHERE activo = true ORDER BY nombre'
     );
     res.json(result.rows);
   } catch (err) {
@@ -99,6 +99,19 @@ router.patch('/:id/activar', verificarToken, async (req, res) => {
     res.json({ mensaje: 'Docente activado correctamente' });
   } catch (err) {
     res.status(500).json({ error: 'Error al activar docente' });
+  }
+});
+// PATCH /api/docentes/:id/tutor
+router.patch('/:id/tutor', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede asignar tutores' });
+  }
+  const { es_tutor } = req.body; // true o false
+  try {
+    await db.query('UPDATE docentes SET es_tutor = $1 WHERE id = $2', [!!es_tutor, req.params.id]);
+    res.json({ mensaje: 'Actualizado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar tutor' });
   }
 });
 

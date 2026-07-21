@@ -15,6 +15,8 @@ const docentesRouter = require('./routes/docentes');
 app.use('/api/docentes', docentesRouter);
 const evaluacionesRouter = require('./routes/evaluaciones');
 app.use('/api/evaluaciones', evaluacionesRouter);
+const evaluacionesTutorRouter = require('./routes/evaluaciones_tutor');
+app.use('/api/evaluaciones-tutor', evaluacionesTutorRouter);
 const alumnosRouter = require('./routes/alumnos');
 app.use('/api/alumnos', alumnosRouter);
 const asistenciasRouter = require('./routes/asistencias');
