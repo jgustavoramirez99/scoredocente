@@ -875,8 +875,8 @@
             <div class="live-badge"><div class="live-dot"></div>En vivo</div>
           </div>
           <table>
-            <thead><tr><th>Docente Tutor</th><th>Promedio</th><th>Fecha</th><th>Detalle</th></tr></thead>
-            <tbody id="tabla-tutoria"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+            <thead><tr><th>Docente Tutor</th><th>Grado/Sección</th><th>Promedio</th><th>Fecha</th><th>Detalle</th></tr></thead>
+            <tbody id="tabla-tutoria"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1170,8 +1170,8 @@
       <div class="table-card">
         <div class="table-header"><h3>Mis evaluaciones</h3></div>
         <table>
-          <thead><tr><th>Docente</th><th>Puntaje</th><th>Fecha</th><th>Acción</th></tr></thead>
-          <tbody id="tabla-psico-historial"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          <thead><tr><th>Docente</th><th>Grado/Sección</th><th>Puntaje</th><th>Fecha</th><th>Acción</th></tr></thead>
+          <tbody id="tabla-psico-historial"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1613,6 +1613,38 @@
     <div class="eval-grid" style="margin-bottom:0.75rem">
       <div class="form-group"><label>Fecha</label><input type="date" id="tutor-eval-fecha"></div>
       <div class="form-group"><label>Hora</label><input type="time" id="tutor-eval-hora"></div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:0.75rem">
+      <label>Grado / Sección de tutoría</label>
+      <select id="tutor-grado-seccion" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+        <option value="">Selecciona...</option>
+        <optgroup label="Inicial">
+          <option value="Inicial 3 años">Inicial 3 años</option>
+          <option value="Inicial 4 años">Inicial 4 años</option>
+          <option value="Inicial 5 años">Inicial 5 años</option>
+        </optgroup>
+        <optgroup label="Primaria">
+          <option value="1ro A">1ro A</option>
+          <option value="1ro B">1ro B</option>
+          <option value="2do A">2do A</option>
+          <option value="2do B">2do B</option>
+          <option value="3ro A">3ro A</option>
+          <option value="3ro B">3ro B</option>
+          <option value="4to A">4to A</option>
+          <option value="4to B">4to B</option>
+          <option value="5to A">5to A</option>
+          <option value="5to B">5to B</option>
+          <option value="6to">6to</option>
+        </optgroup>
+        <optgroup label="Secundaria">
+          <option value="1ro Secundaria">1ro Secundaria</option>
+          <option value="2do Secundaria">2do Secundaria</option>
+          <option value="3ro Secundaria">3ro Secundaria</option>
+          <option value="4to Secundaria">4to Secundaria</option>
+          <option value="5to Secundaria">5to Secundaria</option>
+        </optgroup>
+      </select>
     </div>
 
     <!-- 1. PLANIFICACIÓN BIMESTRAL Y SESIONES DE TUTORÍA -->
@@ -2067,11 +2099,12 @@
   ? evaluaciones.map(e => `
     <tr>
       <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+      <td style="color:var(--text3)">${e.grado_seccion || '—'}</td>
       <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
       <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
       <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacionTutor(${e.id})">🗑 Eliminar</button></td>
     </tr>`).join('')
-  : '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
+  : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
   } catch (err) {
     console.error('Error cargando datos:', err);
   }
@@ -2107,6 +2140,7 @@ function evaluarTutor(id, nombre) {
     .forEach(id => document.getElementById(id).value = '');
   ['tutor-sub-planif','tutor-sub-sesion','tutor-sub-acomp','tutor-sub-padres','tutor-sub-present']
     .forEach(id => document.getElementById(id).textContent = '0/20');
+  document.getElementById('tutor-grado-seccion').value = '';
 
   const ahora = new Date();
   document.getElementById('tutor-eval-fecha').value = ahora.toISOString().split('T')[0];
@@ -2138,6 +2172,12 @@ async function guardarEvaluacionTutor() {
   const fecha_eval   = document.getElementById('tutor-eval-fecha').value;
   const hora_eval    = document.getElementById('tutor-eval-hora').value;
   const observacion  = document.getElementById('tutor-observacion').value;
+  const grado_seccion = document.getElementById('tutor-grado-seccion').value;
+
+  if (!grado_seccion) {
+    alert('⚠️ Selecciona el grado / sección de tutoría');
+    return;
+  }
 
   const getRadio = name => {
     const sel = document.querySelector(`input[name="${name}"]:checked`);
@@ -2159,7 +2199,7 @@ async function guardarEvaluacionTutor() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({
-        docente_id, fecha_eval, hora_eval, observacion,
+        docente_id, fecha_eval, hora_eval, observacion, grado_seccion,
         ...campos,
         fortaleza1: document.getElementById('tutor-fortaleza1').value,
         fortaleza2: document.getElementById('tutor-fortaleza2').value,
@@ -3634,17 +3674,18 @@ async function cargarTutoriaDirector() {
       headers: { 'Authorization': 'Bearer ' + token }
     });
     if (!res.ok) { document.getElementById('tabla-tutoria').innerHTML =
-      '<tr><td colspan="4"><div class="empty-state"><p>No se pudo cargar</p></div></td></tr>'; return; }
+      '<tr><td colspan="5"><div class="empty-state"><p>No se pudo cargar</p></div></td></tr>'; return; }
     const evaluaciones = await res.json();
     document.getElementById('tabla-tutoria').innerHTML = evaluaciones.length
       ? evaluaciones.map(e => `
         <tr>
           <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+          <td style="color:var(--text3)">${e.grado_seccion || '—'}</td>
           <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
           <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
           <td><button class="eval-btn" onclick="verFormularioTutorDirector(${e.id})">🔍 Ver</button></td>
         </tr>`).join('')
-      : '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones de tutoría aún</p></div></td></tr>';
+      : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones de tutoría aún</p></div></td></tr>';
   } catch (err) {
     console.error('Error cargando tutoría:', err);
   }
@@ -3664,20 +3705,59 @@ async function verFormularioTutorDirector(id) {
 
     document.getElementById('detalle-titulo').textContent = 'Tutoría: ' + (e.docente_nombre || '');
     document.getElementById('detalle-subtitulo').textContent =
-      'Evaluado por: Psicóloga  |  Fecha: ' + (e.fecha_eval || new Date(e.creado_en).toLocaleDateString('es-PE')) +
+      'Evaluado por: Psicóloga  |  Grado/Sección: ' + (e.grado_seccion || '—') +
+      '  |  Fecha: ' + (e.fecha_eval || new Date(e.creado_en).toLocaleDateString('es-PE')) +
       '  |  Promedio: ' + parseFloat(e.puntaje_total).toFixed(1) + '%';
+
+    const LABELS_TUTOR = {
+      planif: [
+        'Presenta la planificación bimestral dentro del plazo establecido.',
+        'Diseña sesiones de tutoría alineadas a las necesidades del aula.',
+        'Las sesiones contienen estructura y coherencia.',
+        'Presenta evidencias de los trabajos de la sesión.',
+        'Mantiene actualizada la carpeta de tutoría.'
+      ],
+      sesion: [
+        'Desarrolla la sesión respetando la estructura.',
+        'Emplea estrategias metodológicas que promueven la participación.',
+        'Promoción de un clima favorable para el aprendizaje.',
+        'Logra el propósito de la sesión.',
+        'Utiliza recursos y materiales que favorecen el objetivo de la sesión.'
+      ],
+      acomp: [
+        'Detección de las necesidades socioemocionales y académicas.',
+        'Realiza entrevistas y acompañamiento individual con los estudiantes.',
+        'Registro y seguimiento de casos.',
+        'Derivación a instancias de apoyo.',
+        'Adecuado manejo de la información durante el proceso del acompañamiento.'
+      ],
+      padres: [
+        'Convocatoria oportuna a los padres de familia.',
+        'Registra acuerdos y compromisos establecidos en la entrevista.',
+        'Realiza seguimiento a los acuerdos establecidos.',
+        'Comunicación afectiva con los padres de familia.',
+        'Orienta a los padres para fortalecer el acompañamiento del estudiante desde el hogar.'
+      ],
+      present: [
+        'Promueve una buena presentación personal de sus estudiantes.',
+        'Promoción de un clima de convivencia positiva.',
+        'Organiza y mantiene el aula limpia.',
+        'Intervención oportuna en el clima del aula.',
+        'Propone estrategias de mejora para los estudiantes que presentan dificultades académicas.'
+      ]
+    };
 
     const criterios = [
       { titulo: '1. Planificación bimestral y sesiones de tutoría', max: 20,
-        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['planif_ind' + n] })) },
+        items: LABELS_TUTOR.planif.map((label, i) => ({ label, val: e['planif_ind' + (i+1)] })) },
       { titulo: '2. Desarrollo de la sesión de tutoría', max: 20,
-        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['sesion_ind' + n] })) },
+        items: LABELS_TUTOR.sesion.map((label, i) => ({ label, val: e['sesion_ind' + (i+1)] })) },
       { titulo: '3. Acompañamiento tutorial con los estudiantes', max: 20,
-        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['acomp_ind' + n] })) },
+        items: LABELS_TUTOR.acomp.map((label, i) => ({ label, val: e['acomp_ind' + (i+1)] })) },
       { titulo: '4. Entrevista con los padres de familia', max: 20,
-        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['padres_ind' + n] })) },
+        items: LABELS_TUTOR.padres.map((label, i) => ({ label, val: e['padres_ind' + (i+1)] })) },
       { titulo: '5. Presentación personal de estudiantes y ambientación de aula', max: 20,
-        items: [1,2,3,4,5].map(n => ({ label: 'Indicador ' + n, val: e['present_ind' + n] })) },
+        items: LABELS_TUTOR.present.map((label, i) => ({ label, val: e['present_ind' + (i+1)] })) },
     ];
 
     const html = criterios.map(sec => {
@@ -3763,7 +3843,8 @@ function _generarPDFTutorConLogo(doc, e, logoData) {
 
   const datos = [
     ['Docente Tutor:', e.docente_nombre || '—', 'Observador:', 'Psicóloga Nicole Ramos'],
-    ['Fecha:', e.fecha_eval ? new Date(e.fecha_eval).toLocaleDateString('es-PE') : new Date(e.creado_en).toLocaleDateString('es-PE'), 'Hora:', e.hora_eval ? e.hora_eval.slice(0,5) : '—'],
+    ['Grado/Sección:', e.grado_seccion || '—', 'Fecha:', e.fecha_eval ? new Date(e.fecha_eval).toLocaleDateString('es-PE') : new Date(e.creado_en).toLocaleDateString('es-PE')],
+    ['Hora:', e.hora_eval ? e.hora_eval.slice(0,5) : '—', '', ''],
   ];
 
   doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
@@ -3775,6 +3856,44 @@ function _generarPDFTutorConLogo(doc, e, logoData) {
     y += 6;
   });
   y += 4;
+
+  const LABELS_TUTOR_PDF = {
+    planif: [
+      'Presenta la planificación bimestral dentro del plazo establecido.',
+      'Diseña sesiones de tutoría alineadas a las necesidades del aula.',
+      'Las sesiones contienen estructura y coherencia.',
+      'Presenta evidencias de los trabajos de la sesión.',
+      'Mantiene actualizada la carpeta de tutoría.'
+    ],
+    sesion: [
+      'Desarrolla la sesión respetando la estructura.',
+      'Emplea estrategias metodológicas que promueven la participación.',
+      'Promoción de un clima favorable para el aprendizaje.',
+      'Logra el propósito de la sesión.',
+      'Utiliza recursos y materiales que favorecen el objetivo de la sesión.'
+    ],
+    acomp: [
+      'Detección de las necesidades socioemocionales y académicas.',
+      'Realiza entrevistas y acompañamiento individual con los estudiantes.',
+      'Registro y seguimiento de casos.',
+      'Derivación a instancias de apoyo.',
+      'Adecuado manejo de la información durante el proceso del acompañamiento.'
+    ],
+    padres: [
+      'Convocatoria oportuna a los padres de familia.',
+      'Registra acuerdos y compromisos establecidos en la entrevista.',
+      'Realiza seguimiento a los acuerdos establecidos.',
+      'Comunicación afectiva con los padres de familia.',
+      'Orienta a los padres para fortalecer el acompañamiento del estudiante desde el hogar.'
+    ],
+    present: [
+      'Promueve una buena presentación personal de sus estudiantes.',
+      'Promoción de un clima de convivencia positiva.',
+      'Organiza y mantiene el aula limpia.',
+      'Intervención oportuna en el clima del aula.',
+      'Propone estrategias de mejora para los estudiantes que presentan dificultades académicas.'
+    ]
+  };
 
   const criterios = [
     { titulo: '1. PLANIFICACIÓN BIMESTRAL Y SESIONES DE TUTORÍA', max: 20, prefijo: 'planif' },
@@ -3799,10 +3918,12 @@ function _generarPDFTutorConLogo(doc, e, logoData) {
     y += 8;
 
     vals.forEach((v, i) => {
-      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
-      doc.text('Indicador ' + (i+1), 13, y);
+      if (y > 270) { doc.addPage(); y = 15; _dibujarPie(doc); }
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(40,40,40);
+      const textoLabel = doc.splitTextToSize(LABELS_TUTOR_PDF[sec.prefijo][i], 165);
+      doc.text(textoLabel, 13, y);
       doc.text(String(v || '—'), 195, y, { align: 'right' });
-      y += 5;
+      y += (textoLabel.length * 4) + 1.5;
     });
     y += 3;
   });

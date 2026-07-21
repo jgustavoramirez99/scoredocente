@@ -108,6 +108,10 @@ router.post('/', verificarToken, async (req, res) => {
     return res.status(400).json({ error: 'Faltan indicadores: ' + faltantes.join(', ') });
   }
 
+  if (!b.grado_seccion) {
+    return res.status(400).json({ error: 'Falta el grado/sección de tutoría' });
+  }
+
   const suma = c => CAMPOS_IND
     .filter(k => k.startsWith(c))
     .reduce((acc, k) => acc + (parseInt(b[k]) || 0), 0);
@@ -117,14 +121,14 @@ router.post('/', verificarToken, async (req, res) => {
   // (máximo posible: 100, ya que cada sección suma hasta 20)
 
   try {
-    const cols = ['docente_id', 'supervisor_id', 'fecha_eval', 'hora_eval',
+    const cols = ['docente_id', 'supervisor_id', 'fecha_eval', 'hora_eval', 'grado_seccion',
       ...CAMPOS_IND,
       'observacion', 'fortaleza1', 'fortaleza2', 'fortaleza3',
       'mejora1', 'mejora2', 'mejora3', 'compromisos', 'recomendaciones',
       'puntaje_total'];
 
     const valores = [
-      b.docente_id, req.usuario.id, b.fecha_eval || null, b.hora_eval || null,
+      b.docente_id, req.usuario.id, b.fecha_eval || null, b.hora_eval || null, b.grado_seccion,
       ...CAMPOS_IND.map(c => b[c]),
       b.observacion || null, b.fortaleza1 || null, b.fortaleza2 || null, b.fortaleza3 || null,
       b.mejora1 || null, b.mejora2 || null, b.mejora3 || null,
@@ -141,7 +145,7 @@ router.post('/', verificarToken, async (req, res) => {
 
     res.json({ ...result.rows[0], promedio: puntaje_total.toFixed(1) });
   } catch (err) {
-    console.error(err);
+    console.error('Error al guardar evaluación de tutoría:', err);
     res.status(500).json({ error: 'Error al guardar evaluación de tutoría' });
   }
 });
