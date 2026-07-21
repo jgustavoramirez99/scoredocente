@@ -2100,7 +2100,7 @@
     <tr>
       <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
       <td style="color:var(--text3)">${e.grado_seccion || '—'}</td>
-      <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+      <td><span class="badge ${parseFloat(e.puntaje_total) >= 90 ? 'badge-gold' : parseFloat(e.puntaje_total) >= 80 ? 'badge-green' : parseFloat(e.puntaje_total) >= 70 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
       <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
       <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacionTutor(${e.id})">🗑 Eliminar</button></td>
     </tr>`).join('')
@@ -3681,7 +3681,7 @@ async function cargarTutoriaDirector() {
         <tr>
           <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
           <td style="color:var(--text3)">${e.grado_seccion || '—'}</td>
-          <td><span class="badge ${parseFloat(e.puntaje_total) >= 70 ? 'badge-green' : parseFloat(e.puntaje_total) >= 50 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+          <td><span class="badge ${parseFloat(e.puntaje_total) >= 90 ? 'badge-gold' : parseFloat(e.puntaje_total) >= 80 ? 'badge-green' : parseFloat(e.puntaje_total) >= 70 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
           <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
           <td><button class="eval-btn" onclick="verFormularioTutorDirector(${e.id})">🔍 Ver</button></td>
         </tr>`).join('')
