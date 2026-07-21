@@ -76,6 +76,7 @@ router.get('/usuarios', verificarToken, async (req, res) => {
     const result = await db.query('SELECT id, nombre, email, rol, activo FROM usuarios');
     res.json(result.rows);
   } catch (err) {
+    console.error('Error al obtener usuarios:', err);
     res.status(500).json({ error: 'Error al obtener usuarios' });
   }
 });
@@ -101,7 +102,10 @@ router.post('/usuarios', verificarToken, async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Error al crear usuario' });
+    // 👇 Este log es clave: te va a decir en Render EXACTAMENTE por qué falló
+    // (ej. "invalid input value for enum ..." si rol es un ENUM que no incluye 'psicologa')
+    console.error('Error al crear usuario:', err);
+    res.status(500).json({ error: 'Error al crear usuario', detalle: err.message });
   }
 });
 
@@ -114,6 +118,7 @@ router.patch('/usuarios/:id/desactivar', verificarToken, async (req, res) => {
     await db.query('UPDATE usuarios SET activo = false WHERE id = $1', [req.params.id]);
     res.json({ mensaje: 'Usuario desactivado' });
   } catch (err) {
+    console.error('Error al desactivar usuario:', err);
     res.status(500).json({ error: 'Error al desactivar usuario' });
   }
 });
