@@ -1007,7 +1007,7 @@
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1rem">
           <div class="form-group" style="max-width:280px">
             <label>Salón</label>
-            <select id="dir-asis-salon" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+            <select id="dir-asis-salon" onchange="onCambioSalonAsistenciaDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
               <option value="">Selecciona un salón...</option>
             </select>
           </div>
@@ -1032,6 +1032,29 @@
           <table>
             <thead><tr><th>Fecha</th><th>Salón</th><th>Alumno</th><th>Estado</th><th>Observación</th></tr></thead>
             <tbody id="tabla-dir-asis-historial"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="table-card" style="margin-top:1.5rem">
+          <div class="table-header"><h3>Resumen semanal por salón (últimos 7 días)</h3></div>
+          <table>
+            <thead><tr><th>Salón</th><th>Tardanzas</th><th>Faltas injustificadas</th><th>Total incidencias</th><th>Detalle</th></tr></thead>
+            <tbody id="tabla-dir-resumen-semanal"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="table-card" style="margin-top:1.5rem">
+          <div class="table-header" style="flex-wrap:wrap;gap:10px">
+            <h3 id="dir-detalle-titulo">Detalle por alumno — últimos 7 días</h3>
+            <input type="text" id="dir-detalle-buscador" oninput="filtrarDetalleAsistenciaDirector()" placeholder="Buscar por nombre o celular..."
+              style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;min-width:220px">
+          </div>
+          <div style="position:relative;height:260px;overflow:hidden;padding:1rem 1.5rem 0" id="dir-detalle-chart-wrap">
+            <canvas id="chart-dir-detalle-salon"></canvas>
+          </div>
+          <table>
+            <thead><tr><th>Alumno</th><th>Celular</th><th>Tardanzas</th><th>Faltas injustificadas</th><th>Total</th></tr></thead>
+            <tbody id="tabla-dir-detalle-salon"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón en la tabla de arriba para ver el detalle</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2525,7 +2548,7 @@ async function guardarEvaluacionTutor() {
     // ══════════════════════════════
     async function cargarSalonesAsistenciaDirector() {
       const select = document.getElementById('dir-asis-salon');
-      if (select.dataset.cargado) { cargarHistorialAsistenciaDirector(); return; }
+      if (select.dataset.cargado) { cargarHistorialAsistenciaDirector(); cargarResumenSemanalDirector(); return; }
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
         const res = await fetch('/api/alumnos/salones', { headers });
@@ -2535,6 +2558,7 @@ async function guardarEvaluacionTutor() {
         select.dataset.cargado = '1';
         document.getElementById('dir-asis-fecha').value = fechaHoyISO();
         cargarHistorialAsistenciaDirector();
+        cargarResumenSemanalDirector();
       } catch (err) {
         console.error('Error cargando salones:', err);
       }
@@ -2596,14 +2620,19 @@ async function guardarEvaluacionTutor() {
       }
     }
 
+    // Fecha de hace 7 días en formato YYYY-MM-DD (misma zona horaria que fechaHoyISO)
+    function fechaHace7ISO() {
+      const hace7 = new Date(Date.now() - 7 * 86400000);
+      const off = hace7.getTimezoneOffset();
+      return new Date(hace7.getTime() - off * 60000).toISOString().slice(0, 10);
+    }
+
     async function cargarHistorialAsistenciaDirector() {
       const tbody = document.getElementById('tabla-dir-asis-historial');
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
         const hoy = fechaHoyISO();
-        const hace7 = new Date(Date.now() - 7 * 86400000);
-        const off = hace7.getTimezoneOffset();
-        const desde = new Date(hace7.getTime() - off * 60000).toISOString().slice(0, 10);
+        const desde = fechaHace7ISO();
         const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hoy}`, { headers });
         const registros = (await res.json()).filter(r => r.estado && r.estado !== 'P');
         tbody.innerHTML = registros.length ? registros.map(r => `
@@ -2617,6 +2646,150 @@ async function guardarEvaluacionTutor() {
       } catch (err) {
         console.error('Error cargando historial de asistencia:', err);
       }
+    }
+
+    // ══════════════════════════════
+    //  RESUMEN SEMANAL POR SALÓN (DIRECTOR)
+    // ══════════════════════════════
+    async function cargarResumenSemanalDirector() {
+      const tbody = document.getElementById('tabla-dir-resumen-semanal');
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const hoy = fechaHoyISO();
+        const desde = fechaHace7ISO();
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hoy}`, { headers });
+        const registros = await res.json();
+
+        // Agrupa por salón: cuenta tardanzas (TI+TJ) y faltas injustificadas (FI)
+        const porSalon = {};
+        registros.forEach(r => {
+          if (!porSalon[r.salon]) porSalon[r.salon] = { tardanzas: 0, faltas: 0 };
+          if (r.estado === 'TI' || r.estado === 'TJ') porSalon[r.salon].tardanzas++;
+          else if (r.estado === 'FI') porSalon[r.salon].faltas++;
+        });
+
+        const filas = Object.entries(porSalon)
+          .map(([salon, c]) => ({ salon, ...c, total: c.tardanzas + c.faltas }))
+          .sort((a, b) => b.total - a.total);
+
+        tbody.innerHTML = filas.length ? filas.map(f => `
+          <tr>
+            <td style="color:var(--text);font-weight:500">${f.salon}</td>
+            <td><span class="badge ${f.tardanzas > 0 ? 'badge-amber' : 'badge-green'}">${f.tardanzas}</span></td>
+            <td><span class="badge ${f.faltas > 0 ? 'badge-red' : 'badge-green'}">${f.faltas}</span></td>
+            <td style="color:var(--text);font-weight:600">${f.total}</td>
+            <td><button class="eval-btn" onclick="verDetalleSalonDirector('${f.salon.replace(/'/g, "\\'")}')">🔍 Ver detalle</button></td>
+          </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>Sin faltas ni tardanzas en los últimos 7 días</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando resumen semanal:', err);
+      }
+    }
+
+    // Al presionar "Ver detalle" en el resumen semanal, selecciona ese salón en el
+    // <select> y carga su detalle por alumno (búsqueda por nombre de salón, ya que
+    // el resumen se agrupa por nombre de salón devuelto por el reporte).
+    function verDetalleSalonDirector(nombreSalon) {
+      const select = document.getElementById('dir-asis-salon');
+      const opcion = Array.from(select.options).find(o => o.textContent === nombreSalon);
+      if (opcion) {
+        select.value = opcion.value;
+        cargarDetalleAsistenciaSalonDirector(opcion.value, nombreSalon);
+      }
+      document.getElementById('dir-detalle-titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // También se puede disparar eligiendo el salón directamente del <select> de arriba
+    function onCambioSalonAsistenciaDirector() {
+      const select = document.getElementById('dir-asis-salon');
+      const salonId = select.value;
+      const nombreSalon = select.options[select.selectedIndex]?.textContent || '';
+      if (salonId) cargarDetalleAsistenciaSalonDirector(salonId, nombreSalon);
+    }
+
+    async function cargarDetalleAsistenciaSalonDirector(salonId, nombreSalon) {
+      const tbody = document.getElementById('tabla-dir-detalle-salon');
+      const titulo = document.getElementById('dir-detalle-titulo');
+      const buscador = document.getElementById('dir-detalle-buscador');
+      if (buscador) buscador.value = '';
+      titulo.textContent = `Detalle por alumno — ${nombreSalon} (últimos 7 días)`;
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const hoy = fechaHoyISO();
+        const desde = fechaHace7ISO();
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hoy}&salon_id=${salonId}`, { headers });
+        const registros = await res.json();
+
+        // Agrupa por alumno
+        const porAlumno = {};
+        registros.forEach(r => {
+          const key = r.apellidos_nombres;
+          if (!porAlumno[key]) porAlumno[key] = { nombre: r.apellidos_nombres, celular: r.celular_apoderado || '', tardanzas: 0, faltas: 0 };
+          if (r.estado === 'TI' || r.estado === 'TJ') porAlumno[key].tardanzas++;
+          else if (r.estado === 'FI') porAlumno[key].faltas++;
+        });
+
+        const detalle = Object.values(porAlumno)
+          .filter(a => a.tardanzas > 0 || a.faltas > 0)
+          .map(a => ({ ...a, total: a.tardanzas + a.faltas }))
+          .sort((a, b) => b.total - a.total);
+
+        ultimoDetalleAsistenciaDirector = detalle;
+        renderDetalleAsistenciaDirector(detalle);
+        renderChartDetalleAsistenciaDirector(detalle);
+      } catch (err) {
+        console.error('Error cargando detalle del salón:', err);
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar el detalle</p></div></td></tr>';
+      }
+    }
+
+    function renderDetalleAsistenciaDirector(detalle) {
+      const tbody = document.getElementById('tabla-dir-detalle-salon');
+      tbody.innerHTML = detalle.length ? detalle.map(a => `
+        <tr data-row data-nombre="${a.nombre.toLowerCase()}" data-cel="${(a.celular || '').toLowerCase()}">
+          <td style="color:var(--text);font-weight:500">${a.nombre}</td>
+          <td>${a.celular || '—'}</td>
+          <td><span class="badge ${a.tardanzas > 0 ? 'badge-amber' : 'badge-green'}">${a.tardanzas}</span></td>
+          <td><span class="badge ${a.faltas > 0 ? 'badge-red' : 'badge-green'}">${a.faltas}</span></td>
+          <td style="color:var(--text);font-weight:600">${a.total}</td>
+        </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>Sin tardanzas ni faltas injustificadas en este salón</p></div></td></tr>';
+    }
+
+    function renderChartDetalleAsistenciaDirector(detalle) {
+      if (chartDirDetalleSalon) chartDirDetalleSalon.destroy();
+      const ctx = document.getElementById('chart-dir-detalle-salon').getContext('2d');
+      const top = detalle.slice(0, 15); // evita que el gráfico se sature si hay muchos alumnos
+      chartDirDetalleSalon = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: top.map(a => a.nombre.split(',')[0]),
+          datasets: [
+            { label: 'Tardanzas', data: top.map(a => a.tardanzas), backgroundColor: 'rgba(243,156,18,0.8)', borderRadius: 6 },
+            { label: 'Faltas injustificadas', data: top.map(a => a.faltas), backgroundColor: 'rgba(230,57,70,0.8)', borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#9090a8', maxRotation: 40, font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Filtra la tabla de detalle por salón (nombre o celular), sin volver a pedir a la API
+    function filtrarDetalleAsistenciaDirector() {
+      const q = document.getElementById('dir-detalle-buscador').value.trim().toLowerCase();
+      document.querySelectorAll('#tabla-dir-detalle-salon tr[data-row]').forEach(tr => {
+        const nombre = tr.dataset.nombre || '';
+        const cel = tr.dataset.cel || '';
+        tr.style.display = (!q || nombre.includes(q) || cel.includes(q)) ? '' : 'none';
+      });
     }
 
     function actualizarReporteSupervisor(evaluaciones) {
@@ -2821,6 +2994,8 @@ function cerrarModal() {
     }
     let chartDocentes = null;
     let chartDistribucion = null;
+    let chartDirDetalleSalon = null;
+    let ultimoDetalleAsistenciaDirector = []; // guarda el detalle cargado del salón seleccionado, para filtrar sin re-pedir a la API
 
     function renderizarGraficos(evaluaciones) {
       // ── Agrupar por docente (promedio de todas sus evaluaciones) ──
