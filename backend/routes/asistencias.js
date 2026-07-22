@@ -15,10 +15,15 @@ function permitirRoles(...rolesPermitidos) {
   };
 }
 
-// Fecha de HOY en formato YYYY-MM-DD (zona horaria del servidor)
+// Fecha de HOY en formato YYYY-MM-DD, usando la zona horaria de Perú (America/Lima)
+// (antes usaba la hora del servidor, que en Render corre en UTC y causaba
+// que el backend pensara que ya era "otro día" cuando en Perú aún no lo era)
 function hoyISO() {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Lima',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+  return fmt.format(new Date());
 }
 
 // GET /api/asistencias?salon_id=5&fecha=2026-07-19
