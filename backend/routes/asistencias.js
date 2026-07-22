@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
+const { registrarAuditoria } = require('../utils/auditoria');
 
 const ROLES_PERMITIDOS = ['auxiliar', 'director']; // pueden ver/registrar asistencia
 const ROLES_REPORTE = ['director', 'auxiliar']; // director ve el reporte completo; auxiliar ve el resumen semanal por salón
@@ -67,6 +68,13 @@ router.post('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req,
       fecha = hoyISO();
     }
 
+    // Consultamos si ya existía un registro para saber si esto es un alta o una edición
+    const existiaRes = await db.query(
+      'SELECT id FROM asistencias WHERE alumno_id = $1 AND fecha = $2',
+      [alumno_id, fecha]
+    );
+    const yaExistia = existiaRes.rows.length > 0;
+
     const result = await db.query(
       `INSERT INTO asistencias (alumno_id, fecha, estado, observacion, registrado_por, actualizado_por)
        VALUES ($1, $2, $3, $4, $5, $5)
@@ -75,7 +83,21 @@ router.post('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req,
        RETURNING *`,
       [alumno_id, fecha, estado || null, observacion || null, req.usuario.id]
     );
-    res.json(result.rows[0]);
+    const fila = result.rows[0];
+
+    const alumnoRes = await db.query('SELECT apellidos_nombres FROM alumnos WHERE id = $1', [alumno_id]);
+    const nombreAlumno = alumnoRes.rows[0] ? alumnoRes.rows[0].apellidos_nombres : `alumno_id ${alumno_id}`;
+
+    registrarAuditoria({
+      tabla: 'asistencias',
+      registro_id: fila.id,
+      accion: yaExistia ? 'editar' : 'crear',
+      usuario: req.usuario,
+      descripcion: `Asistencia de ${nombreAlumno} — ${fecha} — estado: ${fila.estado || '—'}`,
+      datos: fila
+    });
+
+    res.json(fila);
   } catch (err) {
     res.status(500).json({ error: 'Error al guardar la asistencia' });
   }

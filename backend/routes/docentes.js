@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
+const { registrarAuditoria } = require('../utils/auditoria');
 
 // GET /api/docentes/pendientes
 router.get('/pendientes', verificarToken, async (req, res) => {
@@ -70,7 +71,18 @@ router.post('/', verificarToken, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, true) RETURNING *`,
       [nombre.trim(), apellido.trim(), curso || '', nivel || 'Primaria', tipo || 'Docente']
     );
-    res.json(result.rows[0]);
+    const fila = result.rows[0];
+
+    registrarAuditoria({
+      tabla: 'docentes',
+      registro_id: fila.id,
+      accion: 'crear',
+      usuario: req.usuario,
+      descripcion: `Docente ${fila.nombre} ${fila.apellido}`,
+      datos: fila
+    });
+
+    res.json(fila);
   } catch (err) {
     res.status(500).json({ error: 'Error al agregar docente' });
   }
@@ -82,7 +94,18 @@ router.patch('/:id/desactivar', verificarToken, async (req, res) => {
     return res.status(403).json({ error: 'Solo el director puede desactivar docentes' });
   }
   try {
-    await db.query('UPDATE docentes SET activo = false WHERE id = $1', [req.params.id]);
+    const result = await db.query('UPDATE docentes SET activo = false WHERE id = $1 RETURNING *', [req.params.id]);
+    const fila = result.rows[0];
+    if (fila) {
+      registrarAuditoria({
+        tabla: 'docentes',
+        registro_id: fila.id,
+        accion: 'editar',
+        usuario: req.usuario,
+        descripcion: `Docente desactivado: ${fila.nombre} ${fila.apellido}`,
+        datos: fila
+      });
+    }
     res.json({ mensaje: 'Docente desactivado correctamente' });
   } catch (err) {
     res.status(500).json({ error: 'Error al desactivar docente' });
@@ -95,7 +118,18 @@ router.patch('/:id/activar', verificarToken, async (req, res) => {
     return res.status(403).json({ error: 'Solo el director puede activar docentes' });
   }
   try {
-    await db.query('UPDATE docentes SET activo = true WHERE id = $1', [req.params.id]);
+    const result = await db.query('UPDATE docentes SET activo = true WHERE id = $1 RETURNING *', [req.params.id]);
+    const fila = result.rows[0];
+    if (fila) {
+      registrarAuditoria({
+        tabla: 'docentes',
+        registro_id: fila.id,
+        accion: 'editar',
+        usuario: req.usuario,
+        descripcion: `Docente reactivado: ${fila.nombre} ${fila.apellido}`,
+        datos: fila
+      });
+    }
     res.json({ mensaje: 'Docente activado correctamente' });
   } catch (err) {
     res.status(500).json({ error: 'Error al activar docente' });
@@ -108,7 +142,18 @@ router.patch('/:id/tutor', verificarToken, async (req, res) => {
   }
   const { es_tutor } = req.body; // true o false
   try {
-    await db.query('UPDATE docentes SET es_tutor = $1 WHERE id = $2', [!!es_tutor, req.params.id]);
+    const result = await db.query('UPDATE docentes SET es_tutor = $1 WHERE id = $2 RETURNING *', [!!es_tutor, req.params.id]);
+    const fila = result.rows[0];
+    if (fila) {
+      registrarAuditoria({
+        tabla: 'docentes',
+        registro_id: fila.id,
+        accion: 'editar',
+        usuario: req.usuario,
+        descripcion: `${fila.nombre} ${fila.apellido} — es_tutor: ${!!es_tutor}`,
+        datos: fila
+      });
+    }
     res.json({ mensaje: 'Actualizado correctamente' });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar tutor' });

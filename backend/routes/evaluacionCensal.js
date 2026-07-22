@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
+const { registrarAuditoria } = require('../utils/auditoria');
 
 const ROLES_ESCRITURA = ['auxiliar'];             // solo la auxiliar registra respuestas
 const ROLES_LECTURA = ['auxiliar', 'director'];   // auxiliar y director pueden consultar
@@ -79,7 +80,18 @@ router.put('/meta', verificarToken, permitirRoles(...ROLES_ESCRITURA), async (re
        RETURNING *`,
       [salon_id, profesor_tutor || null, fecha_aplicacion || null, req.usuario.id]
     );
-    res.json(result.rows[0]);
+    const fila = result.rows[0];
+
+    registrarAuditoria({
+      tabla: 'evaluacion_censal',
+      registro_id: fila.salon_id,
+      accion: 'editar',
+      usuario: req.usuario,
+      descripcion: `Datos generales de evaluación censal — salón ${fila.salon_id}, tutor: ${fila.profesor_tutor || '—'}`,
+      datos: fila
+    });
+
+    res.json(fila);
   } catch (err) {
     res.status(500).json({ error: 'Error al guardar los datos generales' });
   }

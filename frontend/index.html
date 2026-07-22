@@ -770,6 +770,7 @@
       <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
       <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
       <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
+      <div class="nav-item" onclick="showSection('auditoria', this)">🕵️ Auditoría</div>
       <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
@@ -953,6 +954,62 @@
           <table>
             <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th></tr></thead>
             <tbody id="tabla-usuarios"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-auditoria">
+        <div class="page-header">
+          <div class="page-title">Auditoría</div>
+          <div class="page-subtitle">Quién hizo qué y cuándo, en todo el sistema</div>
+        </div>
+        <div class="table-card" style="padding:1.25rem;margin-bottom:1.25rem">
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;align-items:end">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Usuario</label>
+              <select id="audit-filtro-usuario" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Módulo</label>
+              <select id="audit-filtro-tabla" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+                <option value="">Todos</option>
+                <option value="evaluaciones">Evaluaciones docentes</option>
+                <option value="evaluaciones_tutor">Evaluaciones tutoría</option>
+                <option value="docentes">Docentes</option>
+                <option value="asistencias">Asistencias</option>
+                <option value="evaluacion_censal">Evaluación censal</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Acción</label>
+              <select id="audit-filtro-accion" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+                <option value="">Todas</option>
+                <option value="crear">Creado</option>
+                <option value="editar">Editado</option>
+                <option value="eliminar">Eliminado</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Desde</label>
+              <input type="date" id="audit-filtro-desde" style="width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Hasta</label>
+              <input type="date" id="audit-filtro-hasta" style="width:100%;padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.9rem">
+            <button onclick="cargarAuditoria()" style="padding:9px 18px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Filtrar</button>
+            <button onclick="limpiarFiltrosAuditoria()" style="padding:9px 18px;background:var(--surface2);color:var(--text2);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">Limpiar</button>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><h3>Registro de actividad</h3></div>
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Módulo</th><th>Acción</th><th>Detalle</th></tr></thead>
+            <tbody id="tabla-auditoria"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1351,6 +1408,7 @@
     <div class="nav-section">Tutoría</div>
     <div class="nav-item active" onclick="showSectionPsico('psico-tutores', this)">📘 Tutores</div>
     <div class="nav-item" onclick="showSectionPsico('psico-historial', this)">📋 Historial</div>
+    <div class="nav-item" onclick="showSectionPsico('psico-resultados', this)">📊 Resultados</div>
     <div class="sidebar-footer">
       <div class="user-chip">
         <div class="user-avatar">👤</div>
@@ -1386,6 +1444,20 @@
         <table>
           <thead><tr><th>Docente</th><th>Grado/Sección</th><th>Puntaje</th><th>Fecha</th><th>Acción</th></tr></thead>
           <tbody id="tabla-psico-historial"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section" id="section-psico-resultados">
+      <div class="page-header">
+        <div class="page-title">Resultados</div>
+        <div class="page-subtitle">Todas las evaluaciones de tutoría del colegio</div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Resultados generales</h3></div>
+        <table>
+          <thead><tr><th>Docente Tutor</th><th>Grado/Sección</th><th>Puntaje</th><th>Fecha</th><th>Detalle</th></tr></thead>
+          <tbody id="tabla-psico-resultados"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
         </table>
       </div>
     </div>
@@ -2203,6 +2275,7 @@
       if (id === 'asistencia') cargarSalonesAsistenciaDirector();
       if (id === 'tutoria') cargarTutoriaDirector();
       if (id === 'censal') cargarSalonesCensalDirector();
+      if (id === 'auditoria') cargarAuditoria();
     }
 
     function showSectionSup(id, el) {
@@ -2357,6 +2430,34 @@ function showSectionPsico(id, el) {
   document.querySelectorAll('#psicologa-page .nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('section-' + id).classList.add('active');
   el.classList.add('active');
+  if (id === 'psico-resultados') cargarResultadosPsico();
+}
+
+// Todas las evaluaciones de tutoría (no solo las propias). Reutiliza el mismo
+// modal de detalle y el mismo botón de PDF que usa el director, ya que ambos
+// son genéricos y no dependen del rol — solo llaman a los mismos endpoints.
+async function cargarResultadosPsico() {
+  const tbody = document.getElementById('tabla-psico-resultados');
+  try {
+    const res = await fetch('/api/evaluaciones-tutor', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>No se pudo cargar</p></div></td></tr>'; return; }
+    const evaluaciones = await res.json();
+    tbody.innerHTML = evaluaciones.length
+      ? evaluaciones.map(e => `
+        <tr>
+          <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
+          <td style="color:var(--text3)">${e.grado_seccion || '—'}</td>
+          <td><span class="badge ${parseFloat(e.puntaje_total) >= 90 ? 'badge-gold' : parseFloat(e.puntaje_total) >= 80 ? 'badge-green' : parseFloat(e.puntaje_total) >= 70 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+          <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
+          <td><button class="eval-btn" onclick="verFormularioTutorDirector(${e.id})">🔍 Ver</button></td>
+        </tr>`).join('')
+      : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones de tutoría aún</p></div></td></tr>';
+  } catch (err) {
+    console.error('Error cargando resultados:', err);
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>Error al cargar</p></div></td></tr>';
+  }
 }
 
 function evaluarTutor(id, nombre) {
@@ -4886,6 +4987,94 @@ async function verFormularioTutorDirector(id) {
   } catch(err) {
     alert('Error al cargar el formulario');
     console.error(err);
+  }
+}
+
+// ══════════════════════════════
+//  AUDITORÍA (solo director)
+// ══════════════════════════════
+const AUDIT_TABLA_LABEL = {
+  evaluaciones: 'Evaluación docente',
+  evaluaciones_tutor: 'Evaluación tutoría',
+  docentes: 'Docente',
+  asistencias: 'Asistencia',
+  evaluacion_censal: 'Evaluación censal'
+};
+const AUDIT_ACCION_LABEL = {
+  crear: { texto: 'Creado', clase: 'badge-green' },
+  editar: { texto: 'Editado', clase: 'badge-amber' },
+  eliminar: { texto: 'Eliminado', clase: 'badge-red' }
+};
+
+let _auditUsuariosCargados = false;
+
+async function cargarUsuariosFiltroAuditoria() {
+  if (_auditUsuariosCargados) return;
+  try {
+    const res = await fetch('/api/auditoria/usuarios', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    const usuarios = await res.json();
+    const select = document.getElementById('audit-filtro-usuario');
+    usuarios.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.textContent = u.nombre;
+      select.appendChild(opt);
+    });
+    _auditUsuariosCargados = true;
+  } catch (err) {
+    console.error('Error cargando usuarios para filtro de auditoría:', err);
+  }
+}
+
+function limpiarFiltrosAuditoria() {
+  document.getElementById('audit-filtro-usuario').value = '';
+  document.getElementById('audit-filtro-tabla').value = '';
+  document.getElementById('audit-filtro-accion').value = '';
+  document.getElementById('audit-filtro-desde').value = '';
+  document.getElementById('audit-filtro-hasta').value = '';
+  cargarAuditoria();
+}
+
+async function cargarAuditoria() {
+  await cargarUsuariosFiltroAuditoria();
+  const tbody = document.getElementById('tabla-auditoria');
+  tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+  try {
+    const params = new URLSearchParams();
+    const usuario_id = document.getElementById('audit-filtro-usuario').value;
+    const tabla = document.getElementById('audit-filtro-tabla').value;
+    const accion = document.getElementById('audit-filtro-accion').value;
+    const desde = document.getElementById('audit-filtro-desde').value;
+    const hasta = document.getElementById('audit-filtro-hasta').value;
+    if (usuario_id) params.set('usuario_id', usuario_id);
+    if (tabla) params.set('tabla', tabla);
+    if (accion) params.set('accion', accion);
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+
+    const res = await fetch('/api/auditoria?' + params.toString(), {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>No se pudo cargar</p></div></td></tr>'; return; }
+    const registros = await res.json();
+    tbody.innerHTML = registros.length
+      ? registros.map(r => {
+          const accionInfo = AUDIT_ACCION_LABEL[r.accion] || { texto: r.accion, clase: 'badge-amber' };
+          const fecha = new Date(r.creado_en);
+          return `
+          <tr>
+            <td style="color:var(--text3);white-space:nowrap">${fecha.toLocaleDateString('es-PE')} ${fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</td>
+            <td style="color:var(--text);font-weight:500">${r.usuario_nombre || '—'}</td>
+            <td style="color:var(--text3)">${AUDIT_TABLA_LABEL[r.tabla] || r.tabla}</td>
+            <td><span class="badge ${accionInfo.clase}">${accionInfo.texto}</span></td>
+            <td style="color:var(--text3)">${r.descripcion || '—'}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🕵️</div><p>Sin actividad registrada</p></div></td></tr>';
+  } catch (err) {
+    console.error('Error cargando auditoría:', err);
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>Error al cargar</p></div></td></tr>';
   }
 }
 

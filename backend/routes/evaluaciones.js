@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
+const { registrarAuditoria } = require('../utils/auditoria');
 
 // POST /api/evaluaciones
 router.post('/', verificarToken, async (req, res) => {
@@ -86,7 +87,21 @@ router.post('/', verificarToken, async (req, res) => {
         compromisos, recomendaciones
       ]
     );
-    res.json({ ...result.rows[0], promedio: puntaje_total });
+    const fila = result.rows[0];
+
+    const docRes = await db.query('SELECT nombre, apellido FROM docentes WHERE id = $1', [fila.docente_id]);
+    const nombreDocente = docRes.rows[0] ? `${docRes.rows[0].nombre} ${docRes.rows[0].apellido}` : `docente_id ${fila.docente_id}`;
+
+    registrarAuditoria({
+      tabla: 'evaluaciones',
+      registro_id: fila.id,
+      accion: 'crear',
+      usuario: req.usuario,
+      descripcion: `Evaluación de ${nombreDocente}`,
+      datos: fila
+    });
+
+    res.json({ ...fila, promedio: puntaje_total });
   } catch (err) {
     console.error('Error guardando evaluación:', err);
     res.status(500).json({ error: 'Error al guardar evaluación' });
@@ -185,6 +200,20 @@ router.delete('/:id', verificarToken, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Evaluacion no encontrada o sin permiso' });
     }
+
+    const fila = result.rows[0];
+    const docRes = await db.query('SELECT nombre, apellido FROM docentes WHERE id = $1', [fila.docente_id]);
+    const nombreDocente = docRes.rows[0] ? `${docRes.rows[0].nombre} ${docRes.rows[0].apellido}` : `docente_id ${fila.docente_id}`;
+
+    registrarAuditoria({
+      tabla: 'evaluaciones',
+      registro_id: fila.id,
+      accion: 'eliminar',
+      usuario: req.usuario,
+      descripcion: `Evaluación de ${nombreDocente}`,
+      datos: fila
+    });
+
     res.json({ mensaje: 'Evaluacion eliminada correctamente' });
   } catch (err) {
     res.status(500).json({ error: 'Error al eliminar evaluacion' });

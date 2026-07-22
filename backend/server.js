@@ -23,6 +23,8 @@ const asistenciasRouter = require('./routes/asistencias');
 app.use('/api/asistencias', asistenciasRouter);
 const evaluacionCensalRouter = require('./routes/evaluacionCensal');
 app.use('/api/evaluacion-censal', evaluacionCensalRouter);
+const auditoriaRouter = require('./routes/auditoria');
+app.use('/api/auditoria', auditoriaRouter);
 app.use('/api/auth', authRouter);
 
 app.get('/{*path}', (req, res) => {

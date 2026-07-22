@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
+const { registrarAuditoria } = require('../utils/auditoria');
 
 // Roles que pueden VER los resultados (solo lectura)
-const ROLES_LECTURA = ['director', 'directora', 'coordinador_general'];
+// 'psicologa' se agregó para que ella también pueda ver TODOS los resultados
+// (antes solo veía los suyos en /mias), no solo los que ella registró.
+const ROLES_LECTURA = ['director', 'directora', 'coordinador_general', 'psicologa'];
 // Rol que registra las evaluaciones
 const ROL_EVALUADOR = 'psicologa';
 
@@ -143,7 +146,21 @@ router.post('/', verificarToken, async (req, res) => {
       valores
     );
 
-    res.json({ ...result.rows[0], promedio: puntaje_total.toFixed(1) });
+    const fila = result.rows[0];
+
+    const docRes = await db.query('SELECT nombre, apellido FROM docentes WHERE id = $1', [fila.docente_id]);
+    const nombreDocente = docRes.rows[0] ? `${docRes.rows[0].nombre} ${docRes.rows[0].apellido}` : `docente_id ${fila.docente_id}`;
+
+    registrarAuditoria({
+      tabla: 'evaluaciones_tutor',
+      registro_id: fila.id,
+      accion: 'crear',
+      usuario: req.usuario,
+      descripcion: `Evaluación de tutoría de ${nombreDocente} — grado/sección ${fila.grado_seccion || '—'}`,
+      datos: fila
+    });
+
+    res.json({ ...fila, promedio: puntaje_total.toFixed(1) });
   } catch (err) {
     console.error('Error al guardar evaluación de tutoría:', err);
     res.status(500).json({ error: 'Error al guardar evaluación de tutoría' });
@@ -156,7 +173,23 @@ router.delete('/:id', verificarToken, async (req, res) => {
     return res.status(403).json({ error: 'No autorizado' });
   }
   try {
-    await db.query('DELETE FROM evaluaciones_tutor WHERE id = $1', [req.params.id]);
+    const result = await db.query('DELETE FROM evaluaciones_tutor WHERE id = $1 RETURNING *', [req.params.id]);
+    const fila = result.rows[0];
+
+    if (fila) {
+      const docRes = await db.query('SELECT nombre, apellido FROM docentes WHERE id = $1', [fila.docente_id]);
+      const nombreDocente = docRes.rows[0] ? `${docRes.rows[0].nombre} ${docRes.rows[0].apellido}` : `docente_id ${fila.docente_id}`;
+
+      registrarAuditoria({
+        tabla: 'evaluaciones_tutor',
+        registro_id: fila.id,
+        accion: 'eliminar',
+        usuario: req.usuario,
+        descripcion: `Evaluación de tutoría de ${nombreDocente} — grado/sección ${fila.grado_seccion || '—'}`,
+        datos: fila
+      });
+    }
+
     res.json({ mensaje: 'Evaluación eliminada correctamente' });
   } catch (err) {
     res.status(500).json({ error: 'Error al eliminar evaluación' });
