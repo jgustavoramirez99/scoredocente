@@ -506,6 +506,28 @@
       color: white;
       border-color: var(--accent);
     }
+    .whatsapp-btn {
+      padding: 6px 12px;
+      background: rgba(37,211,102,0.12);
+      color: #25D366;
+      border: 1px solid rgba(37,211,102,0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .whatsapp-btn:hover {
+      background: #25D366;
+      color: white;
+      border-color: #25D366;
+    }
+    .whatsapp-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
     /* ══════════════════════════════
        MODAL
@@ -1108,17 +1130,24 @@
           <div class="page-title">Asistencia de hoy — <span id="aux-fecha-hoy"></span></div>
           <div class="page-subtitle">Selecciona un salón, marca la asistencia de cada alumno y registra el celular u observación. Solo puedes registrar el día de hoy.</div>
         </div>
-        <div class="form-group" style="max-width:320px;margin-bottom:1rem">
-          <label>Salón</label>
-          <select id="aux-salon-select" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none" onchange="cargarAlumnosAuxiliar()">
-            <option value="">Selecciona un salón...</option>
-          </select>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+          <div class="form-group" style="max-width:320px;margin-bottom:0">
+            <label>Salón</label>
+            <select id="aux-salon-select" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none" onchange="cargarAlumnosAuxiliar()">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:320px;flex:1;min-width:220px;margin-bottom:0">
+            <label>Buscar alumno</label>
+            <input type="text" id="aux-buscador" oninput="filtrarAlumnosAuxiliar()" placeholder="Buscar por nombre o celular..."
+              style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          </div>
         </div>
         <div class="table-card">
           <div class="table-header"><h3>Lista de asistencia</h3></div>
           <table>
-            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Observación</th><th>Acción</th></tr></thead>
-            <tbody id="tabla-aux-alumnos"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
+            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Observación</th><th>Acción</th><th>WhatsApp</th></tr></thead>
+            <tbody id="tabla-aux-alumnos"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2269,6 +2298,87 @@ async function guardarEvaluacionTutor() {
       { valor: 'TJ', texto: 'Tardanza Justificada' }
     ];
 
+    // Opciones predefinidas del desplegable de Observación
+    const OBSERVACIONES_PREDEFINIDAS = ['Contestó', 'No contestó', 'Salud y Viaje'];
+
+    // Mensajes predeterminados de WhatsApp según el estado de asistencia marcado.
+    // Usa {NOMBRE} donde quieras que aparezca el nombre del alumno.
+    const MENSAJES_ASISTENCIA = {
+      TI: 'Buenos días 🤗 Le hablamos del colegio Cervantes School para informarle que su menor {NOMBRE} llegó tarde el día de hoy (pasada las 7:40). Le pedimos tener un poco más de cuidado la próxima vez para que no vuelva a ocurrir 😊 Recuerde que en Cervantes School nos preocupamos por la integridad y bienestar de nuestros alumnos. Que tenga buen día ✨',
+      TJ: 'Buenos días 🤗 Le hablamos del colegio Cervantes School para informarle que su menor {NOMBRE} llegó tarde el día de hoy (pasada las 7:40). Le pedimos tener un poco más de cuidado la próxima vez para que no vuelva a ocurrir 😊 Recuerde que en Cervantes School nos preocupamos por la integridad y bienestar de nuestros alumnos. Que tenga buen día ✨',
+      FI: 'Buenos días 🤗 Le hablamos del colegio Cervantes School para informarle que su menor {NOMBRE} no asistió al colegio el día de hoy y no contamos con ninguna justificación registrada. Le agradeceríamos nos pueda indicar el motivo de la inasistencia 📋 recuerde que en Cervantes School nos preocupamos por la integridad y bienestar de nuestros alumnos que tenga buen día✨'
+    };
+
+    // Mensaje genérico si el estado no tiene un mensaje predeterminado propio
+    const MENSAJE_GENERICO = 'Buenos días, nos comunicamos del colegio Cervantes School con respecto a {NOMBRE}. ¿Podría confirmarnos si recibió este mensaje?';
+
+    function mensajePredeterminado(nombre, estado) {
+      const plantilla = MENSAJES_ASISTENCIA[estado] || MENSAJE_GENERICO;
+      return plantilla.replace('{NOMBRE}', nombre);
+    }
+
+    function opcionesObservacion(valorActual) {
+      const esPredefinida = OBSERVACIONES_PREDEFINIDAS.includes(valorActual);
+      const opciones = ['', ...OBSERVACIONES_PREDEFINIDAS, 'Otro'];
+      return opciones.map(op => {
+        const label = op === '' ? 'Sin observación' : op;
+        const marcado = op === valorActual || (op === 'Otro' && valorActual && !esPredefinida);
+        return `<option value="${op}" ${marcado ? 'selected' : ''}>${label}</option>`;
+      }).join('');
+    }
+
+    // Muestra/oculta el campo de texto libre cuando se elige "Otro" en Observación
+    function toggleObsOtro(alumnoId) {
+      const sel = document.getElementById('obs-sel-' + alumnoId);
+      const otro = document.getElementById('obs-otro-' + alumnoId);
+      if (sel && otro) otro.style.display = sel.value === 'Otro' ? 'block' : 'none';
+    }
+
+    // Habilita/deshabilita el botón de WhatsApp: requiere celular Y estado de asistencia marcado
+    function actualizarBotonWhatsapp(alumnoId) {
+      const cel = document.getElementById('cel-' + alumnoId).value.trim();
+      const estadoSel = document.getElementById('est-' + alumnoId);
+      const estado = estadoSel ? estadoSel.value : '';
+      const btn = document.getElementById('wa-' + alumnoId);
+      if (btn) btn.disabled = !cel || !estado;
+    }
+
+    // Abre WhatsApp Web/App con un mensaje predeterminado al celular del apoderado
+    function abrirWhatsappAlumno(alumnoId) {
+      const celInput = document.getElementById('cel-' + alumnoId);
+      let cel = (celInput.value || '').replace(/\D/g, '');
+      if (!cel) {
+        alert('Este alumno no tiene un número de celular registrado.');
+        return;
+      }
+      const estadoSel = document.getElementById('est-' + alumnoId);
+      const estado = estadoSel ? estadoSel.value : '';
+      if (!estado) {
+        alert('⚠️ Primero debes marcar la Asistencia (Tardanza o Falta) de este alumno antes de enviar el mensaje.');
+        return;
+      }
+      // Código de país Perú (51) si el número tiene 9 dígitos y no lo incluye ya
+      if (cel.length === 9) {
+        cel = '51' + cel;
+      }
+      const fila = celInput.closest('tr');
+      const nombre = fila ? fila.children[1].textContent.trim() : 'su hijo(a)';
+      const mensaje = mensajePredeterminado(nombre, estado);
+      window.open(`https://wa.me/${cel}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+
+    // Filtra la tabla de asistencia del auxiliar por nombre o celular
+    function filtrarAlumnosAuxiliar() {
+      const q = document.getElementById('aux-buscador').value.trim().toLowerCase();
+      document.querySelectorAll('#tabla-aux-alumnos tr[data-row]').forEach(tr => {
+        const nombre = tr.dataset.nombre || '';
+        const celInput = tr.querySelector('input[type="tel"]');
+        const cel = celInput ? celInput.value.toLowerCase() : '';
+        const match = !q || nombre.includes(q) || cel.includes(q);
+        tr.style.display = match ? '' : 'none';
+      });
+    }
+
     function fechaHoyISO() {
       // Fecha de HOY en Perú (America/Lima), sin importar la zona horaria configurada en la computadora
       const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -2302,8 +2412,10 @@ async function guardarEvaluacionTutor() {
     async function cargarAlumnosAuxiliar() {
       const salonId = document.getElementById('aux-salon-select').value;
       const tbody = document.getElementById('tabla-aux-alumnos');
+      const buscador = document.getElementById('aux-buscador');
+      if (buscador) buscador.value = '';
       if (!salonId) {
-        tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr>';
         return;
       }
       try {
@@ -2311,18 +2423,30 @@ async function guardarEvaluacionTutor() {
         const res = await fetch('/api/asistencias?salon_id=' + salonId + '&fecha=' + fechaHoyISO(), { headers });
         const data = await res.json();
         const alumnos = data.alumnos || [];
-        tbody.innerHTML = alumnos.length ? alumnos.map(a => `
-          <tr>
+        tbody.innerHTML = alumnos.length ? alumnos.map(a => {
+          const obsVal = a.observacion || '';
+          const esOtro = obsVal && !OBSERVACIONES_PREDEFINIDAS.includes(obsVal);
+          const nombreAttr = (a.apellidos_nombres || '').replace(/"/g, '&quot;').toLowerCase();
+          return `
+          <tr data-row data-nombre="${nombreAttr}">
             <td>${a.numero ?? '—'}</td>
             <td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>
             <td><input type="tel" id="cel-${a.alumno_id}" value="${a.celular_apoderado || ''}" placeholder="Ej: 987654321"
+                oninput="actualizarBotonWhatsapp(${a.alumno_id})"
                 style="width:135px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
-            <td><select id="est-${a.alumno_id}" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+            <td><select id="est-${a.alumno_id}" onchange="actualizarBotonWhatsapp(${a.alumno_id})" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
                 ${opcionesEstado(a.estado)}</select></td>
-            <td><input type="text" id="obs-${a.alumno_id}" value="${(a.observacion || '').replace(/"/g,'&quot;')}" placeholder="Ej: Respondió el papá, alumno con gripe"
-                style="width:220px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+            <td>
+              <select id="obs-sel-${a.alumno_id}" onchange="toggleObsOtro(${a.alumno_id})"
+                  style="width:150px;padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+                  ${opcionesObservacion(obsVal)}</select>
+              <input type="text" id="obs-otro-${a.alumno_id}" value="${esOtro ? obsVal.replace(/"/g,'&quot;') : ''}" placeholder="Especifica..."
+                  style="display:${esOtro ? 'block' : 'none'};margin-top:4px;width:150px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+            </td>
             <td><button class="eval-btn" onclick="guardarAsistenciaAlumno(${a.alumno_id})">💾 Guardar</button></td>
-          </tr>`).join('') : '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
+            <td><button class="whatsapp-btn" id="wa-${a.alumno_id}" onclick="abrirWhatsappAlumno(${a.alumno_id})" ${(a.celular_apoderado && a.estado) ? '' : 'disabled'}>💬 WhatsApp</button></td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
       } catch (err) {
         console.error('Error cargando alumnos:', err);
       }
@@ -2331,7 +2455,9 @@ async function guardarEvaluacionTutor() {
     async function guardarAsistenciaAlumno(alumnoId) {
       const celInput = document.getElementById('cel-' + alumnoId);
       const estado = document.getElementById('est-' + alumnoId).value;
-      const observacion = document.getElementById('obs-' + alumnoId).value.trim();
+      const obsSel = document.getElementById('obs-sel-' + alumnoId).value;
+      const obsOtro = document.getElementById('obs-otro-' + alumnoId).value.trim();
+      const observacion = obsSel === 'Otro' ? obsOtro : obsSel;
       const celular_apoderado = celInput.value.trim();
       try {
         // 1) Actualiza celular del apoderado (si cambió o si estaba vacío)
