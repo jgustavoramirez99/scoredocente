@@ -1044,6 +1044,21 @@
             <div style="position:relative;height:260px;padding:1rem 1.5rem"><canvas id="chart-dir-censal-nivel-torta"></canvas></div>
           </div>
         </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-top:1.5rem" id="dir-censal-charts-competencia-grid">
+          <div class="table-card">
+            <div class="table-header"><h3>Competencia Literal<br><span id="dir-censal-prom-literal" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
+            <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-dir-censal-literal"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Competencia Inferencial<br><span id="dir-censal-prom-inferencial" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
+            <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-dir-censal-inferencial"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Competencia Crítico<br><span id="dir-censal-prom-critico" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
+            <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-dir-censal-critico"></canvas></div>
+          </div>
+        </div>
       </div>
 
       <div class="section" id="section-asistencia">
@@ -1303,6 +1318,21 @@
           <div class="table-card">
             <div class="table-header"><h3>Distribución % por Nivel de Logro</h3></div>
             <div style="position:relative;height:260px;padding:1rem 1.5rem"><canvas id="chart-censal-nivel-torta"></canvas></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-top:1.5rem" id="censal-charts-competencia-grid">
+          <div class="table-card">
+            <div class="table-header"><h3>Competencia Literal<br><span id="censal-prom-literal" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
+            <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-censal-literal"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Competencia Inferencial<br><span id="censal-prom-inferencial" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
+            <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-censal-inferencial"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Competencia Crítico<br><span id="censal-prom-critico" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
+            <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-censal-critico"></canvas></div>
           </div>
         </div>
       </div>
@@ -3114,6 +3144,7 @@ async function guardarEvaluacionTutor() {
         document.getElementById('censal-fecha').value = '';
         if (chartCensalNivelBarras) { chartCensalNivelBarras.destroy(); chartCensalNivelBarras = null; }
         if (chartCensalNivelTorta) { chartCensalNivelTorta.destroy(); chartCensalNivelTorta = null; }
+        destruirChartsCompetenciaCensal('');
         return;
       }
 
@@ -3130,6 +3161,7 @@ async function guardarEvaluacionTutor() {
         document.getElementById('censal-fecha').value = '';
         if (chartCensalNivelBarras) { chartCensalNivelBarras.destroy(); chartCensalNivelBarras = null; }
         if (chartCensalNivelTorta) { chartCensalNivelTorta.destroy(); chartCensalNivelTorta = null; }
+        destruirChartsCompetenciaCensal('');
         return;
       }
 
@@ -3274,6 +3306,65 @@ async function guardarEvaluacionTutor() {
       }
     }
 
+    // ══════════════════════════════
+    //  GRÁFICOS POR COMPETENCIA (Literal / Inferencial / Crítico) — reutilizable
+    //  en el panel de la auxiliar y en el panel del director
+    // ══════════════════════════════
+    let chartsCensalCompetencia = {}; // { canvasId: instancia de Chart }
+
+    function destruirChartsCompetenciaCensal(prefix) {
+      const sufijos = ['literal', 'inferencial', 'critico'];
+      sufijos.forEach(s => {
+        const canvasId = `chart-${prefix}censal-${s}`;
+        if (chartsCensalCompetencia[canvasId]) {
+          chartsCensalCompetencia[canvasId].destroy();
+          delete chartsCensalCompetencia[canvasId];
+        }
+        const promEl = document.getElementById(`${prefix}censal-prom-${s}`);
+        if (promEl) promEl.textContent = '—';
+      });
+    }
+
+    function statsCompetenciaCensal(alumnos, items, competencia) {
+      const maxItems = (items || []).filter(it => it.competencia === competencia).length;
+      const evaluados = (alumnos || []).filter(a => a.total_correctas !== null);
+      const key = competencia === 'L' ? 'literal' : competencia === 'I' ? 'inferencial' : 'critico';
+      const promedio = evaluados.length
+        ? Math.round(evaluados.reduce((s, a) => s + (a[key] || 0), 0) / evaluados.length)
+        : 0;
+      const distribucion = new Array(maxItems + 1).fill(0);
+      evaluados.forEach(a => {
+        const val = Math.min(a[key] || 0, maxItems);
+        distribucion[val]++;
+      });
+      return { maxItems, promedio, distribucion };
+    }
+
+    function renderChartCompetenciaCensal(canvasId, promedioElId, alumnos, items, competencia, color) {
+      const { maxItems, promedio, distribucion } = statsCompetenciaCensal(alumnos, items, competencia);
+      const promEl = document.getElementById(promedioElId);
+      if (promEl) promEl.textContent = maxItems ? `Promedio: ${promedio}/${maxItems} correctas` : 'Este salón no tiene ítems de esta competencia';
+
+      const labels = distribucion.map((_, i) => String(i) + (maxItems ? ' correctas' : ''));
+
+      if (chartsCensalCompetencia[canvasId]) chartsCensalCompetencia[canvasId].destroy();
+      const canvasEl = document.getElementById(canvasId);
+      if (!canvasEl) return;
+      const ctx = canvasEl.getContext('2d');
+      chartsCensalCompetencia[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Alumnos', data: distribucion, backgroundColor: color, borderRadius: 6 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#9090a8', font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
     function renderChartsCensal(alumnos) {
       const niveles = ['Destacado (AD)', 'Logrado (A)', 'En Proceso (B)', 'En Inicio (C)'];
       const colores = ['#2ecc71', '#8ecae6', '#f39c12', '#e63946'];
@@ -3316,6 +3407,10 @@ async function guardarEvaluacionTutor() {
           }
         }
       });
+
+      renderChartCompetenciaCensal('chart-censal-literal', 'censal-prom-literal', alumnos, censalItemsActuales, 'L', '#8ecae6');
+      renderChartCompetenciaCensal('chart-censal-inferencial', 'censal-prom-inferencial', alumnos, censalItemsActuales, 'I', '#f39c12');
+      renderChartCompetenciaCensal('chart-censal-critico', 'censal-prom-critico', alumnos, censalItemsActuales, 'C', '#e63946');
     }
 
     // ══════════════════════════════
@@ -3323,6 +3418,7 @@ async function guardarEvaluacionTutor() {
     // ══════════════════════════════
     let chartDirCensalNivelBarras = null;
     let chartDirCensalNivelTorta = null;
+    let dirCensalItemsActuales = []; // ítems del salón seleccionado, para los gráficos por competencia
 
     async function cargarSalonesCensalDirector() {
       const select = document.getElementById('dir-censal-salon-select');
@@ -3351,6 +3447,7 @@ async function guardarEvaluacionTutor() {
         document.getElementById('dir-censal-fecha').value = '';
         if (chartDirCensalNivelBarras) { chartDirCensalNivelBarras.destroy(); chartDirCensalNivelBarras = null; }
         if (chartDirCensalNivelTorta) { chartDirCensalNivelTorta.destroy(); chartDirCensalNivelTorta = null; }
+        destruirChartsCompetenciaCensal('dir-');
         return;
       }
       tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
@@ -3367,6 +3464,7 @@ async function guardarEvaluacionTutor() {
         document.getElementById('dir-censal-fecha').value = meta.fecha_aplicacion ? String(meta.fecha_aplicacion).slice(0, 10) : '';
 
         renderTablaCensalDirector(grid.items || [], grid.alumnos || []);
+        dirCensalItemsActuales = grid.items || [];
         renderChartsCensalDirector(grid.alumnos || []);
       } catch (err) {
         console.error('Error cargando evaluación censal (director):', err);
@@ -3480,6 +3578,10 @@ async function guardarEvaluacionTutor() {
           }
         }
       });
+
+      renderChartCompetenciaCensal('chart-dir-censal-literal', 'dir-censal-prom-literal', alumnos, dirCensalItemsActuales, 'L', '#8ecae6');
+      renderChartCompetenciaCensal('chart-dir-censal-inferencial', 'dir-censal-prom-inferencial', alumnos, dirCensalItemsActuales, 'I', '#f39c12');
+      renderChartCompetenciaCensal('chart-dir-censal-critico', 'dir-censal-prom-critico', alumnos, dirCensalItemsActuales, 'C', '#e63946');
     }
 
     function actualizarReporteSupervisor(evaluaciones) {
