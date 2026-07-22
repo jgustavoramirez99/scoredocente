@@ -21,6 +21,8 @@ const alumnosRouter = require('./routes/alumnos');
 app.use('/api/alumnos', alumnosRouter);
 const asistenciasRouter = require('./routes/asistencias');
 app.use('/api/asistencias', asistenciasRouter);
+const evaluacionCensalRouter = require('./routes/evaluacionCensal');
+app.use('/api/evaluacion-censal', evaluacionCensalRouter);
 app.use('/api/auth', authRouter);
 
 app.get('/{*path}', (req, res) => {
