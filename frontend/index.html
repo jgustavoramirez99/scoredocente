@@ -772,6 +772,7 @@
       <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
       <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
+      <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -996,6 +997,52 @@
             <thead><tr><th>Salón</th><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th></tr></thead>
             <tbody id="tabla-apod-detalle"><tr><td colspan="4"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-censal">
+        <div class="page-header">
+          <div class="page-title">Evaluación Censal de Comprensión Lectora</div>
+          <div class="page-subtitle">Resultados registrados por la auxiliar, por salón. Solo lectura.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Salón</label>
+            <select id="dir-censal-salon-select" onchange="cargarEvaluacionCensalDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:220px;margin-bottom:0">
+            <label>Profesor(a) Tutor(a)</label>
+            <input type="text" id="dir-censal-profesor" disabled placeholder="—"
+              style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text2);outline:none">
+          </div>
+          <div class="form-group" style="max-width:180px;margin-bottom:0">
+            <label>Fecha de aplicación</label>
+            <input type="date" id="dir-censal-fecha" disabled
+              style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text2);outline:none">
+          </div>
+          <div style="color:var(--text2);font-size:13px;padding-bottom:9px" id="dir-censal-n-evaluados"></div>
+        </div>
+
+        <div class="table-card" style="overflow-x:auto">
+          <div class="table-header"><h3>Registro de respuestas</h3></div>
+          <table id="tabla-dir-censal-wrap" style="min-width:700px">
+            <thead><tr id="dir-censal-thead-row"><th>N°</th><th>Apellidos y Nombres</th></tr></thead>
+            <tbody id="tabla-dir-censal-alumnos"><tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📝</div><p>Selecciona un salón para ver los resultados</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem" id="dir-censal-charts-grid">
+          <div class="table-card">
+            <div class="table-header"><h3>N° de estudiantes por Nivel de Logro</h3></div>
+            <div style="position:relative;height:260px;padding:1rem 1.5rem"><canvas id="chart-dir-censal-nivel-barras"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Distribución % por Nivel de Logro</h3></div>
+            <div style="position:relative;height:260px;padding:1rem 1.5rem"><canvas id="chart-dir-censal-nivel-torta"></canvas></div>
+          </div>
         </div>
       </div>
 
@@ -1232,6 +1279,10 @@
               style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
           </div>
           <div style="color:var(--text2);font-size:13px;padding-bottom:9px" id="censal-n-evaluados"></div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:12px;padding-bottom:0">
+            <span id="censal-guardar-status" style="font-size:12px;font-weight:600;opacity:0;transition:opacity 0.3s"></span>
+            <button class="eval-btn" onclick="guardarEvaluacionCensalCompleta()">💾 Guardar evaluación</button>
+          </div>
         </div>
 
         <div class="table-card" style="overflow-x:auto">
@@ -2118,6 +2169,7 @@
       if (id === 'apoderados') cargarReporteApoderados();
       if (id === 'asistencia') cargarSalonesAsistenciaDirector();
       if (id === 'tutoria') cargarTutoriaDirector();
+      if (id === 'censal') cargarSalonesCensalDirector();
     }
 
     function showSectionSup(id, el) {
@@ -3115,6 +3167,26 @@ async function guardarEvaluacionTutor() {
       }
     }
 
+    async function guardarEvaluacionCensalCompleta() {
+      const salonId = document.getElementById('censal-salon-select').value;
+      const status = document.getElementById('censal-guardar-status');
+      if (!salonId) {
+        alert('Selecciona un salón antes de guardar.');
+        return;
+      }
+      try {
+        await guardarMetaCensal();
+        status.textContent = '✅ Evaluación guardada correctamente';
+        status.style.color = 'var(--green)';
+        status.style.opacity = '1';
+        setTimeout(() => { status.style.opacity = '0'; }, 3000);
+      } catch (err) {
+        status.textContent = '⚠️ No se pudo guardar, intenta de nuevo';
+        status.style.color = 'var(--accent2)';
+        status.style.opacity = '1';
+      }
+    }
+
     async function guardarRespuestaCensal(alumnoId, itemNumero) {
       const select = document.getElementById(`censal-${alumnoId}-${itemNumero}`);
       const estado = select.value || null;
@@ -3180,6 +3252,128 @@ async function guardarEvaluacionTutor() {
       if (chartCensalNivelTorta) chartCensalNivelTorta.destroy();
       const ctxTorta = document.getElementById('chart-censal-nivel-torta').getContext('2d');
       chartCensalNivelTorta = new Chart(ctxTorta, {
+        type: 'pie',
+        data: { labels: niveles, datasets: [{ data: conteo, backgroundColor: colores }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const val = ctx.raw;
+                  const pct = totalEvaluados ? Math.round((val / totalEvaluados) * 100) : 0;
+                  return `${ctx.label}: ${val} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ══════════════════════════════
+    //  EVALUACIÓN CENSAL DE COMPRENSIÓN LECTORA (DIRECTOR - SOLO LECTURA)
+    // ══════════════════════════════
+    let chartDirCensalNivelBarras = null;
+    let chartDirCensalNivelTorta = null;
+
+    async function cargarSalonesCensalDirector() {
+      const select = document.getElementById('dir-censal-salon-select');
+      if (select.dataset.cargado) return;
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/alumnos/salones', { headers });
+        const salones = await res.json();
+        select.innerHTML = '<option value="">Selecciona un salón...</option>' +
+          salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        select.dataset.cargado = '1';
+      } catch (err) {
+        console.error('Error cargando salones (censal director):', err);
+      }
+    }
+
+    async function cargarEvaluacionCensalDirector() {
+      const salonId = document.getElementById('dir-censal-salon-select').value;
+      const thead = document.getElementById('dir-censal-thead-row');
+      const tbody = document.getElementById('tabla-dir-censal-alumnos');
+      document.getElementById('dir-censal-n-evaluados').textContent = '';
+      if (!salonId) {
+        thead.innerHTML = '<th>N°</th><th>Apellidos y Nombres</th>';
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📝</div><p>Selecciona un salón para ver los resultados</p></div></td></tr>';
+        document.getElementById('dir-censal-profesor').value = '';
+        document.getElementById('dir-censal-fecha').value = '';
+        if (chartDirCensalNivelBarras) { chartDirCensalNivelBarras.destroy(); chartDirCensalNivelBarras = null; }
+        if (chartDirCensalNivelTorta) { chartDirCensalNivelTorta.destroy(); chartDirCensalNivelTorta = null; }
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const [metaRes, gridRes] = await Promise.all([
+          fetch('/api/evaluacion-censal/meta?salon_id=' + salonId, { headers }),
+          fetch('/api/evaluacion-censal?salon_id=' + salonId, { headers })
+        ]);
+        const meta = await metaRes.json();
+        const grid = await gridRes.json();
+
+        document.getElementById('dir-censal-profesor').value = meta.profesor_tutor || '';
+        document.getElementById('dir-censal-fecha').value = meta.fecha_aplicacion ? String(meta.fecha_aplicacion).slice(0, 10) : '';
+
+        renderTablaCensalDirector(grid.items || [], grid.alumnos || []);
+        renderChartsCensalDirector(grid.alumnos || []);
+      } catch (err) {
+        console.error('Error cargando evaluación censal (director):', err);
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la evaluación</p></div></td></tr>';
+      }
+    }
+
+    function renderTablaCensalDirector(items, alumnos) {
+      const thead = document.getElementById('dir-censal-thead-row');
+      const tbody = document.getElementById('tabla-dir-censal-alumnos');
+      const totalCols = 2 + items.length + 2;
+
+      thead.innerHTML = '<th>N°</th><th>Apellidos y Nombres</th>' +
+        items.map(it => `<th>Ítem ${it.item_numero}<br><span style="color:var(--text3);font-size:11px">(${it.competencia})</span></th>`).join('') +
+        '<th>Total<br>Correctas</th><th>Nivel de<br>Logro</th>';
+
+      document.getElementById('dir-censal-n-evaluados').textContent =
+        alumnos.length ? (alumnos.filter(a => a.total_correctas !== null).length + ' de ' + alumnos.length + ' evaluados') : '';
+
+      tbody.innerHTML = alumnos.length ? alumnos.map(a => `
+        <tr>
+          <td>${a.numero ?? '—'}</td>
+          <td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>
+          ${items.map(it => `<td style="text-align:center;color:var(--text2)">${a.respuestas[it.item_numero] || '—'}</td>`).join('')}
+          <td style="color:var(--text);font-weight:600">${a.total_correctas ?? '—'}</td>
+          <td>${badgeNivelLogro(a.nivel_logro)}</td>
+        </tr>`).join('') : `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>`;
+    }
+
+    function renderChartsCensalDirector(alumnos) {
+      const niveles = ['Destacado (AD)', 'Logrado (A)', 'En Proceso (B)', 'En Inicio (C)'];
+      const colores = ['#2ecc71', '#8ecae6', '#f39c12', '#e63946'];
+      const conteo = niveles.map(n => alumnos.filter(a => a.nivel_logro === n).length);
+      const totalEvaluados = conteo.reduce((a, b) => a + b, 0);
+
+      if (chartDirCensalNivelBarras) chartDirCensalNivelBarras.destroy();
+      const ctxBarras = document.getElementById('chart-dir-censal-nivel-barras').getContext('2d');
+      chartDirCensalNivelBarras = new Chart(ctxBarras, {
+        type: 'bar',
+        data: { labels: niveles, datasets: [{ data: conteo, backgroundColor: colores, borderRadius: 6 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#9090a8', font: { size: 11 } }, grid: { display: false } }
+          }
+        }
+      });
+
+      if (chartDirCensalNivelTorta) chartDirCensalNivelTorta.destroy();
+      const ctxTorta = document.getElementById('chart-dir-censal-nivel-torta').getContext('2d');
+      chartDirCensalNivelTorta = new Chart(ctxTorta, {
         type: 'pie',
         data: { labels: niveles, datasets: [{ data: conteo, backgroundColor: colores }] },
         options: {
