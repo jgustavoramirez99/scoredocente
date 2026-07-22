@@ -1,34 +1,59 @@
+const express = require('express');
+const router = express.Router();
 const db = require('../db');
+const { verificarToken } = require('./auth');
 
-// Registra una acción en el log de auditoría.
-// Nunca lanza error hacia arriba: si falla el registro de auditoría,
-// no debe tumbar la operación principal (crear/editar/eliminar) que sí le importa al usuario.
-//
-// tabla: nombre lógico de la tabla/módulo afectado (ej: 'evaluaciones', 'asistencias')
-// registro_id: id de la fila afectada
-// accion: 'crear' | 'editar' | 'eliminar'
-// usuario: req.usuario (viene del token, tiene id y nombre)
-// descripcion: texto corto legible para humanos (ej: "Evaluación de Juan Pérez")
-// datos: objeto opcional con snapshot de los datos relevantes (útil sobre todo en 'eliminar',
-//        para poder reconstruir qué había si luego lo vuelven a registrar)
-async function registrarAuditoria({ tabla, registro_id, accion, usuario, descripcion, datos }) {
-  try {
-    await db.query(
-      `INSERT INTO auditoria (tabla, registro_id, accion, usuario_id, usuario_nombre, descripcion, datos)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        tabla,
-        registro_id || null,
-        accion,
-        usuario.id,
-        usuario.nombre || usuario.email || 'Desconocido',
-        descripcion || null,
-        datos ? JSON.stringify(datos) : null
-      ]
-    );
-  } catch (err) {
-    console.error('⚠️  Error al registrar auditoría (no afecta la operación principal):', err.message);
+// GET /api/auditoria/usuarios — lista simple de usuarios para el filtro del panel
+router.get('/usuarios', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede ver la auditoría' });
   }
-}
+  try {
+    const result = await db.query(
+      `SELECT DISTINCT u.id, u.nombre
+       FROM auditoria a
+       JOIN usuarios u ON u.id = a.usuario_id
+       ORDER BY u.nombre`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener usuarios de auditoría:', err);
+    res.status(500).json({ error: 'Error al obtener usuarios' });
+  }
+});
 
-module.exports = { registrarAuditoria };
+// GET /api/auditoria?usuario_id=&tabla=&accion=&desde=&hasta=
+// Solo el director puede ver el registro de actividad del sistema.
+router.get('/', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== 'director') {
+    return res.status(403).json({ error: 'Solo el director puede ver la auditoría' });
+  }
+  try {
+    const { usuario_id, tabla, accion, desde, hasta } = req.query;
+    const params = [];
+    const where = [];
+
+    if (usuario_id) { params.push(usuario_id); where.push(`a.usuario_id = $${params.length}`); }
+    if (tabla)      { params.push(tabla);      where.push(`a.tabla = $${params.length}`); }
+    if (accion)     { params.push(accion);     where.push(`a.accion = $${params.length}`); }
+    if (desde)      { params.push(desde);      where.push(`a.creado_en >= $${params.length}`); }
+    if (hasta)      { params.push(hasta);      where.push(`a.creado_en <= $${params.length}::date + interval '1 day'`); }
+
+    const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+
+    const result = await db.query(
+      `SELECT a.*
+       FROM auditoria a
+       ${whereSql}
+       ORDER BY a.creado_en DESC
+       LIMIT 500`,
+      params
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener auditoría:', err);
+    res.status(500).json({ error: 'Error al obtener la auditoría' });
+  }
+});
+
+module.exports = router;
