@@ -4,7 +4,7 @@ const db = require('../db');
 const { verificarToken } = require('./auth');
 
 const ROLES_PERMITIDOS = ['auxiliar', 'director']; // pueden ver/registrar asistencia
-const ROLES_REPORTE = ['director']; // solo Gerente General ve el reporte/historial completo
+const ROLES_REPORTE = ['director', 'auxiliar']; // director ve el reporte completo; auxiliar ve el resumen semanal por salón
 
 function permitirRoles(...rolesPermitidos) {
   return (req, res, next) => {
@@ -81,7 +81,9 @@ router.post('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req,
   }
 });
 
-// GET /api/asistencias/reporte?desde=&hasta=&salon_id= — historial completo, SOLO Gerente General
+// GET /api/asistencias/reporte?desde=&hasta=&salon_id= — historial de faltas/tardanzas
+// El director lo usa para ver y corregir cualquier salón y fecha; el auxiliar solo
+// para el resumen semanal de su panel (el front nunca le muestra edición aquí).
 router.get('/reporte', verificarToken, permitirRoles(...ROLES_REPORTE), async (req, res) => {
   try {
     const { desde, hasta, salon_id } = req.query;

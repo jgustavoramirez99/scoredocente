@@ -1136,6 +1136,7 @@
       </div>
       <div class="nav-section">Asistencia</div>
       <div class="nav-item active" onclick="showSectionAux('aux-asistencia', this)">🗓 Asistencia de hoy</div>
+      <div class="nav-item" onclick="showSectionAux('aux-resumen', this)">📊 Resumen por salón</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -1171,6 +1172,36 @@
           <table>
             <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Observación</th><th>Acción</th><th>WhatsApp</th></tr></thead>
             <tbody id="tabla-aux-alumnos"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-aux-resumen">
+        <div class="page-header">
+          <div class="page-title">Resumen por salón</div>
+          <div class="page-subtitle">Tardanzas y faltas injustificadas de los últimos 7 días, por salón</div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header"><h3>Resumen semanal por salón (últimos 7 días)</h3></div>
+          <table>
+            <thead><tr><th>Salón</th><th>Tardanzas</th><th>Faltas injustificadas</th><th>Total incidencias</th><th>Detalle</th></tr></thead>
+            <tbody id="tabla-aux-resumen-semanal"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="table-card" style="margin-top:1.5rem">
+          <div class="table-header" style="flex-wrap:wrap;gap:10px">
+            <h3 id="aux-detalle-titulo">Detalle por alumno — últimos 7 días</h3>
+            <input type="text" id="aux-detalle-buscador" oninput="filtrarDetalleAsistenciaAuxiliar()" placeholder="Buscar por nombre o celular..."
+              style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;min-width:220px">
+          </div>
+          <div style="position:relative;height:260px;overflow:hidden;padding:1rem 1.5rem 0" id="aux-detalle-chart-wrap">
+            <canvas id="chart-aux-detalle-salon"></canvas>
+          </div>
+          <table>
+            <thead><tr><th>Alumno</th><th>Celular</th><th>Tardanzas</th><th>Faltas injustificadas</th><th>Total</th></tr></thead>
+            <tbody id="tabla-aux-detalle-salon"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón en la tabla de arriba para ver el detalle</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2053,6 +2084,7 @@
       document.querySelectorAll('#auxiliar-page .nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('section-' + id).classList.add('active');
       el.classList.add('active');
+      if (id === 'aux-resumen') cargarResumenSemanalAuxiliar();
     }
 
     async function cargarDatosDirector() {
@@ -2792,6 +2824,138 @@ async function guardarEvaluacionTutor() {
       });
     }
 
+    // ══════════════════════════════
+    //  ASISTENCIA (AUXILIAR) — resumen semanal por salón y detalle por alumno
+    // ══════════════════════════════
+    async function cargarResumenSemanalAuxiliar() {
+      const tbody = document.getElementById('tabla-aux-resumen-semanal');
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const hoy = fechaHoyISO();
+        const desde = fechaHace7ISO();
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hoy}`, { headers });
+        const registros = await res.json();
+
+        const porSalon = {};
+        registros.forEach(r => {
+          if (!porSalon[r.salon]) porSalon[r.salon] = { tardanzas: 0, faltas: 0 };
+          if (r.estado === 'TI' || r.estado === 'TJ') porSalon[r.salon].tardanzas++;
+          else if (r.estado === 'FI') porSalon[r.salon].faltas++;
+        });
+
+        const filas = Object.entries(porSalon)
+          .map(([salon, c]) => ({ salon, ...c, total: c.tardanzas + c.faltas }))
+          .sort((a, b) => b.total - a.total);
+
+        tbody.innerHTML = filas.length ? filas.map(f => `
+          <tr>
+            <td style="color:var(--text);font-weight:500">${f.salon}</td>
+            <td><span class="badge ${f.tardanzas > 0 ? 'badge-amber' : 'badge-green'}">${f.tardanzas}</span></td>
+            <td><span class="badge ${f.faltas > 0 ? 'badge-red' : 'badge-green'}">${f.faltas}</span></td>
+            <td style="color:var(--text);font-weight:600">${f.total}</td>
+            <td><button class="eval-btn" onclick="verDetalleSalonAuxiliar('${f.salon.replace(/'/g, "\\'")}')">🔍 Ver detalle</button></td>
+          </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>Sin faltas ni tardanzas en los últimos 7 días</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando resumen semanal (auxiliar):', err);
+      }
+    }
+
+    // Al presionar "Ver detalle", busca el salón por nombre en el <select> de
+    // asistencia de hoy (ya cargado al iniciar sesión) y trae su detalle.
+    function verDetalleSalonAuxiliar(nombreSalon) {
+      const select = document.getElementById('aux-salon-select');
+      const opcion = select ? Array.from(select.options).find(o => o.textContent === nombreSalon) : null;
+      if (opcion) {
+        cargarDetalleAsistenciaSalonAuxiliar(opcion.value, nombreSalon);
+      }
+      document.getElementById('aux-detalle-titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function cargarDetalleAsistenciaSalonAuxiliar(salonId, nombreSalon) {
+      const tbody = document.getElementById('tabla-aux-detalle-salon');
+      const titulo = document.getElementById('aux-detalle-titulo');
+      const buscador = document.getElementById('aux-detalle-buscador');
+      if (buscador) buscador.value = '';
+      titulo.textContent = `Detalle por alumno — ${nombreSalon} (últimos 7 días)`;
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const hoy = fechaHoyISO();
+        const desde = fechaHace7ISO();
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hoy}&salon_id=${salonId}`, { headers });
+        const registros = await res.json();
+
+        const porAlumno = {};
+        registros.forEach(r => {
+          const key = r.apellidos_nombres;
+          if (!porAlumno[key]) porAlumno[key] = { nombre: r.apellidos_nombres, celular: r.celular_apoderado || '', tardanzas: 0, faltas: 0 };
+          if (r.estado === 'TI' || r.estado === 'TJ') porAlumno[key].tardanzas++;
+          else if (r.estado === 'FI') porAlumno[key].faltas++;
+        });
+
+        const detalle = Object.values(porAlumno)
+          .filter(a => a.tardanzas > 0 || a.faltas > 0)
+          .map(a => ({ ...a, total: a.tardanzas + a.faltas }))
+          .sort((a, b) => b.total - a.total);
+
+        ultimoDetalleAsistenciaAuxiliar = detalle;
+        renderDetalleAsistenciaAuxiliar(detalle);
+        renderChartDetalleAsistenciaAuxiliar(detalle);
+      } catch (err) {
+        console.error('Error cargando detalle del salón (auxiliar):', err);
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar el detalle</p></div></td></tr>';
+      }
+    }
+
+    function renderDetalleAsistenciaAuxiliar(detalle) {
+      const tbody = document.getElementById('tabla-aux-detalle-salon');
+      tbody.innerHTML = detalle.length ? detalle.map(a => `
+        <tr data-row data-nombre="${a.nombre.toLowerCase()}" data-cel="${(a.celular || '').toLowerCase()}">
+          <td style="color:var(--text);font-weight:500">${a.nombre}</td>
+          <td>${a.celular || '—'}</td>
+          <td><span class="badge ${a.tardanzas > 0 ? 'badge-amber' : 'badge-green'}">${a.tardanzas}</span></td>
+          <td><span class="badge ${a.faltas > 0 ? 'badge-red' : 'badge-green'}">${a.faltas}</span></td>
+          <td style="color:var(--text);font-weight:600">${a.total}</td>
+        </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">✅</div><p>Sin tardanzas ni faltas injustificadas en este salón</p></div></td></tr>';
+    }
+
+    function renderChartDetalleAsistenciaAuxiliar(detalle) {
+      if (chartAuxDetalleSalon) chartAuxDetalleSalon.destroy();
+      const ctx = document.getElementById('chart-aux-detalle-salon').getContext('2d');
+      const top = detalle.slice(0, 15); // evita que el gráfico se sature si hay muchos alumnos
+      chartAuxDetalleSalon = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: top.map(a => a.nombre.split(',')[0]),
+          datasets: [
+            { label: 'Tardanzas', data: top.map(a => a.tardanzas), backgroundColor: 'rgba(243,156,18,0.8)', borderRadius: 6 },
+            { label: 'Faltas injustificadas', data: top.map(a => a.faltas), backgroundColor: 'rgba(230,57,70,0.8)', borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#9090a8', maxRotation: 40, font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // Filtra la tabla de detalle por salón (nombre o celular), sin volver a pedir a la API
+    function filtrarDetalleAsistenciaAuxiliar() {
+      const q = document.getElementById('aux-detalle-buscador').value.trim().toLowerCase();
+      document.querySelectorAll('#tabla-aux-detalle-salon tr[data-row]').forEach(tr => {
+        const nombre = tr.dataset.nombre || '';
+        const cel = tr.dataset.cel || '';
+        tr.style.display = (!q || nombre.includes(q) || cel.includes(q)) ? '' : 'none';
+      });
+    }
+
     function actualizarReporteSupervisor(evaluaciones) {
       const total = evaluaciones.length;
       const aprobados = evaluaciones.filter(e => parseFloat(e.puntaje_total) >= 70).length;
@@ -2996,6 +3160,8 @@ function cerrarModal() {
     let chartDistribucion = null;
     let chartDirDetalleSalon = null;
     let ultimoDetalleAsistenciaDirector = []; // guarda el detalle cargado del salón seleccionado, para filtrar sin re-pedir a la API
+    let chartAuxDetalleSalon = null;
+    let ultimoDetalleAsistenciaAuxiliar = [];
 
     function renderizarGraficos(evaluaciones) {
       // ── Agrupar por docente (promedio de todas sus evaluaciones) ──
