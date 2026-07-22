@@ -15,6 +15,10 @@ function permitirRoles(...rolesPermitidos) {
   };
 }
 
+// Si una auxiliar no renueva el bloqueo en 2 minutos, se considera libre
+// (por si cierra el navegador sin avisar). El frontend renueva cada 45s.
+const BLOQUEO_TTL_MS = 2 * 60 * 1000;
+
 // Nivel de logro según % de aciertos (no cantidad fija, porque el N° de ítems
 // varía según el grado: 6 en primaria, hasta 20 en 5to de secundaria)
 function calcularNivelLogro(correctas, totalItems) {
@@ -173,6 +177,79 @@ router.post('/respuesta', verificarToken, permitirRoles(...ROLES_ESCRITURA), asy
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Error al guardar la respuesta' });
+  }
+});
+
+// ══════════════════════════════
+//  BLOQUEO POR SALÓN (para que solo una auxiliar edite un salón a la vez)
+// ══════════════════════════════
+
+// GET /api/evaluacion-censal/bloqueo?salon_id=5
+// Consulta si el salón está ocupado por otra persona (sin tomarlo)
+router.get('/bloqueo', verificarToken, permitirRoles(...ROLES_LECTURA), async (req, res) => {
+  try {
+    const { salon_id } = req.query;
+    if (!salon_id) return res.status(400).json({ error: 'salon_id es requerido' });
+    const result = await db.query('SELECT * FROM evaluacion_censal_bloqueos WHERE salon_id = $1', [salon_id]);
+    const bloqueo = result.rows[0];
+    const vencido = bloqueo && (Date.now() - new Date(bloqueo.tomado_en).getTime()) > BLOQUEO_TTL_MS;
+    if (!bloqueo || vencido) return res.json({ ocupado: false });
+    res.json({
+      ocupado: bloqueo.usuario_id !== req.usuario.id,
+      usuario_nombre: bloqueo.usuario_nombre,
+      tomado_en: bloqueo.tomado_en
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al consultar el bloqueo del salón' });
+  }
+});
+
+// POST /api/evaluacion-censal/bloqueo/tomar  { salon_id }
+// Toma el bloqueo si está libre, o lo renueva si ya es tuyo. Si otra persona lo tiene, responde 409.
+router.post('/bloqueo/tomar', verificarToken, permitirRoles(...ROLES_ESCRITURA), async (req, res) => {
+  try {
+    const { salon_id } = req.body;
+    if (!salon_id) return res.status(400).json({ error: 'salon_id es requerido' });
+
+    const actualRes = await db.query('SELECT * FROM evaluacion_censal_bloqueos WHERE salon_id = $1', [salon_id]);
+    const actual = actualRes.rows[0];
+
+    if (actual && actual.usuario_id !== req.usuario.id) {
+      const vencido = (Date.now() - new Date(actual.tomado_en).getTime()) > BLOQUEO_TTL_MS;
+      if (!vencido) {
+        return res.status(409).json({
+          error: 'Salón en uso',
+          usuario_nombre: actual.usuario_nombre,
+          tomado_en: actual.tomado_en
+        });
+      }
+    }
+
+    const nombreUsuario = req.usuario.nombre || req.usuario.email || 'Auxiliar';
+    const upsert = await db.query(
+      `INSERT INTO evaluacion_censal_bloqueos (salon_id, usuario_id, usuario_nombre, tomado_en)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (salon_id)
+       DO UPDATE SET usuario_id = $2, usuario_nombre = $3, tomado_en = now()
+       RETURNING *`,
+      [salon_id, req.usuario.id, nombreUsuario]
+    );
+    res.json({ ocupado: false, ...upsert.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al tomar el bloqueo del salón' });
+  }
+});
+
+// POST /api/evaluacion-censal/bloqueo/liberar  { salon_id }
+// Libera el bloqueo, solo si es tuyo (no puedes liberar el de otra persona)
+router.post('/bloqueo/liberar', verificarToken, permitirRoles(...ROLES_ESCRITURA), async (req, res) => {
+  try {
+    const { salon_id } = req.body;
+    if (!salon_id) return res.status(400).json({ error: 'salon_id es requerido' });
+    await db.query('DELETE FROM evaluacion_censal_bloqueos WHERE salon_id = $1 AND usuario_id = $2', [salon_id, req.usuario.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al liberar el bloqueo del salón' });
   }
 });
 

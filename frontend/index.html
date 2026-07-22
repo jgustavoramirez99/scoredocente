@@ -1285,6 +1285,8 @@
           </div>
         </div>
 
+        <div id="censal-bloqueo-banner" style="display:none;background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
+
         <div class="table-card" style="overflow-x:auto">
           <div class="table-header"><h3>Registro de respuestas</h3></div>
           <table id="tabla-censal-wrap" style="min-width:700px">
@@ -2156,6 +2158,7 @@
 }
 
     function logout() {
+      if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual);
       if (pollingInterval) clearInterval(pollingInterval);
       localStorage.clear();
       location.reload();
@@ -2180,6 +2183,12 @@
     }
 
     function showSectionAux(id, el) {
+      // si salimos de "Evaluación Censal" hacia otra pestaña, soltamos el bloqueo del salón
+      if (id !== 'aux-censal' && censalSalonActual) {
+        liberarBloqueoCensal(censalSalonActual);
+        detenerHeartbeatCensal();
+        censalSalonActual = null;
+      }
       document.querySelectorAll('#auxiliar-page .section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('#auxiliar-page .nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('section-' + id).classList.add('active');
@@ -2187,6 +2196,10 @@
       if (id === 'aux-resumen') cargarResumenSemanalAuxiliar();
       if (id === 'aux-censal') cargarSalonesCensalAuxiliar();
     }
+
+    window.addEventListener('pagehide', () => {
+      if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual);
+    });
 
     async function cargarDatosDirector() {
       try {
@@ -3075,11 +3088,25 @@ async function guardarEvaluacionTutor() {
       }
     }
 
+    // Estado del bloqueo por salón en el panel de la auxiliar
+    let censalSalonActual = null;     // salón cuyo bloqueo tiene esta sesión ahora mismo
+    let censalHeartbeatInterval = null;
+
     async function cargarEvaluacionCensal() {
       const salonId = document.getElementById('censal-salon-select').value;
       const thead = document.getElementById('censal-thead-row');
       const tbody = document.getElementById('tabla-censal-alumnos');
+      const banner = document.getElementById('censal-bloqueo-banner');
+
+      // Si veníamos con el bloqueo de otro salón, lo soltamos antes de continuar
+      if (censalSalonActual && censalSalonActual !== salonId) {
+        liberarBloqueoCensal(censalSalonActual);
+      }
+      detenerHeartbeatCensal();
+      censalSalonActual = null;
+      banner.style.display = 'none';
       document.getElementById('censal-n-evaluados').textContent = '';
+
       if (!salonId) {
         thead.innerHTML = '<th>N°</th><th>Apellidos y Nombres</th>';
         tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📝</div><p>Selecciona un salón para ver a los alumnos</p></div></td></tr>';
@@ -3089,7 +3116,26 @@ async function guardarEvaluacionTutor() {
         if (chartCensalNivelTorta) { chartCensalNivelTorta.destroy(); chartCensalNivelTorta = null; }
         return;
       }
+
       tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+
+      // Intentamos tomar el bloqueo del salón antes de mostrar nada editable
+      const bloqueo = await tomarBloqueoCensal(salonId);
+      if (bloqueo.ocupado) {
+        banner.textContent = `🔒 Este salón está siendo editado por ${bloqueo.usuario_nombre} en este momento. Elige otro salón o intenta en unos minutos.`;
+        banner.style.display = 'block';
+        thead.innerHTML = '<th>N°</th><th>Apellidos y Nombres</th>';
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">🔒</div><p>Salón bloqueado por otra persona</p></div></td></tr>';
+        document.getElementById('censal-profesor').value = '';
+        document.getElementById('censal-fecha').value = '';
+        if (chartCensalNivelBarras) { chartCensalNivelBarras.destroy(); chartCensalNivelBarras = null; }
+        if (chartCensalNivelTorta) { chartCensalNivelTorta.destroy(); chartCensalNivelTorta = null; }
+        return;
+      }
+
+      censalSalonActual = salonId;
+      iniciarHeartbeatCensal(salonId);
+
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
         const [metaRes, gridRes] = await Promise.all([
@@ -3326,6 +3372,48 @@ async function guardarEvaluacionTutor() {
         console.error('Error cargando evaluación censal (director):', err);
         tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la evaluación</p></div></td></tr>';
       }
+    }
+
+    async function tomarBloqueoCensal(salonId) {
+      try {
+        const res = await fetch('/api/evaluacion-censal/bloqueo/tomar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ salon_id: salonId })
+        });
+        if (res.status === 409) {
+          const data = await res.json();
+          return { ocupado: true, usuario_nombre: data.usuario_nombre };
+        }
+        return { ocupado: false };
+      } catch (err) {
+        console.error('Error al tomar el bloqueo del salón:', err);
+        return { ocupado: false }; // si falla la red, no bloqueamos el trabajo de la auxiliar
+      }
+    }
+
+    function iniciarHeartbeatCensal(salonId) {
+      censalHeartbeatInterval = setInterval(() => {
+        fetch('/api/evaluacion-censal/bloqueo/tomar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ salon_id: salonId })
+        }).catch(() => {});
+      }, 45000); // renueva cada 45s (el bloqueo vence a los 2 min sin renovar)
+    }
+
+    function detenerHeartbeatCensal() {
+      if (censalHeartbeatInterval) { clearInterval(censalHeartbeatInterval); censalHeartbeatInterval = null; }
+    }
+
+    function liberarBloqueoCensal(salonId) {
+      if (!salonId) return;
+      fetch('/api/evaluacion-censal/bloqueo/liberar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ salon_id: salonId }),
+        keepalive: true
+      }).catch(() => {});
     }
 
     function renderTablaCensalDirector(items, alumnos) {
