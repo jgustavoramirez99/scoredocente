@@ -721,6 +721,8 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -1084,7 +1086,10 @@
         </div>
 
         <div class="table-card" style="overflow-x:auto">
-          <div class="table-header"><h3>Registro de respuestas</h3></div>
+          <div class="table-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>Registro de respuestas</h3>
+            <button class="eval-btn" onclick="descargarPDFCensal('dir-')">📄 Descargar PDF del salón</button>
+          </div>
           <table id="tabla-dir-censal-wrap" style="min-width:700px">
             <thead><tr id="dir-censal-thead-row"><th>N°</th><th>Apellidos y Nombres</th></tr></thead>
             <tbody id="tabla-dir-censal-alumnos"><tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📝</div><p>Selecciona un salón para ver los resultados</p></div></td></tr></tbody>
@@ -1360,7 +1365,10 @@
         <div id="censal-bloqueo-banner" style="display:none;background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
 
         <div class="table-card" style="overflow-x:auto">
-          <div class="table-header"><h3>Registro de respuestas</h3></div>
+          <div class="table-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>Registro de respuestas</h3>
+            <button class="eval-btn" onclick="descargarPDFCensal('')">📄 Descargar PDF del salón</button>
+          </div>
           <table id="tabla-censal-wrap" style="min-width:700px">
             <thead><tr id="censal-thead-row"><th>N°</th><th>Apellidos y Nombres</th></tr></thead>
             <tbody id="tabla-censal-alumnos"><tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📝</div><p>Selecciona un salón para ver a los alumnos</p></div></td></tr></tbody>
@@ -3246,6 +3254,8 @@ async function guardarEvaluacionTutor() {
         if (chartCensalNivelBarras) { chartCensalNivelBarras.destroy(); chartCensalNivelBarras = null; }
         if (chartCensalNivelTorta) { chartCensalNivelTorta.destroy(); chartCensalNivelTorta = null; }
         destruirChartsCompetenciaCensal('');
+        censalAlumnosActuales = [];
+        censalItemsActuales = [];
         return;
       }
 
@@ -3263,6 +3273,8 @@ async function guardarEvaluacionTutor() {
         if (chartCensalNivelBarras) { chartCensalNivelBarras.destroy(); chartCensalNivelBarras = null; }
         if (chartCensalNivelTorta) { chartCensalNivelTorta.destroy(); chartCensalNivelTorta = null; }
         destruirChartsCompetenciaCensal('');
+        censalAlumnosActuales = [];
+        censalItemsActuales = [];
         return;
       }
 
@@ -3282,8 +3294,9 @@ async function guardarEvaluacionTutor() {
         document.getElementById('censal-fecha').value = meta.fecha_aplicacion ? String(meta.fecha_aplicacion).slice(0, 10) : '';
 
         censalItemsActuales = grid.items || [];
-        renderTablaCensal(censalItemsActuales, grid.alumnos || []);
-        renderChartsCensal(grid.alumnos || []);
+        censalAlumnosActuales = grid.alumnos || [];
+        renderTablaCensal(censalItemsActuales, censalAlumnosActuales);
+        renderChartsCensal(censalAlumnosActuales);
       } catch (err) {
         console.error('Error cargando evaluación censal:', err);
         tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la evaluación</p></div></td></tr>';
@@ -3392,6 +3405,7 @@ async function guardarEvaluacionTutor() {
         const res = await fetch('/api/evaluacion-censal?salon_id=' + salonId, { headers });
         const grid = await res.json();
         const alumnos = grid.alumnos || [];
+        censalAlumnosActuales = alumnos;
         const actualizado = alumnos.find(a => a.alumno_id === alumnoIdEditado);
         if (actualizado) {
           const celdaTotal = document.getElementById(`censal-total-${alumnoIdEditado}`);
@@ -3520,6 +3534,7 @@ async function guardarEvaluacionTutor() {
     let chartDirCensalNivelBarras = null;
     let chartDirCensalNivelTorta = null;
     let dirCensalItemsActuales = []; // ítems del salón seleccionado, para los gráficos por competencia
+    let dirCensalAlumnosActuales = []; // alumnos del salón seleccionado (director), usados para exportar el PDF
 
     async function cargarSalonesCensalDirector() {
       const select = document.getElementById('dir-censal-salon-select');
@@ -3549,6 +3564,8 @@ async function guardarEvaluacionTutor() {
         if (chartDirCensalNivelBarras) { chartDirCensalNivelBarras.destroy(); chartDirCensalNivelBarras = null; }
         if (chartDirCensalNivelTorta) { chartDirCensalNivelTorta.destroy(); chartDirCensalNivelTorta = null; }
         destruirChartsCompetenciaCensal('dir-');
+        dirCensalAlumnosActuales = [];
+        dirCensalItemsActuales = [];
         return;
       }
       tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
@@ -3564,9 +3581,10 @@ async function guardarEvaluacionTutor() {
         document.getElementById('dir-censal-profesor').value = meta.profesor_tutor || '';
         document.getElementById('dir-censal-fecha').value = meta.fecha_aplicacion ? String(meta.fecha_aplicacion).slice(0, 10) : '';
 
-        renderTablaCensalDirector(grid.items || [], grid.alumnos || []);
         dirCensalItemsActuales = grid.items || [];
-        renderChartsCensalDirector(grid.alumnos || []);
+        dirCensalAlumnosActuales = grid.alumnos || [];
+        renderTablaCensalDirector(dirCensalItemsActuales, dirCensalAlumnosActuales);
+        renderChartsCensalDirector(dirCensalAlumnosActuales);
       } catch (err) {
         console.error('Error cargando evaluación censal (director):', err);
         tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la evaluación</p></div></td></tr>';
@@ -3894,6 +3912,7 @@ function cerrarModal() {
     let chartCensalNivelBarras = null;
     let chartCensalNivelTorta = null;
     let censalItemsActuales = []; // ítems del salón seleccionado en Evaluación Censal, guardados para no re-pedirlos en cada guardado
+    let censalAlumnosActuales = []; // alumnos del salón seleccionado (auxiliar), usados para exportar el PDF
 
     function renderizarGraficos(evaluaciones) {
       // ── Agrupar por docente (promedio de todas sus evaluaciones) ──
@@ -5295,6 +5314,194 @@ function _dibujarPie(doc, pag, total) {
   const txt = pag ? 'EduScore CS  |  I.E.P. Cervantes School  |  Página ' + pag + ' de ' + total
                   : 'EduScore CS  |  I.E.P. Cervantes School';
   doc.text(txt, 105, 293, {align:'center'});
+}
+
+// ══════════════════════════════════════════════════
+//  PDF — EVALUACIÓN CENSAL DE COMPRENSIÓN LECTORA (por salón)
+//  Reutilizable desde el panel del Director ('dir-') y de la Auxiliar ('')
+// ══════════════════════════════════════════════════
+
+// Captura un <canvas> de Chart.js con fondo blanco (para que se vea bien en el PDF)
+// y devuelve también su relación de aspecto, para poder escalarlo sin deformarlo.
+function _canvasCensalConFondo(canvasId) {
+  const original = document.getElementById(canvasId);
+  if (!original || !original.width || !original.height) return null;
+  const temp = document.createElement('canvas');
+  temp.width = original.width;
+  temp.height = original.height;
+  const ctx = temp.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, temp.width, temp.height);
+  ctx.drawImage(original, 0, 0);
+  return { data: temp.toDataURL('image/png'), ratio: original.width / original.height };
+}
+
+// Dibuja una imagen dentro de un ancho/alto máximo, respetando su proporción original.
+// Devuelve la altura efectiva que ocupó, para poder seguir calculando el "y" siguiente.
+function _addImagenAjustada(doc, img, x, y, maxW, maxH) {
+  if (!img) return 0;
+  let w = maxW, h = w / img.ratio;
+  if (h > maxH) { h = maxH; w = h * img.ratio; }
+  doc.addImage(img.data, 'PNG', x + (maxW - w) / 2, y, w, h);
+  return h;
+}
+
+async function descargarPDFCensal(prefix) {
+  const salonSelect = document.getElementById(prefix + 'censal-salon-select');
+  const salonId = salonSelect.value;
+  if (!salonId) { alert('Selecciona un salón antes de descargar el PDF.'); return; }
+  const salonNombre = salonSelect.options[salonSelect.selectedIndex].text;
+
+  const items = prefix === 'dir-' ? dirCensalItemsActuales : censalItemsActuales;
+  const alumnos = prefix === 'dir-' ? dirCensalAlumnosActuales : censalAlumnosActuales;
+
+  if (!alumnos || !alumnos.length) {
+    alert('Este salón no tiene alumnos registrados para exportar, o todavía no terminó de cargar. Espera un momento e inténtalo de nuevo.');
+    return;
+  }
+
+  const profesor = (document.getElementById(prefix + 'censal-profesor').value || '').trim() || '—';
+  const fechaAplicacion = document.getElementById(prefix + 'censal-fecha').value;
+  const fechaTexto = fechaAplicacion ? new Date(fechaAplicacion + 'T00:00:00').toLocaleDateString('es-PE') : '—';
+
+  // Capturamos los 5 gráficos del salón tal cual se ven en pantalla
+  const imgBarras      = _canvasCensalConFondo('chart-' + prefix + 'censal-nivel-barras');
+  const imgTorta        = _canvasCensalConFondo('chart-' + prefix + 'censal-nivel-torta');
+  const imgLiteral      = _canvasCensalConFondo('chart-' + prefix + 'censal-literal');
+  const imgInferencial  = _canvasCensalConFondo('chart-' + prefix + 'censal-inferencial');
+  const imgCritico      = _canvasCensalConFondo('chart-' + prefix + 'censal-critico');
+
+  const { jsPDF } = window.jspdf;
+  const orientacion = items.length > 8 ? 'landscape' : 'portrait';
+  const doc = new jsPDF({ orientation: orientacion, unit: 'mm', format: 'a4' });
+
+  const datosPDF = { salonNombre, profesor, fechaTexto, items, alumnos, imgBarras, imgTorta, imgLiteral, imgInferencial, imgCritico };
+
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.src = '/Cervantes1.png';
+  logoImg.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = logoImg.width; c.height = logoImg.height;
+    c.getContext('2d').drawImage(logoImg, 0, 0);
+    _generarPDFCensalConLogo(doc, datosPDF, c.toDataURL('image/png'));
+  };
+  logoImg.onerror = () => _generarPDFCensalConLogo(doc, datosPDF, null);
+}
+
+function _generarPDFCensalConLogo(doc, d, logoData) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 10;
+
+  const dibujarEncabezado = () => {
+    doc.setFillColor(180, 0, 30);
+    doc.rect(0, 0, pageW, 2, 'F');
+    if (logoData) doc.addImage(logoData, 'PNG', margin, 3, 26, 18);
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(20, 20, 80);
+    doc.text('EVALUACIÓN CENSAL DE COMPRENSIÓN LECTORA', pageW / 2 + 8, 10, { align: 'center' });
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('I.E.P. Cervantes School  —  Salón: ' + d.salonNombre, pageW / 2 + 8, 16, { align: 'center' });
+    doc.setDrawColor(180, 0, 30);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 24, pageW - margin, 24);
+  };
+
+  dibujarEncabezado();
+
+  // Datos generales
+  let y = 30;
+  doc.setFontSize(9); doc.setTextColor(40, 40, 40);
+  doc.setFont('helvetica', 'bold'); doc.text('Profesor(a) Tutor(a):', margin, y);
+  doc.setFont('helvetica', 'normal'); doc.text(d.profesor, margin + 38, y);
+  doc.setFont('helvetica', 'bold'); doc.text('Fecha de aplicación:', margin + 100, y);
+  doc.setFont('helvetica', 'normal'); doc.text(d.fechaTexto, margin + 136, y);
+  y += 5;
+  const evaluados = d.alumnos.filter(a => a.total_correctas !== null && a.total_correctas !== undefined).length;
+  doc.setFont('helvetica', 'bold'); doc.text('Evaluados:', margin, y);
+  doc.setFont('helvetica', 'normal'); doc.text(evaluados + ' de ' + d.alumnos.length, margin + 38, y);
+  y += 6;
+
+  // ── Tabla de respuestas por alumno ──
+  const head = [['N°', 'Apellidos y Nombres', ...d.items.map(it => 'Ítem ' + it.item_numero + ' (' + it.competencia + ')'), 'Total Correctas', 'Nivel de Logro']];
+  const body = d.alumnos.map(a => [
+    a.numero ?? '—',
+    a.apellidos_nombres,
+    ...d.items.map(it => a.respuestas[it.item_numero] || '—'),
+    a.total_correctas ?? '—',
+    a.nivel_logro || '—'
+  ]);
+
+  const colorNivel = (val) => {
+    if (!val) return null;
+    if (val.startsWith('Destacado')) return { fill: [212, 175, 55], text: [255, 255, 255] };
+    if (val.startsWith('Logrado')) return { fill: [46, 204, 113], text: [255, 255, 255] };
+    if (val.startsWith('En Proceso')) return { fill: [243, 156, 18], text: [255, 255, 255] };
+    if (val.startsWith('En Inicio')) return { fill: [230, 57, 70], text: [255, 255, 255] };
+    return null;
+  };
+
+  doc.autoTable({
+    head, body,
+    startY: y,
+    margin: { left: margin, right: margin },
+    styles: { font: 'helvetica', fontSize: 7.5, cellPadding: 1.8, halign: 'center', valign: 'middle', lineColor: [220, 220, 230], lineWidth: 0.1 },
+    headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+    columnStyles: { 1: { halign: 'left', cellWidth: 'auto' } },
+    alternateRowStyles: { fillColor: [246, 246, 250] },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === head[0].length - 1) {
+        const c = colorNivel(data.cell.raw);
+        if (c) { data.cell.styles.fillColor = c.fill; data.cell.styles.textColor = c.text; data.cell.styles.fontStyle = 'bold'; }
+      }
+    },
+    didDrawPage: () => { dibujarEncabezado(); },
+  });
+
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ── Gráficos: N° por nivel + Distribución % ──
+  const anchoMitad = (pageW - margin * 2 - 6) / 2;
+  const altoGraficoGrande = 65;
+  if (y + 12 + altoGraficoGrande > pageH - 15) { doc.addPage(); dibujarEncabezado(); y = 30; }
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+  doc.text('N° de estudiantes por Nivel de Logro', margin, y);
+  doc.text('Distribución % por Nivel de Logro', margin + anchoMitad + 6, y);
+  y += 4;
+  _addImagenAjustada(doc, d.imgBarras, margin, y, anchoMitad, altoGraficoGrande);
+  _addImagenAjustada(doc, d.imgTorta, margin + anchoMitad + 6, y, anchoMitad, altoGraficoGrande);
+  y += altoGraficoGrande + 12;
+
+  // ── Gráficos por competencia: Literal / Inferencial / Crítico ──
+  const anchoTercio = (pageW - margin * 2 - 12) / 3;
+  const altoGraficoChico = 55;
+  if (y + 12 + altoGraficoChico > pageH - 15) { doc.addPage(); dibujarEncabezado(); y = 30; }
+  const titulosComp = ['Competencia Literal', 'Competencia Inferencial', 'Competencia Crítico'];
+  const imgsComp = [d.imgLiteral, d.imgInferencial, d.imgCritico];
+  doc.setFontSize(10);
+  titulosComp.forEach((t, i) => {
+    doc.text(t, margin + i * (anchoTercio + 6), y);
+  });
+  y += 4;
+  imgsComp.forEach((img, i) => {
+    _addImagenAjustada(doc, img, margin + i * (anchoTercio + 6), y, anchoTercio, altoGraficoChico);
+  });
+  y += altoGraficoChico;
+
+  // Pie de página en todas las páginas
+  const totalPags = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPags; i++) {
+    doc.setPage(i);
+    doc.setFillColor(20, 20, 80);
+    doc.rect(0, pageH - 8, pageW, 8, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+    doc.text('EduScore CS  |  I.E.P. Cervantes School  |  Evaluación Censal — ' + d.salonNombre + '  |  Página ' + i + ' de ' + totalPags, pageW / 2, pageH - 3, { align: 'center' });
+  }
+
+  const nombreArchivo = 'Evaluacion_Censal_' + d.salonNombre.replace(/[^a-zA-Z0-9]+/g, '_') + '.pdf';
+  doc.save(nombreArchivo);
 }
   </script>
   <!-- MODAL DETALLE EVALUACIÓN (DIRECTOR) -->
