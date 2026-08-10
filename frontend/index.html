@@ -776,6 +776,7 @@
       <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
+      <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -1119,6 +1120,49 @@
           <div class="table-card">
             <div class="table-header"><h3>Competencia Crítico<br><span id="dir-censal-prom-critico" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
             <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-dir-censal-critico"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-eval-estudiantes">
+        <div class="page-header">
+          <div class="page-title">Evaluación de Docentes por Estudiantes</div>
+          <div class="page-subtitle">Resultados de la encuesta a alumnos — 100% anónimo, no se identifica al alumno</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Filtrar por salón</label>
+            <select id="ee-salon-select" onchange="cerrarDetalleEvalEstudiantes(); cargarResumenEvalEstudiantes()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Todos los salones</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-card" style="overflow-x:auto">
+          <div class="table-header"><h3>Promedio por docente</h3></div>
+          <table>
+            <thead><tr><th>Docente</th><th>N° de votos</th><th>Promedio</th><th>Interpretación</th><th></th></tr></thead>
+            <tbody id="tabla-ee-resumen"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div id="ee-detalle-wrap" style="display:none;margin-top:1.5rem">
+          <div class="table-card">
+            <div class="table-header" style="display:flex;justify-content:space-between;align-items:center">
+              <h3>Detalle — <span id="ee-detalle-docente-nombre"></span></h3>
+              <button class="eval-btn" onclick="cerrarDetalleEvalEstudiantes()">✕ Cerrar</button>
+            </div>
+            <div style="padding:0 1.5rem 1rem;color:var(--text2);font-size:13px" id="ee-detalle-resumen-txt"></div>
+            <div style="position:relative;height:260px;padding:1rem 1.5rem"><canvas id="chart-ee-criterios"></canvas></div>
+          </div>
+
+          <div class="table-card" style="overflow-x:auto;margin-top:1.5rem">
+            <div class="table-header"><h3>Votos individuales (anónimos)</h3></div>
+            <table style="min-width:900px">
+              <thead><tr id="ee-votos-thead"></tr></thead>
+              <tbody id="tabla-ee-votos"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -2284,6 +2328,7 @@
       if (id === 'tutoria') cargarTutoriaDirector();
       if (id === 'censal') cargarSalonesCensalDirector();
       if (id === 'auditoria') cargarAuditoria();
+      if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
     }
 
     function showSectionSup(id, el) {
@@ -3613,6 +3658,131 @@ async function guardarEvaluacionTutor() {
         console.error('Error cargando evaluación censal (director):', err);
         tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la evaluación</p></div></td></tr>';
       }
+    }
+
+    let chartEECriterios = null;
+    let eeDocenteActual = null;
+
+    function badgeEvalEstudiante(promedio) {
+      if (!promedio) return '<span class="badge badge-gray">Sin votos</span>';
+      const p = parseFloat(promedio);
+      let clase = 'badge-red';
+      if (p >= 4.50) clase = 'badge-gold';
+      else if (p >= 4.00) clase = 'badge-green';
+      else if (p >= 3.50) clase = 'badge-amber';
+      else if (p >= 3.00) clase = 'badge-amber';
+      return `<span class="badge ${clase}">${p.toFixed(2)}</span>`;
+    }
+
+    async function cargarSalonesEvalEstudiantes() {
+      const select = document.getElementById('ee-salon-select');
+      if (select.dataset.cargado) return;
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/alumnos/salones', { headers });
+        const salones = await res.json();
+        select.innerHTML = '<option value="">Todos los salones</option>' +
+          salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        select.dataset.cargado = '1';
+      } catch (err) {
+        console.error('Error cargando salones (eval. estudiantes):', err);
+      }
+    }
+
+    async function cargarResumenEvalEstudiantes() {
+      const salonId = document.getElementById('ee-salon-select').value;
+      const tbody = document.getElementById('tabla-ee-resumen');
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const url = '/api/evaluaciones-estudiantes/resumen' + (salonId ? '?salon_id=' + salonId : '');
+        const res = await fetch(url, { headers });
+        const data = await res.json();
+        tbody.innerHTML = data.length ? data.map(d => `
+          <tr>
+            <td style="color:var(--text);font-weight:500">${d.docente_nombre}</td>
+            <td>${d.total_respuestas}</td>
+            <td>${badgeEvalEstudiante(d.promedio)}</td>
+            <td style="color:var(--text2);font-size:13px">${d.interpretacion}</td>
+            <td><button class="eval-btn" ${d.total_respuestas == 0 ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''} onclick="verDetalleDocenteEE(${d.docente_id}, '${d.docente_nombre.replace(/'/g, "\\'")}')">Ver detalle</button></td>
+          </tr>`).join('') : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🧑‍🎓</div><p>No hay docentes activos</p></div></td></tr>';
+      } catch (err) {
+        console.error('Error cargando resumen eval. estudiantes:', err);
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar el resumen</p></div></td></tr>';
+      }
+    }
+
+    async function verDetalleDocenteEE(docenteId, nombre) {
+      eeDocenteActual = docenteId;
+      const salonId = document.getElementById('ee-salon-select').value;
+      document.getElementById('ee-detalle-wrap').style.display = 'block';
+      document.getElementById('ee-detalle-docente-nombre').textContent = nombre;
+      document.getElementById('ee-detalle-resumen-txt').textContent = 'Cargando...';
+      document.getElementById('tabla-ee-votos').innerHTML = '';
+      document.getElementById('ee-detalle-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const url = '/api/evaluaciones-estudiantes/' + docenteId + (salonId ? '?salon_id=' + salonId : '');
+        const res = await fetch(url, { headers });
+        const data = await res.json();
+        const prom = data.promedios || {};
+
+        document.getElementById('ee-detalle-resumen-txt').innerHTML =
+          `<b>${prom.total_respuestas || 0}</b> votos recibidos ${salonId ? 'en este salón' : 'en todos los salones'} — Promedio general: <b>${prom.promedio_general || '—'}</b> (${data.interpretacion || 'Sin votos'})`;
+
+        renderChartEECriterios(prom);
+        renderTablaVotosEE(data.respuestas || []);
+      } catch (err) {
+        console.error('Error cargando detalle eval. estudiantes:', err);
+        document.getElementById('ee-detalle-resumen-txt').textContent = 'No se pudo cargar el detalle.';
+      }
+    }
+
+    function renderChartEECriterios(prom) {
+      const labels = CRITERIOS_EE_LABELS;
+      const valores = labels.map((_, i) => parseFloat(prom['criterio' + (i + 1)]) || 0);
+      if (chartEECriterios) chartEECriterios.destroy();
+      const ctx = document.getElementById('chart-ee-criterios').getContext('2d');
+      chartEECriterios = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ data: valores, backgroundColor: '#e63946', borderRadius: 6 }] },
+        plugins: [ChartDataLabels],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'top', color: '#9090a8', font: { weight: 'bold', size: 11 } }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 5, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#9090a8', font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    const CRITERIOS_EE_LABELS = ['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10'];
+
+    function renderTablaVotosEE(respuestas) {
+      const thead = document.getElementById('ee-votos-thead');
+      const tbody = document.getElementById('tabla-ee-votos');
+      thead.innerHTML = '<th>Salón</th>' + CRITERIOS_EE_LABELS.map(c => `<th>${c}</th>`).join('') + '<th>Promedio</th><th>Fortaleza</th><th>Mejora</th><th>Fecha</th>';
+      tbody.innerHTML = respuestas.length ? respuestas.map(r => `
+        <tr>
+          <td style="color:var(--text2)">${r.salon_nombre || '—'}</td>
+          ${CRITERIOS_EE_LABELS.map((_, i) => `<td style="text-align:center;color:var(--text2)">${r['criterio' + (i + 1)]}</td>`).join('')}
+          <td style="font-weight:600">${badgeEvalEstudiante(r.puntaje_total)}</td>
+          <td style="color:var(--text2);font-size:12px;max-width:180px">${r.fortaleza || '—'}</td>
+          <td style="color:var(--text2);font-size:12px;max-width:180px">${r.mejora || '—'}</td>
+          <td style="color:var(--text3);font-size:12px">${new Date(r.creado_en).toLocaleDateString('es-PE')}</td>
+        </tr>`).join('') : `<tr><td colspan="${2 + CRITERIOS_EE_LABELS.length + 3}"><div class="empty-state"><div class="empty-icon">🗳️</div><p>Este docente aún no tiene votos</p></div></td></tr>`;
+    }
+
+    function cerrarDetalleEvalEstudiantes() {
+      document.getElementById('ee-detalle-wrap').style.display = 'none';
+      eeDocenteActual = null;
+      if (chartEECriterios) { chartEECriterios.destroy(); chartEECriterios = null; }
     }
 
     async function tomarBloqueoCensal(salonId) {
