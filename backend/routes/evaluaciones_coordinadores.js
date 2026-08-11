@@ -14,31 +14,43 @@ const {
   getNivelGestion,
 } = require('../utils/indicadoresCoordinadores');
 
+// ── ACCESO RESTRINGIDO ──────────────────────────────────
+// Solo esta cuenta puede ver o registrar evaluaciones de coordinadores,
+// sin importar que otras cuentas tengan rol 'director' o 'coordinador_general'.
+const EMAIL_PERMITIDO = 'gerentegeneralcervantino@cervantesschool.edu.pe';
+
+async function soloGerenteGeneral(req, res, next) {
+  try {
+    const r = await db.query('SELECT email FROM usuarios WHERE id = $1', [req.usuario.id]);
+    const email = r.rows[0] && r.rows[0].email;
+    if (email !== EMAIL_PERMITIDO) {
+      return res.status(403).json({ error: 'No tienes permiso para acceder a esta sección' });
+    }
+    next();
+  } catch (err) {
+    console.error('Error verificando permiso de coordinadores:', err);
+    res.status(500).json({ error: 'Error al verificar permisos' });
+  }
+}
+
+// Todas las rutas de este archivo pasan primero por el token,
+// y luego por el filtro de "solo Gerente General".
+router.use(verificarToken);
+router.use(soloGerenteGeneral);
+
 function nivelValido(nivel) {
   return NIVELES_EDUCATIVOS.includes(nivel);
 }
 
-// Solo el director / coordinador general registra estas evaluaciones.
-// Ajusta esta lista de roles a los que uses en tu sistema.
-function puedeRegistrar(usuario) {
-  return ['director', 'directora', 'admin'].includes(usuario.rol);
-}
-
 // GET /api/evaluaciones-coordinadores/config
-// Entrega indicadores/pesos/preguntas para que el frontend arme el formulario
-// sin tener que duplicar los 30 textos a mano.
-router.get('/config', verificarToken, (req, res) => {
+router.get('/config', (req, res) => {
   res.json({ DIMENSIONES, INDICADORES, PREGUNTAS_ABIERTAS, NIVELES_EDUCATIVOS, ESCALA });
 });
 
 // POST /api/evaluaciones-coordinadores
-// Body: { nivel_educativo, fecha_eval, puntajes_gral, puntajes_acad, preguntas_gral, preguntas_acad }
-router.post('/', verificarToken, async (req, res) => {
+router.post('/', async (req, res) => {
   const { nivel_educativo, fecha_eval, puntajes_gral, puntajes_acad, preguntas_gral, preguntas_acad } = req.body;
 
-  if (!puedeRegistrar(req.usuario)) {
-    return res.status(403).json({ error: 'No tienes permiso para registrar esta evaluación' });
-  }
   if (!nivelValido(nivel_educativo)) {
     return res.status(400).json({ error: 'nivel_educativo inválido (usa inicial, primaria o secundaria)' });
   }
@@ -87,8 +99,7 @@ router.post('/', verificarToken, async (req, res) => {
 });
 
 // GET /api/evaluaciones-coordinadores?nivel=inicial
-// Lista las fichas individuales de un nivel (o todas si no se pasa nivel).
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { nivel } = req.query;
     let where = '';
@@ -110,9 +121,7 @@ router.get('/', verificarToken, async (req, res) => {
 });
 
 // GET /api/evaluaciones-coordinadores/resumen/:nivel
-// Reporte agregado: promedio por indicador y puntaje final, por coordinador,
-// para un nivel educativo (inicial | primaria | secundaria).
-router.get('/resumen/:nivel', verificarToken, async (req, res) => {
+router.get('/resumen/:nivel', async (req, res) => {
   const { nivel } = req.params;
   if (!nivelValido(nivel)) return res.status(400).json({ error: 'nivel inválido' });
 
@@ -180,10 +189,7 @@ router.get('/resumen/:nivel', verificarToken, async (req, res) => {
 });
 
 // DELETE /api/evaluaciones-coordinadores/:id
-router.delete('/:id', verificarToken, async (req, res) => {
-  if (!puedeRegistrar(req.usuario)) {
-    return res.status(403).json({ error: 'No tienes permiso para eliminar esta evaluación' });
-  }
+router.delete('/:id', async (req, res) => {
   try {
     const result = await db.query(
       'DELETE FROM evaluaciones_coordinadores WHERE id = $1 RETURNING *',

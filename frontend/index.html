@@ -777,7 +777,7 @@
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
       <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
-      <div class="nav-item" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
+      <div class="nav-item" id="nav-coordinadores" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -2347,6 +2347,12 @@
       const navAsis = document.getElementById('nav-asistencia');
       if (navAsis) navAsis.style.display = 'none';
     }
+
+    // ✅ Coordinadores: solo lo ve la cuenta exacta del Gerente General
+    // (ni siquiera otras cuentas con rol "director" o "coordinador_general")
+    const EMAIL_COORDINADORES = 'gerentegeneralcervantino@cervantesschool.edu.pe';
+    const navCoord = document.getElementById('nav-coordinadores');
+    if (navCoord && usuario.email !== EMAIL_COORDINADORES) navCoord.style.display = 'none';
     } else if (usuario.rol === 'psicologa') {
   document.getElementById('psicologa-page').style.display = 'flex';
   document.getElementById('psico-user-info').textContent = usuario.nombre;
