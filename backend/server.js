@@ -17,6 +17,8 @@ const evaluacionesRouter = require('./routes/evaluaciones');
 app.use('/api/evaluaciones', evaluacionesRouter);
 const evaluacionesTutorRouter = require('./routes/evaluaciones_tutor');
 app.use('/api/evaluaciones-tutor', evaluacionesTutorRouter);
+const evaluacionesCoordinadoresRouter = require('./routes/evaluaciones_coordinadores');
+app.use('/api/evaluaciones-coordinadores', evaluacionesCoordinadoresRouter);
 // NUEVO: evaluación docente respondida por los propios estudiantes (encuesta)
 const evaluacionesEstudiantesRouter = require('./routes/evaluaciones_estudiantes');
 app.use('/api/evaluaciones-estudiantes', evaluacionesEstudiantesRouter);

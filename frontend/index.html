@@ -777,6 +777,7 @@
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
       <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
+      <div class="nav-item" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -1164,6 +1165,52 @@
               <tbody id="tabla-ee-votos"></tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-coordinadores">
+        <div class="page-header">
+          <div class="page-title">Coordinadores</div>
+          <div class="page-subtitle">Evaluación de la gestión del Coordinador General y del Coordinador Académico</div>
+        </div>
+
+        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap">
+          <button class="eval-btn" id="coord-nivel-inicial" onclick="coordSeleccionarNivel('inicial')" style="padding:8px 18px">Inicial</button>
+          <button class="eval-btn" id="coord-nivel-primaria" onclick="coordSeleccionarNivel('primaria')" style="padding:8px 18px">Primaria</button>
+          <button class="eval-btn" id="coord-nivel-secundaria" onclick="coordSeleccionarNivel('secundaria')" style="padding:8px 18px">Secundaria</button>
+        </div>
+
+        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem">
+          <button class="eval-btn" id="coord-tab-registrar" onclick="coordMostrarTab('registrar')" style="padding:8px 18px">➕ Registrar evaluación</button>
+          <button class="eval-btn" id="coord-tab-reporte" onclick="coordMostrarTab('reporte')" style="padding:8px 18px">📊 Ver reporte</button>
+        </div>
+
+        <!-- ── PANEL: REGISTRAR ── -->
+        <div id="coord-panel-registrar">
+          <div class="form-group" style="max-width:220px;margin-bottom:1.25rem">
+            <label>Fecha de la evaluación</label>
+            <input type="date" id="coord-fecha-eval">
+          </div>
+
+          <div id="coord-dimensiones-container"></div>
+
+          <div class="table-card" style="margin-top:1rem">
+            <div class="table-header"><h3>Preguntas estratégicas abiertas</h3></div>
+            <div id="coord-preguntas-container" style="padding:1rem 1.5rem"></div>
+          </div>
+
+          <div style="margin-top:1.25rem;display:flex;align-items:center;gap:1rem">
+            <button onclick="coordEnviarEvaluacion()" style="padding:12px 24px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              Guardar evaluación
+            </button>
+            <span id="coord-mensaje" style="font-size:13px;font-weight:600"></span>
+          </div>
+        </div>
+
+        <!-- ── PANEL: REPORTE ── -->
+        <div id="coord-panel-reporte" style="display:none">
+          <div id="coord-reporte-info" style="color:var(--text2);font-size:13px;margin-bottom:1rem"></div>
+          <div id="coord-reporte-container" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem"></div>
         </div>
       </div>
 
@@ -2329,6 +2376,7 @@
       if (id === 'censal') cargarSalonesCensalDirector();
       if (id === 'auditoria') cargarAuditoria();
       if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
+      if (id === 'coordinadores') cargarCoordinadores();
     }
 
     function showSectionSup(id, el) {
@@ -5730,5 +5778,199 @@ function _generarPDFCensalConLogo(doc, d, logoData) {
     <div id="detalle-contenido"></div>
   </div>
 </div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  COORDINADORES — evaluación de gestión (Gral / Acad)
+// ══════════════════════════════════════════════════
+let coordConfig = null;
+let coordNivelActual = 'inicial';
+let coordTabActual = 'registrar';
+
+async function cargarCoordinadores() {
+  if (!coordConfig) {
+    const res = await fetch('/api/evaluaciones-coordinadores/config', { headers: { 'Authorization': 'Bearer ' + token } });
+    coordConfig = await res.json();
+  }
+  coordSeleccionarNivel(coordNivelActual);
+  coordMostrarTab(coordTabActual);
+  coordRenderFormulario();
+}
+
+function coordSeleccionarNivel(nivel) {
+  coordNivelActual = nivel;
+  ['inicial', 'primaria', 'secundaria'].forEach(n => {
+    const btn = document.getElementById('coord-nivel-' + n);
+    if (btn) {
+      btn.style.background = (n === nivel) ? 'var(--accent)' : 'var(--accent-glow)';
+      btn.style.color = (n === nivel) ? 'white' : 'var(--accent2)';
+    }
+  });
+  if (coordTabActual === 'reporte') coordCargarReporte();
+}
+
+function coordMostrarTab(tab) {
+  coordTabActual = tab;
+  document.getElementById('coord-panel-registrar').style.display = (tab === 'registrar') ? 'block' : 'none';
+  document.getElementById('coord-panel-reporte').style.display = (tab === 'reporte') ? 'block' : 'none';
+  document.getElementById('coord-tab-registrar').style.background = (tab === 'registrar') ? 'var(--accent)' : 'var(--accent-glow)';
+  document.getElementById('coord-tab-registrar').style.color = (tab === 'registrar') ? 'white' : 'var(--accent2)';
+  document.getElementById('coord-tab-reporte').style.background = (tab === 'reporte') ? 'var(--accent)' : 'var(--accent-glow)';
+  document.getElementById('coord-tab-reporte').style.color = (tab === 'reporte') ? 'white' : 'var(--accent2)';
+  if (tab === 'reporte') coordCargarReporte();
+}
+
+function coordSelectHTML(target, indId) {
+  const opciones = [1,2,3,4,5].map(n => `<option value="${n}">${n}</option>`).join('');
+  return `<select data-target="${target}" data-ind="${indId}" style="width:60px;padding:6px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="">-</option>${opciones}
+          </select>`;
+}
+
+function coordRenderFormulario() {
+  const cont = document.getElementById('coord-dimensiones-container');
+  cont.innerHTML = coordConfig.DIMENSIONES.map(dim => {
+    const indicadores = coordConfig.INDICADORES.filter(i => i.dimension === dim.id);
+    return `
+      <div class="table-card" style="margin-bottom:1rem">
+        <div class="table-header"><h3>Dimensión ${dim.id}. ${dim.nombre} — ${dim.peso}%</h3></div>
+        <table>
+          <thead><tr><th>Indicador</th><th style="width:60px">Peso</th><th style="width:80px">Gral</th><th style="width:80px">Acad</th></tr></thead>
+          <tbody>
+            ${indicadores.map(ind => `
+              <tr>
+                <td>${ind.id}. ${ind.texto}</td>
+                <td>${ind.peso}%</td>
+                <td>${coordSelectHTML('gral', ind.id)}</td>
+                <td>${coordSelectHTML('acad', ind.id)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  const preguntasCont = document.getElementById('coord-preguntas-container');
+  preguntasCont.innerHTML = coordConfig.PREGUNTAS_ABIERTAS.map(p => `
+    <div class="form-group" style="margin-bottom:1rem">
+      <label style="text-transform:none;font-size:13px;color:var(--text)">${p.texto}</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:6px">
+        <div>
+          <label>Coordinador General</label>
+          <textarea rows="2" data-pregunta="${p.id}" data-target="gral"></textarea>
+        </div>
+        <div>
+          <label>Coordinador Académico</label>
+          <textarea rows="2" data-pregunta="${p.id}" data-target="acad"></textarea>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function coordEnviarEvaluacion() {
+  const puntajes_gral = {}, puntajes_acad = {};
+  document.querySelectorAll('#coord-dimensiones-container select').forEach(sel => {
+    const obj = sel.dataset.target === 'gral' ? puntajes_gral : puntajes_acad;
+    obj[sel.dataset.ind] = sel.value || null;
+  });
+
+  const preguntas_gral = {}, preguntas_acad = {};
+  document.querySelectorAll('#coord-preguntas-container textarea').forEach(ta => {
+    const obj = ta.dataset.target === 'gral' ? preguntas_gral : preguntas_acad;
+    obj[ta.dataset.pregunta] = ta.value.trim();
+  });
+
+  const body = {
+    nivel_educativo: coordNivelActual,
+    fecha_eval: document.getElementById('coord-fecha-eval').value || null,
+    puntajes_gral, puntajes_acad, preguntas_gral, preguntas_acad
+  };
+
+  const msg = document.getElementById('coord-mensaje');
+  try {
+    const res = await fetch('/api/evaluaciones-coordinadores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error al guardar');
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✅ Evaluación guardada (' + coordNivelActual + '). Puedes registrar otra.';
+    coordRenderFormulario();
+  } catch (err) {
+    msg.style.color = 'var(--accent2)';
+    msg.textContent = '❌ ' + err.message;
+  }
+}
+
+function coordClaseBadge(puntaje) {
+  if (puntaje >= 90) return 'badge-gold';
+  if (puntaje >= 80) return 'badge-green';
+  if (puntaje >= 70) return 'badge-amber';
+  return 'badge-red';
+}
+
+async function coordCargarReporte() {
+  const cont = document.getElementById('coord-reporte-container');
+  const info = document.getElementById('coord-reporte-info');
+  cont.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div>';
+
+  const res = await fetch('/api/evaluaciones-coordinadores/resumen/' + coordNivelActual, { headers: { 'Authorization': 'Bearer ' + token } });
+  const data = await res.json();
+
+  if (!data.total_evaluadores) {
+    info.textContent = '';
+    cont.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📭</div><p>${data.mensaje || 'Sin evaluaciones registradas para este nivel.'}</p></div>`;
+    return;
+  }
+
+  info.textContent = `Nivel: ${coordNivelActual.charAt(0).toUpperCase() + coordNivelActual.slice(1)} — Evaluaciones registradas: ${data.total_evaluadores}`;
+  cont.innerHTML = coordTarjeta('Coordinador General', data.coordinador_general) +
+                    coordTarjeta('Coordinador Académico', data.coordinador_academico);
+}
+
+function coordTarjeta(titulo, r) {
+  const claseBadge = coordClaseBadge(r.puntaje_final);
+  return `
+    <div class="table-card" style="padding:1.5rem">
+      <h3 style="margin-bottom:0.75rem">${titulo}</h3>
+      <span class="badge ${claseBadge}" style="font-size:14px;padding:6px 14px">${r.puntaje_final}% — ${r.nivel_gestion.texto}</span>
+
+      <div style="margin-top:1.25rem">
+        ${r.dimensiones.map(dim => `
+          <details style="margin-bottom:0.6rem">
+            <summary style="cursor:pointer;font-weight:600;font-size:13.5px;color:var(--text)">${dim.nombre} — ${dim.puntaje}% / ${dim.peso}%</summary>
+            <div style="padding:0.5rem 0 0 0.75rem">
+              ${dim.indicadores.map(i => `
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--text2);padding:3px 0;border-bottom:1px dashed var(--border)">
+                  <span>${i.texto}</span>
+                  <span style="white-space:nowrap;margin-left:8px">${i.promedio !== null ? i.promedio.toFixed(1) : '-'}/5</span>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        `).join('')}
+      </div>
+
+      <h3 style="margin-top:1.5rem;margin-bottom:0.5rem;font-size:14px">Preguntas abiertas</h3>
+      ${r.respuestas_abiertas.map(p => `
+        <div style="margin-bottom:0.85rem">
+          <div style="font-size:12.5px;font-weight:600;color:var(--text)">${p.texto}</div>
+          ${p.respuestas.length
+            ? `<ul style="margin:4px 0 0 18px;font-size:12.5px;color:var(--text2)">${p.respuestas.map(t => `<li>${coordEscapeHtml(t)}</li>`).join('')}</ul>`
+            : `<div style="font-size:12px;color:var(--text3);margin-top:4px">Sin respuestas</div>`}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function coordEscapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
 </body>
 </html>
