@@ -1209,7 +1209,12 @@
 
         <!-- ── PANEL: REPORTE ── -->
         <div id="coord-panel-reporte" style="display:none">
-          <div id="coord-reporte-info" style="color:var(--text2);font-size:13px;margin-bottom:1rem"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+            <div id="coord-reporte-info" style="color:var(--text2);font-size:13px"></div>
+            <button onclick="coordDescargarPDF()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              📄 Descargar PDF
+            </button>
+          </div>
           <div id="coord-reporte-container" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem"></div>
         </div>
       </div>
@@ -5792,6 +5797,9 @@ function _generarPDFCensalConLogo(doc, d, logoData) {
 let coordConfig = null;
 let coordNivelActual = 'inicial';
 let coordTabActual = 'registrar';
+let chartCoordGral = null;
+let chartCoordAcad = null;
+let coordReporteData = null; // guarda el último reporte cargado, para exportarlo a PDF
 
 async function cargarCoordinadores() {
   if (!coordConfig) {
@@ -5823,7 +5831,12 @@ function coordMostrarTab(tab) {
   document.getElementById('coord-tab-registrar').style.color = (tab === 'registrar') ? 'white' : 'var(--accent2)';
   document.getElementById('coord-tab-reporte').style.background = (tab === 'reporte') ? 'var(--accent)' : 'var(--accent-glow)';
   document.getElementById('coord-tab-reporte').style.color = (tab === 'reporte') ? 'white' : 'var(--accent2)';
-  if (tab === 'reporte') coordCargarReporte();
+  if (tab === 'reporte') {
+    coordCargarReporte();
+  } else {
+    if (chartCoordGral) { chartCoordGral.destroy(); chartCoordGral = null; }
+    if (chartCoordAcad) { chartCoordAcad.destroy(); chartCoordAcad = null; }
+  }
 }
 
 function coordSelectHTML(target, indId) {
@@ -5924,26 +5937,83 @@ async function coordCargarReporte() {
   const info = document.getElementById('coord-reporte-info');
   cont.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div>';
 
+  if (chartCoordGral) { chartCoordGral.destroy(); chartCoordGral = null; }
+  if (chartCoordAcad) { chartCoordAcad.destroy(); chartCoordAcad = null; }
+
   const res = await fetch('/api/evaluaciones-coordinadores/resumen/' + coordNivelActual, { headers: { 'Authorization': 'Bearer ' + token } });
   const data = await res.json();
 
   if (!data.total_evaluadores) {
     info.textContent = '';
     cont.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📭</div><p>${data.mensaje || 'Sin evaluaciones registradas para este nivel.'}</p></div>`;
+    coordReporteData = null;
     return;
   }
 
+  coordReporteData = data; // guardado para el botón "Descargar PDF"
+
   info.textContent = `Nivel: ${coordNivelActual.charAt(0).toUpperCase() + coordNivelActual.slice(1)} — Evaluaciones registradas: ${data.total_evaluadores}`;
-  cont.innerHTML = coordTarjeta('Coordinador General', data.coordinador_general) +
-                    coordTarjeta('Coordinador Académico', data.coordinador_academico);
+  cont.innerHTML = coordTarjeta('Coordinador General', data.coordinador_general, 'gral') +
+                    coordTarjeta('Coordinador Académico', data.coordinador_academico, 'acad');
+
+  chartCoordGral = coordRenderDonutPuntaje('chart-coord-gral', data.coordinador_general.puntaje_final);
+  chartCoordAcad = coordRenderDonutPuntaje('chart-coord-acad', data.coordinador_academico.puntaje_final);
 }
 
-function coordTarjeta(titulo, r) {
+function coordColorPuntaje(puntaje) {
+  if (puntaje >= 90) return '#D4AF37'; // gold
+  if (puntaje >= 80) return '#2ecc71'; // green
+  if (puntaje >= 70) return '#f39c12'; // amber
+  return '#e63946';                    // red
+}
+
+function coordRenderDonutPuntaje(canvasId, puntaje) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const color = coordColorPuntaje(puntaje);
+  const restante = Math.max(0, 100 - puntaje);
+  const ctx = canvas.getContext('2d');
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Puntaje', 'Restante'],
+      datasets: [{ data: [puntaje, restante], backgroundColor: [color, 'rgba(255,255,255,0.08)'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: () => 'Puntaje: ' + puntaje + '%' },
+          filter: (item) => item.dataIndex === 0
+        },
+        datalabels: { display: false }
+      }
+    }
+  });
+}
+
+function coordTarjeta(titulo, r, key) {
   const claseBadge = coordClaseBadge(r.puntaje_final);
   return `
     <div class="table-card" style="padding:1.5rem">
       <h3 style="margin-bottom:0.75rem">${titulo}</h3>
-      <span class="badge ${claseBadge}" style="font-size:14px;padding:6px 14px">${r.puntaje_final}% — ${r.nivel_gestion.texto}</span>
+
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:0.75rem">
+        <div style="position:relative;width:150px;height:150px">
+          <canvas id="chart-coord-${key}"></canvas>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none">
+            <span style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text)">${r.puntaje_final}%</span>
+            <span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-top:2px">${r.nivel_gestion.texto}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center">
+        <span class="badge ${claseBadge}" style="font-size:13px;padding:5px 12px">${r.puntaje_final}% — ${r.nivel_gestion.texto}</span>
+      </div>
 
       <div style="margin-top:1.25rem">
         ${r.dimensiones.map(dim => `
@@ -5976,6 +6046,145 @@ function coordTarjeta(titulo, r) {
 
 function coordEscapeHtml(str) {
   return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ══════════════════════════════════════════════════
+//  PDF — REPORTE DE COORDINADORES (con gráfico de las 6 dimensiones)
+// ══════════════════════════════════════════════════
+function coordColorPuntajePDF(puntaje) {
+  if (puntaje >= 90) return [212,175,55]; // gold
+  if (puntaje >= 80) return [46,204,113]; // green
+  if (puntaje >= 70) return [243,156,18]; // amber
+  return [230,57,70];                     // red
+}
+
+async function coordDescargarPDF() {
+  if (!coordReporteData) {
+    alert('Primero carga un reporte con evaluaciones registradas para este nivel.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+  logoImg.src = '/Cervantes1.png';
+  logoImg.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = logoImg.width; canvas.height = logoImg.height;
+    canvas.getContext('2d').drawImage(logoImg, 0, 0);
+    _generarPDFCoordinadoresConLogo(doc, coordReporteData, coordNivelActual, canvas.toDataURL('image/png'));
+  };
+  logoImg.onerror = () => _generarPDFCoordinadoresConLogo(doc, coordReporteData, coordNivelActual, null);
+}
+
+function _generarPDFCoordinadoresConLogo(doc, data, nivel, logoData) {
+  // ── Encabezado ──
+  doc.setFillColor(180, 0, 30);
+  doc.rect(0, 0, 210, 2, 'F');
+  if (logoData) doc.addImage(logoData, 'PNG', 10, 3, 28, 20);
+
+  doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+  doc.text('REPORTE DE EVALUACIÓN DE COORDINADORES', 120, 10, { align: 'center' });
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100,100,100);
+  const nivelTxt = nivel.charAt(0).toUpperCase() + nivel.slice(1);
+  doc.text('I.E.P. Cervantes School  —  Nivel: ' + nivelTxt + '  —  ' + new Date().toLocaleDateString('es-PE'), 105, 16, { align: 'center' });
+
+  doc.setDrawColor(180, 0, 30);
+  doc.setLineWidth(0.5);
+  doc.line(10, 24, 200, 24);
+
+  let y = 30;
+  y = _dibujarBloqueCoordinadorPDF(doc, 'Coordinador General', data.coordinador_general, y);
+  y = _dibujarBloqueCoordinadorPDF(doc, 'Coordinador Académico', data.coordinador_academico, y);
+
+  const totalPags = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPags; i++) {
+    doc.setPage(i);
+    _dibujarPie(doc, i, totalPags);
+  }
+
+  const fecha = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+  doc.save('Reporte_Coordinadores_' + nivel + '_' + fecha + '.pdf');
+}
+
+// Dibuja el bloque de un coordinador: puntaje total + gráfico de barras con las
+// 6 dimensiones y su porcentaje + preguntas abiertas. Devuelve el nuevo "y".
+function _dibujarBloqueCoordinadorPDF(doc, titulo, r, y) {
+  if (y > 240) { doc.addPage(); y = 15; _dibujarPie(doc); }
+
+  const color = coordColorPuntajePDF(r.puntaje_final);
+
+  // Título + puntaje final
+  doc.setFillColor(...color);
+  doc.roundedRect(10, y, 190, 12, 2, 2, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+  doc.text(titulo, 14, y + 8);
+  doc.text(r.puntaje_final + '%  —  ' + r.nivel_gestion.texto, 196, y + 8, { align: 'right' });
+  y += 17;
+
+  // ── Gráfico: puntaje por dimensión (las 6 dimensiones) ──
+  doc.setFillColor(220, 220, 235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+  doc.text('PUNTAJE POR DIMENSIÓN', 13, y + 4.5);
+  y += 9;
+
+  r.dimensiones.forEach(dim => {
+    if (y > 268) { doc.addPage(); y = 15; _dibujarPie(doc); }
+    const pct = dim.puntaje; // 0-100
+    const barColor = coordColorPuntajePDF(pct);
+    const barW = (pct / 100) * 110;
+
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(60,60,60);
+    const label = doc.splitTextToSize(dim.nombre + ' (' + dim.peso + '%)', 66);
+    doc.text(label, 12, y + 4);
+
+    doc.setFillColor(220, 220, 228);
+    doc.roundedRect(82, y, 110, 6, 1.5, 1.5, 'F');
+    if (barW > 0) {
+      doc.setFillColor(...barColor);
+      doc.roundedRect(82, y, barW, 6, 1.5, 1.5, 'F');
+    }
+    doc.setTextColor(...barColor); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+    doc.text(pct.toFixed(0) + '%', 200, y + 5, { align: 'right' });
+
+    y += Math.max(9, label.length * 4 + 3);
+  });
+
+  y += 4;
+
+  // ── Preguntas abiertas ──
+  if (y > 255) { doc.addPage(); y = 15; _dibujarPie(doc); }
+  doc.setFillColor(220, 220, 235);
+  doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+  doc.text('PREGUNTAS ABIERTAS', 13, y + 4.5);
+  y += 9;
+
+  r.respuestas_abiertas.forEach(p => {
+    if (y > 270) { doc.addPage(); y = 15; _dibujarPie(doc); }
+    doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(40,40,40);
+    const pregunta = doc.splitTextToSize(p.texto, 186);
+    doc.text(pregunta, 12, y);
+    y += pregunta.length * 4 + 1;
+
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(80,80,80); doc.setFontSize(7.5);
+    if (p.respuestas.length) {
+      p.respuestas.forEach(t => {
+        if (y > 276) { doc.addPage(); y = 15; _dibujarPie(doc); }
+        const linea = doc.splitTextToSize('•  ' + t, 182);
+        doc.text(linea, 15, y);
+        y += linea.length * 3.6 + 1;
+      });
+    } else {
+      doc.text('Sin respuestas', 15, y);
+      y += 4;
+    }
+    y += 2;
+  });
+
+  return y + 8;
 }
 </script>
 </body>
