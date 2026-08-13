@@ -1158,12 +1158,30 @@
               </div>
             </div>
             <div style="padding:0 1.5rem 1rem;color:var(--text2);font-size:13px" id="ee-detalle-resumen-txt"></div>
+          </div>
+
+          <div class="table-card" style="margin-top:1.5rem">
+            <div class="table-header"><h3>Puntaje general por bloques (100%)</h3></div>
+            <div style="display:flex;flex-wrap:wrap;gap:1.5rem;padding:1rem 1.5rem;align-items:center">
+              <div style="position:relative;width:230px;height:230px;flex-shrink:0">
+                <canvas id="chart-ee-bloques-general"></canvas>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none">
+                  <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)" id="ee-bloques-total-txt">—</span>
+                  <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-top:2px">sobre 100</span>
+                </div>
+              </div>
+              <div id="ee-bloques-leyenda" style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:0.6rem"></div>
+            </div>
+          </div>
+
+          <div class="table-card" style="margin-top:1.5rem">
+            <div class="table-header"><h3>Promedio por criterio</h3></div>
             <div style="position:relative;height:260px;padding:1rem 1.5rem"><canvas id="chart-ee-criterios"></canvas></div>
           </div>
 
           <div class="table-card" style="margin-top:1.5rem">
-            <div class="table-header"><h3>Distribución de votos por pregunta</h3></div>
-            <div id="ee-pasteles-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;padding:1rem 1.5rem"></div>
+            <div class="table-header"><h3>Distribución de votos por pregunta (agrupada por bloques)</h3></div>
+            <div id="ee-pasteles-grid" style="padding:1rem 1.5rem;display:flex;flex-direction:column;gap:1.5rem"></div>
           </div>
 
           <div class="table-card" style="overflow-x:auto;margin-top:1.5rem">
@@ -3799,6 +3817,8 @@ async function guardarEvaluacionTutor() {
           `<b>${prom.total_respuestas || 0}</b> votos recibidos ${salonId ? 'en este salón' : 'en todos los salones'} — Promedio general: <b>${prom.promedio_general || '—'}</b> (${data.interpretacion || 'Sin votos'})`;
 
         eeRespuestasActuales = data.respuestas || [];
+        eeBloquesActuales = calcularBloquesEE(prom);
+        renderPastelBloquesEE(eeBloquesActuales);
         renderChartEECriterios(prom);
         renderPastelesEECriterios(eeRespuestasActuales);
         renderTablaVotosEE(eeRespuestasActuales);
@@ -3833,18 +3853,120 @@ async function guardarEvaluacionTutor() {
 
     const CRITERIOS_EE_LABELS = ['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10'];
 
-    // ✏️ Edita estos 10 textos para que coincidan EXACTAMENTE con las preguntas
-    // de tu formulario de Google (en el mismo orden: criterio1 → criterio10).
-    // Mientras no los edites, se mostrará "C1", "C2", etc. como en la tabla.
-    const CRITERIOS_EE_TEXTOS = ['C1','C2','C3','C4','C5','C6','C7','C8','C9','C10'];
+    // Textos reales de las 10 preguntas del formulario (criterio1 → criterio10)
+    const CRITERIOS_EE_TEXTOS = [
+      'El profesor explica los temas con claridad y logra que comprenda lo que enseña.',
+      'Planifica y desarrolla sus clases de manera organizada, dinámica y con un propósito claro.',
+      'Utiliza estrategias, ejemplos y recursos que hacen las clases interesantes y fáciles de entender.',
+      'Promueve mi participación, el pensamiento crítico y el trabajo colaborativo durante la clase.',
+      'Evalúa de manera justa, brinda retroalimentación y me orienta para mejorar mi aprendizaje.',
+      'Hace cumplir las normas de convivencia con firmeza, respeto y equidad para todos los estudiantes.',
+      'Trata a todos los estudiantes con respeto, paciencia y sin favoritismos.',
+      'Demuestra entusiasmo, compromiso y pasión por enseñar en cada sesión de aprendizaje.',
+      'Motiva permanentemente a superarnos y fomenta valores como la responsabilidad, el respeto y la disciplina.',
+      'Considero que este profesor contribuye significativamente a mi aprendizaje y formación integral.'
+    ];
+
+    // Bloques de evaluación: agrupan los 10 criterios en 4 ejes, cada uno con su
+    // propio peso dentro del puntaje general (30% + 20% + 20% + 30% = 100%).
+    const BLOQUES_EE = [
+      {
+        id: 'b1', color: '#8b5cf6', colorTexto: '#5b21b6',
+        titulo: 'El profesor explica los temas con claridad y utiliza estrategias interesantes y fáciles de entender',
+        criterios: [1, 2, 3], peso: 30
+      },
+      {
+        id: 'b2', color: '#38bdf8', colorTexto: '#0369a1',
+        titulo: 'Promueve mi participación, el pensamiento crítico y brinda retroalimentación',
+        criterios: [4, 5], peso: 20
+      },
+      {
+        id: 'b3', color: '#fbbf24', colorTexto: '#92400e',
+        titulo: 'Influye normas de convivencia con respeto',
+        criterios: [6, 7], peso: 20
+      },
+      {
+        id: 'b4', color: '#22c55e', colorTexto: '#166534',
+        titulo: 'El profesor demuestra compromiso y pasión, y contribuye significativamente en mi aprendizaje',
+        criterios: [8, 9, 10], peso: 30
+      }
+    ];
+
+    let chartEEBloquesGeneral = null;
+
+    // Calcula, para cada bloque, el promedio (sobre 5) de sus criterios y cuánto
+    // aporta ese bloque al puntaje general de 100 (promedio/5 * peso del bloque).
+    function calcularBloquesEE(prom) {
+      return BLOQUES_EE.map(b => {
+        const valores = b.criterios.map(n => parseFloat(prom['criterio' + n]) || 0).filter(v => v > 0);
+        const promedioBloque = valores.length ? valores.reduce((a, v) => a + v, 0) / valores.length : 0;
+        const puntaje = Math.round((promedioBloque / 5) * b.peso * 100) / 100;
+        return { ...b, promedio: Math.round(promedioBloque * 100) / 100, puntaje };
+      });
+    }
+
+    // Un único gráfico de pastel por docente: 4 rebanadas (una por bloque),
+    // cada una del tamaño de lo que ese bloque efectivamente aportó al 100%.
+    function renderPastelBloquesEE(bloques) {
+      if (chartEEBloquesGeneral) { chartEEBloquesGeneral.destroy(); chartEEBloquesGeneral = null; }
+      const canvas = document.getElementById('chart-ee-bloques-general');
+      if (!canvas) return;
+
+      const totalGeneral = Math.round(bloques.reduce((a, b) => a + b.puntaje, 0) * 100) / 100;
+      document.getElementById('ee-bloques-total-txt').textContent = totalGeneral + '%';
+
+      const labels = bloques.map((b, i) => 'Bloque ' + (i + 1));
+      const valores = bloques.map(b => b.puntaje);
+      const colores = bloques.map(b => b.color);
+      const noAlcanzado = Math.max(0, 100 - totalGeneral);
+      if (noAlcanzado > 0.05) {
+        labels.push('No alcanzado');
+        valores.push(Math.round(noAlcanzado * 100) / 100);
+        colores.push('rgba(255,255,255,0.08)');
+      }
+
+      const ctx = canvas.getContext('2d');
+      chartEEBloquesGeneral = new Chart(ctx, {
+        type: 'pie',
+        data: { labels, datasets: [{ data: valores, backgroundColor: colores, borderWidth: 0 }] },
+        plugins: [ChartDataLabels],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw}%` } },
+            datalabels: {
+              color: '#fff', font: { weight: 'bold', size: 11 },
+              formatter: (value, ctx) => {
+                if (ctx.chart.data.labels[ctx.dataIndex] === 'No alcanzado') return '';
+                return value > 0 ? value + '%' : '';
+              }
+            }
+          }
+        }
+      });
+
+      // Leyenda con el título completo de cada bloque, su peso y su puntaje logrado
+      const leyenda = document.getElementById('ee-bloques-leyenda');
+      leyenda.innerHTML = bloques.map((b, i) => `
+        <div style="display:flex;gap:0.6rem;align-items:flex-start">
+          <span style="width:11px;height:11px;border-radius:3px;background:${b.color};flex-shrink:0;margin-top:3px"></span>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.35">Bloque ${i + 1} (${b.peso}%) — ${b.titulo}</div>
+            <div style="font-size:11.5px;color:var(--text2);margin-top:2px">Promedio: ${b.promedio}/5 &nbsp;•&nbsp; Aporte: <b>${b.puntaje}%</b> de ${b.peso}%</div>
+          </div>
+        </div>
+      `).join('');
+    }
 
     let eeRespuestasActuales = [];
+    let eeBloquesActuales = [];
     let chartsEEPasteles = [];
     const PALETA_VOTOS_EE = ['#e63946', '#f39c12', '#ffd166', '#8ecae6', '#2ecc71']; // voto 1 (rojo) → voto 5 (verde)
 
     // Un gráfico de pastel por cada pregunta/criterio, mostrando cuántos alumnos
-    // votaron 1, 2, 3, 4 o 5 en esa pregunta (igual que el gráfico de barras de
-    // Google Forms, pero en pastel y filtrado por el docente/salón actual).
+    // votaron 1, 2, 3, 4 o 5 en esa pregunta — agrupados visualmente en los 4
+    // bloques de evaluación (mismo color que el gráfico general de bloques).
     function renderPastelesEECriterios(respuestas) {
       chartsEEPasteles.forEach(c => c.destroy());
       chartsEEPasteles = [];
@@ -3852,52 +3974,67 @@ async function guardarEvaluacionTutor() {
       grid.innerHTML = '';
 
       if (!respuestas.length) {
-        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🗳️</div><p>Aún no hay votos para graficar</p></div>';
+        grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🗳️</div><p>Aún no hay votos para graficar</p></div>';
         return;
       }
 
-      CRITERIOS_EE_LABELS.forEach((_, i) => {
-        const campo = 'criterio' + (i + 1);
-        const conteo = [1, 2, 3, 4, 5].map(v => respuestas.filter(r => parseInt(r[campo]) === v).length);
-        const total = conteo.reduce((a, b) => a + b, 0);
-
-        const card = document.createElement('div');
-        card.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.85rem';
-        card.innerHTML = `
-          <div style="font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:0.4rem;min-height:30px;line-height:1.3">${CRITERIOS_EE_TEXTOS[i] || CRITERIOS_EE_LABELS[i]}</div>
-          <div style="position:relative;height:160px"><canvas id="chart-ee-pastel-${i + 1}"></canvas></div>
+      BLOQUES_EE.forEach((bloque, bIdx) => {
+        const bloqueWrap = document.createElement('div');
+        bloqueWrap.style.cssText = `border-left:4px solid ${bloque.color};border-radius:6px;padding:0.25rem 0 0.25rem 0.9rem`;
+        bloqueWrap.innerHTML = `
+          <div style="font-size:12px;font-weight:700;margin-bottom:0.7rem">
+            <span style="color:${bloque.color}">Bloque ${bIdx + 1} (${bloque.peso}%)</span>
+            <span style="color:var(--text2);font-weight:500"> — ${bloque.titulo}</span>
+          </div>
+          <div class="ee-pastel-subgrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem"></div>
         `;
-        grid.appendChild(card);
+        grid.appendChild(bloqueWrap);
+        const subgrid = bloqueWrap.querySelector('.ee-pastel-subgrid');
 
-        const ctx = document.getElementById('chart-ee-pastel-' + (i + 1)).getContext('2d');
-        const chart = new Chart(ctx, {
-          type: 'pie',
-          data: { labels: ['1', '2', '3', '4', '5'], datasets: [{ data: conteo, backgroundColor: PALETA_VOTOS_EE }] },
-          plugins: [ChartDataLabels],
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 9 }, boxWidth: 8, padding: 6 } },
-              tooltip: {
-                callbacks: {
-                  label: (ctx) => {
-                    const val = ctx.raw;
-                    const pct = total ? Math.round((val / total) * 100) : 0;
-                    return `Voto ${ctx.label}: ${val} (${pct}%)`;
+        bloque.criterios.forEach(n => {
+          const i = n - 1;
+          const campo = 'criterio' + n;
+          const conteo = [1, 2, 3, 4, 5].map(v => respuestas.filter(r => parseInt(r[campo]) === v).length);
+          const total = conteo.reduce((a, b) => a + b, 0);
+
+          const card = document.createElement('div');
+          card.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.85rem';
+          card.innerHTML = `
+            <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:0.4rem;min-height:44px;line-height:1.3">P${n}. ${CRITERIOS_EE_TEXTOS[i] || CRITERIOS_EE_LABELS[i]}</div>
+            <div style="position:relative;height:150px"><canvas id="chart-ee-pastel-${n}"></canvas></div>
+          `;
+          subgrid.appendChild(card);
+
+          const ctx = document.getElementById('chart-ee-pastel-' + n).getContext('2d');
+          const chart = new Chart(ctx, {
+            type: 'pie',
+            data: { labels: ['1', '2', '3', '4', '5'], datasets: [{ data: conteo, backgroundColor: PALETA_VOTOS_EE }] },
+            plugins: [ChartDataLabels],
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 9 }, boxWidth: 8, padding: 6 } },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => {
+                      const val = ctx.raw;
+                      const pct = total ? Math.round((val / total) * 100) : 0;
+                      return `Voto ${ctx.label}: ${val} (${pct}%)`;
+                    }
                   }
-                }
-              },
-              datalabels: {
-                color: '#fff', font: { weight: 'bold', size: 9 },
-                formatter: (value) => {
-                  const pct = total ? Math.round((value / total) * 100) : 0;
-                  return value > 0 ? pct + '%' : '';
+                },
+                datalabels: {
+                  color: '#fff', font: { weight: 'bold', size: 9 },
+                  formatter: (value) => {
+                    const pct = total ? Math.round((value / total) * 100) : 0;
+                    return value > 0 ? pct + '%' : '';
+                  }
                 }
               }
             }
-          }
+          });
+          chartsEEPasteles.push(chart);
         });
-        chartsEEPasteles.push(chart);
       });
     }
 
@@ -3921,9 +4058,11 @@ async function guardarEvaluacionTutor() {
       eeDocenteActual = null;
       eeRespuestasActuales = [];
       if (chartEECriterios) { chartEECriterios.destroy(); chartEECriterios = null; }
+      if (chartEEBloquesGeneral) { chartEEBloquesGeneral.destroy(); chartEEBloquesGeneral = null; }
       chartsEEPasteles.forEach(c => c.destroy());
       chartsEEPasteles = [];
       document.getElementById('ee-pasteles-grid').innerHTML = '';
+      document.getElementById('ee-bloques-leyenda').innerHTML = '';
     }
 
     // ══════════════════════════════════════════════════
@@ -3940,6 +4079,7 @@ async function guardarEvaluacionTutor() {
       const resumenTxt = document.getElementById('ee-detalle-resumen-txt').textContent;
 
       const imgBarras = _canvasCensalConFondo('chart-ee-criterios');
+      const imgBloques = _canvasCensalConFondo('chart-ee-bloques-general');
       const imgsPasteles = CRITERIOS_EE_LABELS.map((_, i) => _canvasCensalConFondo('chart-ee-pastel-' + (i + 1)));
 
       const { jsPDF } = window.jspdf;
@@ -3952,12 +4092,12 @@ async function guardarEvaluacionTutor() {
         const c = document.createElement('canvas');
         c.width = logoImg.width; c.height = logoImg.height;
         c.getContext('2d').drawImage(logoImg, 0, 0);
-        _generarPDFEvalEstudiantesConLogo(doc, nombreDocente, resumenTxt, imgBarras, imgsPasteles, c.toDataURL('image/png'));
+        _generarPDFEvalEstudiantesConLogo(doc, nombreDocente, resumenTxt, imgBarras, imgBloques, imgsPasteles, c.toDataURL('image/png'));
       };
-      logoImg.onerror = () => _generarPDFEvalEstudiantesConLogo(doc, nombreDocente, resumenTxt, imgBarras, imgsPasteles, null);
+      logoImg.onerror = () => _generarPDFEvalEstudiantesConLogo(doc, nombreDocente, resumenTxt, imgBarras, imgBloques, imgsPasteles, null);
     }
 
-    function _generarPDFEvalEstudiantesConLogo(doc, nombreDocente, resumenTxt, imgBarras, imgsPasteles, logoData) {
+    function _generarPDFEvalEstudiantesConLogo(doc, nombreDocente, resumenTxt, imgBarras, imgBloques, imgsPasteles, logoData) {
       // ── Encabezado ──
       doc.setFillColor(180, 0, 30);
       doc.rect(0, 0, 210, 2, 'F');
@@ -3982,6 +4122,36 @@ async function guardarEvaluacionTutor() {
       const resumenLineas = doc.splitTextToSize(resumenLimpio, 186);
       doc.text(resumenLineas, 12, y);
       y += resumenLineas.length * 4.5 + 6;
+
+      // ── Gráfico: puntaje general por bloques (100%) ──
+      if (imgBloques) {
+        doc.setFillColor(220, 220, 235);
+        doc.roundedRect(10, y, 190, 6, 1, 1, 'F');
+        doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+        doc.text('PUNTAJE GENERAL POR BLOQUES (100%)', 13, y + 4.5);
+        y += 10;
+
+        const yImgInicio = y;
+        const hImg = _addImagenAjustada(doc, imgBloques, 12, y, 78, 78);
+
+        // Leyenda de bloques al lado del gráfico
+        let yLeyenda = yImgInicio + 2;
+        const xLeyenda = 96;
+        eeBloquesActuales.forEach((b, i) => {
+          const colorRgb = _hexARgb(b.color);
+          doc.setFillColor(colorRgb[0], colorRgb[1], colorRgb[2]);
+          doc.rect(xLeyenda, yLeyenda, 3, 3, 'F');
+          doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+          doc.text('Bloque ' + (i + 1) + ' (' + b.peso + '%) — ' + b.puntaje + '% logrado', xLeyenda + 5, yLeyenda + 2.8);
+          yLeyenda += 5;
+          doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(90, 90, 90);
+          const tituloLineas = doc.splitTextToSize(b.titulo, 92);
+          doc.text(tituloLineas, xLeyenda + 5, yLeyenda + 2.5);
+          yLeyenda += tituloLineas.length * 3.4 + 3;
+        });
+
+        y += Math.max(hImg, yLeyenda - yImgInicio) + 8;
+      }
 
       // ── Gráfico: promedio por criterio ──
       if (imgBarras) {
@@ -5758,6 +5928,15 @@ function _generarPDFTutorConLogo(doc, e, logoData) {
 
   const fecha = (e.fecha_eval || new Date(e.creado_en).toLocaleDateString('es-PE')).replace(/\//g,'-');
   doc.save('Ficha_Tutoria_' + (e.docente_nombre||'').replace(/ /g,'_') + '_' + fecha + '.pdf');
+}
+
+// Convierte un color hex (#8b5cf6) a un array [r,g,b] para doc.setFillColor(...)
+function _hexARgb(hex) {
+  const limpio = hex.replace('#', '');
+  const r = parseInt(limpio.substring(0, 2), 16);
+  const g = parseInt(limpio.substring(2, 4), 16);
+  const b = parseInt(limpio.substring(4, 6), 16);
+  return [r, g, b];
 }
 
 function _dibujarPie(doc, pag, total) {
