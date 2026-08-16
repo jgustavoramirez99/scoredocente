@@ -33,14 +33,90 @@ async function soloGerenteGeneral(req, res, next) {
   }
 }
 
-// Todas las rutas de este archivo pasan primero por el token,
-// y luego por el filtro de "solo Gerente General".
-router.use(verificarToken);
-router.use(soloGerenteGeneral);
-
 function nivelValido(nivel) {
   return NIVELES_EDUCATIVOS.includes(nivel);
 }
+
+// ── FORMULARIO PÚBLICO (salón de cómputo) ───────────────
+// Estas dos rutas van ANTES de verificarToken/soloGerenteGeneral a propósito:
+// no requieren login, solo el código de acceso compartido. Así los profesores
+// pueden abrir el link en cualquier PC del salón y evaluar sin necesitar
+// una cuenta de ScoreDocente. Todo lo demás del archivo (ver, listar,
+// resumen, eliminar) sigue restringido solo al Gerente General.
+const CODIGO_ACCESO_PUBLICO = process.env.CODIGO_EVAL_COORDINADORES || 'cervantes2026';
+
+// GET /api/evaluaciones-coordinadores/publico/config
+router.get('/publico/config', (req, res) => {
+  res.json({ DIMENSIONES, INDICADORES, PREGUNTAS_ABIERTAS, NIVELES_EDUCATIVOS, ESCALA });
+});
+
+// POST /api/evaluaciones-coordinadores/publico
+router.post('/publico', async (req, res) => {
+  const { codigo, nivel_educativo, fecha_eval, puntajes_gral, puntajes_acad, preguntas_gral, preguntas_acad } = req.body;
+
+  if (codigo !== CODIGO_ACCESO_PUBLICO) {
+    return res.status(403).json({ error: 'Código de acceso incorrecto' });
+  }
+  if (!nivelValido(nivel_educativo)) {
+    return res.status(400).json({ error: 'nivel_educativo inválido (usa inicial, primaria o secundaria)' });
+  }
+  if (!puntajes_gral || !puntajes_acad) {
+    return res.status(400).json({ error: 'Faltan los puntajes de ambos coordinadores' });
+  }
+
+  const puntaje_total_gral = calcularPuntaje(puntajes_gral);
+  const puntaje_total_acad = calcularPuntaje(puntajes_acad);
+
+  try {
+    // Las evaluaciones enviadas desde el formulario público quedan asociadas
+    // a la cuenta del Gerente General (igual que cuando se digitaban a mano),
+    // así no hace falta tocar la estructura de la tabla ni crear cuentas nuevas.
+    const gerente = await db.query('SELECT id FROM usuarios WHERE email = $1', [EMAIL_PERMITIDO]);
+    const registradoPorId = gerente.rows[0] && gerente.rows[0].id;
+    if (!registradoPorId) {
+      return res.status(500).json({ error: 'No se encontró la cuenta responsable de registrar evaluaciones' });
+    }
+
+    const result = await db.query(
+      `INSERT INTO evaluaciones_coordinadores
+        (nivel_educativo, puntajes_gral, puntajes_acad, preguntas_gral, preguntas_acad,
+         puntaje_total_gral, puntaje_total_acad, fecha_eval, registrado_por)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       RETURNING id, nivel_educativo, creado_en`,
+      [
+        nivel_educativo,
+        puntajes_gral,
+        puntajes_acad,
+        preguntas_gral || {},
+        preguntas_acad || {},
+        puntaje_total_gral,
+        puntaje_total_acad,
+        fecha_eval || new Date().toISOString().slice(0, 10),
+        registradoPorId,
+      ]
+    );
+    const fila = result.rows[0];
+
+    registrarAuditoria({
+      tabla: 'evaluaciones_coordinadores',
+      registro_id: fila.id,
+      accion: 'crear',
+      usuario: { id: registradoPorId, nombre: 'Formulario público (salón de cómputo)', email: EMAIL_PERMITIDO },
+      descripcion: `Evaluación de coordinadores (${nivel_educativo}) — enviada desde formulario público`,
+      datos: fila,
+    });
+
+    res.json({ ok: true, id: fila.id });
+  } catch (err) {
+    console.error('Error guardando evaluación pública de coordinadores:', err);
+    res.status(500).json({ error: 'Error al guardar la evaluación' });
+  }
+});
+
+// Todas las rutas DE AQUÍ EN ADELANTE pasan primero por el token,
+// y luego por el filtro de "solo Gerente General".
+router.use(verificarToken);
+router.use(soloGerenteGeneral);
 
 // GET /api/evaluaciones-coordinadores/config
 router.get('/config', (req, res) => {

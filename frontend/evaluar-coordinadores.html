@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Evaluación de Coordinadores | ScoreDocente</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0f; --surface:#111118; --surface2:#18181f; --surface3:#1f1f28;
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
+    --accent:#e63946; --accent2:#ff6b6b; --accent-glow:rgba(230,57,70,0.15);
+    --text:#f0f0f5; --text2:#9090a8; --text3:#5a5a72;
+    --green:#2ecc71; --gold:#D4AF37; --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); padding-bottom:80px;}
+  h1,h2,h3,.brand{font-family:'Syne',sans-serif;}
+  .wrap{max-width:760px; margin:0 auto; padding:0 18px;}
+  header.top{padding:28px 18px 18px; text-align:center; border-bottom:1px solid var(--border);}
+  header.top img{height:52px; margin-bottom:10px;}
+  header.top h1{font-size:20px; font-weight:700; margin:0 0 6px;}
+  header.top p{color:var(--text2); font-size:13px; max-width:52ch; margin:0 auto; line-height:1.5;}
+  .badge-anon{display:inline-block; margin-top:10px; font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--gold); border:1px solid rgba(212,175,55,0.35); background:rgba(212,175,55,0.08);
+    padding:4px 10px; border-radius:100px;}
+
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin:16px 0;}
+  .field-label{font-size:13px; font-weight:600; color:var(--text); margin-bottom:8px; display:block;}
+  select.nivel{width:100%; padding:12px; border-radius:8px; background:var(--surface2); color:var(--text); border:1px solid var(--border2); font-size:14.5px;}
+
+  .dim-head{font-size:14px; font-weight:700; color:var(--accent2); margin:0 0 2px; font-family:'Syne',sans-serif;}
+  .dim-peso{font-size:11px; color:var(--text3); margin:0 0 14px;}
+
+  .ind-row{border-top:1px solid var(--border); padding:14px 0;}
+  .ind-row:first-of-type{border-top:none; padding-top:2px;}
+  .ind-text{font-size:13.5px; line-height:1.4; margin-bottom:10px; color:var(--text);}
+  .rate-cols{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .rate-col-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text3); margin-bottom:6px;}
+  .rate-group{display:flex; gap:6px;}
+  .rate-opt{flex:1;}
+  .rate-opt input{position:absolute; opacity:0; width:1px; height:1px;}
+  .rate-opt label{display:flex; align-items:center; justify-content:center; height:34px; border-radius:8px;
+    border:1px solid var(--border2); background:var(--surface2); color:var(--text2); font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .12s;}
+  .rate-opt input:checked + label{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .rate-opt input:focus-visible + label{outline:2px solid var(--accent2); outline-offset:1px;}
+  .escala-hint{font-size:10.5px; color:var(--text3); margin:10px 0 0; line-height:1.6;}
+
+  .coord-title{font-size:16px; font-weight:700; margin:0 0 4px; font-family:'Syne',sans-serif;}
+  .coord-sub{font-size:12px; color:var(--text2); margin:0 0 16px;}
+
+  textarea{width:100%; min-height:70px; padding:10px 12px; border-radius:8px; background:var(--surface2);
+    color:var(--text); border:1px solid var(--border2); font-family:'DM Sans',sans-serif; font-size:13.5px; resize:vertical;}
+  .open-q{margin-bottom:14px;}
+  .open-q label{display:block; font-size:12.5px; color:var(--text2); margin-bottom:6px;}
+
+  .code-field input{width:100%; padding:12px; border-radius:8px; background:var(--surface2); color:var(--text);
+    border:1px solid var(--border2); font-size:14.5px; letter-spacing:.04em;}
+
+  .submit-bar{position:sticky; bottom:0; background:linear-gradient(180deg, rgba(10,10,15,0) 0%, var(--bg) 35%);
+    padding:22px 0 10px; text-align:center;}
+  .submit-btn{background:var(--accent); color:#fff; border:none; font-family:'DM Sans',sans-serif; font-weight:700;
+    font-size:15px; padding:15px 40px; border-radius:100px; cursor:pointer; box-shadow:0 8px 24px var(--accent-glow);}
+  .submit-btn:disabled{opacity:.5; cursor:default;}
+
+  .stamp-overlay{position:fixed; inset:0; background:rgba(10,10,15,0.94); display:none; align-items:center;
+    justify-content:center; flex-direction:column; z-index:50; text-align:center; padding:20px;}
+  .stamp{width:150px; height:150px; border-radius:50%; border:4px solid var(--green); display:flex; align-items:center;
+    justify-content:center; font-family:'Syne',sans-serif; font-weight:700; color:var(--green); font-size:15px;}
+  .stamp-msg{margin-top:22px; font-size:19px; font-family:'Syne',sans-serif; font-weight:700;}
+  .stamp-sub{margin-top:8px; color:var(--text2); font-size:13px; max-width:40ch;}
+  .stamp-btn{margin-top:22px; background:none; border:1px solid var(--border2); color:var(--text);
+    padding:10px 22px; border-radius:100px; font-size:13px; cursor:pointer;}
+
+  .loading{text-align:center; padding:60px 20px; color:var(--text2); font-size:14px;}
+  @media(max-width:520px){ .rate-cols{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <img src="Cervantes1.png" alt="Cervantes School">
+  <h1>Evaluación de Gestión de Coordinadores</h1>
+  <p>Califica el desempeño de los coordinadores de tu nivel educativo. Tu respuesta es anónima y se suma al promedio general junto con las de tus demás colegas.</p>
+  <span class="badge-anon">Anónimo · No pide tu nombre</span>
+</header>
+
+<div class="wrap" id="app">
+  <div class="loading" id="loadingMsg">Cargando formulario…</div>
+</div>
+
+<div class="stamp-overlay" id="stampOverlay">
+  <div class="stamp">ENVIADO<br>✓</div>
+  <div class="stamp-msg">¡Gracias por tu evaluación!</div>
+  <div class="stamp-sub">Tu respuesta quedó registrada. Puedes cerrar esta ventana, o si otro profesor va a usar esta misma PC, presiona el botón de abajo.</div>
+  <button class="stamp-btn" id="btnOtra">Enviar otra evaluación</button>
+</div>
+
+<script>
+async function init(){
+  try{
+    const res = await fetch('/api/evaluaciones-coordinadores/publico/config');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    window.CONFIG = await res.json();
+    render();
+  }catch(err){
+    document.getElementById('loadingMsg').textContent = 'No se pudo cargar el formulario. Verifica tu conexión e intenta recargar la página.';
+    console.error(err);
+  }
+}
+
+function ratingGroup(prefix, indId){
+  let html = '<div class="rate-group">';
+  for(let v=1; v<=5; v++){
+    const id = `${prefix}_${indId}_${v}`;
+    html += `<div class="rate-opt">
+      <input type="radio" name="${prefix}_${indId}" id="${id}" value="${v}">
+      <label for="${id}">${v}</label>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function render(){
+  const { DIMENSIONES, INDICADORES, PREGUNTAS_ABIERTAS, NIVELES_EDUCATIVOS, ESCALA } = window.CONFIG;
+  const nivelLabels = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
+
+  let dimensionesHtml = '';
+  DIMENSIONES.forEach(dim=>{
+    const inds = INDICADORES.filter(i=>i.dimension === dim.id);
+    let indsHtml = '';
+    inds.forEach(ind=>{
+      indsHtml += `
+        <div class="ind-row">
+          <div class="ind-text">${ind.texto}</div>
+          <div class="rate-cols">
+            <div>
+              <div class="rate-col-label">Coordinador General</div>
+              ${ratingGroup('gral', ind.id)}
+            </div>
+            <div>
+              <div class="rate-col-label">Coordinador Académico</div>
+              ${ratingGroup('acad', ind.id)}
+            </div>
+          </div>
+        </div>`;
+    });
+    dimensionesHtml += `
+      <div class="card">
+        <p class="dim-head">${dim.nombre}</p>
+        <p class="dim-peso">Peso ${dim.peso}% del puntaje total</p>
+        ${indsHtml}
+      </div>`;
+  });
+
+  const escalaHint = ESCALA.slice().reverse().map(e=>`${e.puntaje} = ${e.nivel}`).join(' &nbsp;·&nbsp; ');
+
+  let openGralHtml = '';
+  let openAcadHtml = '';
+  PREGUNTAS_ABIERTAS.forEach(p=>{
+    openGralHtml += `<div class="open-q"><label>${p.texto}</label><textarea name="pg_${p.id}"></textarea></div>`;
+    openAcadHtml += `<div class="open-q"><label>${p.texto}</label><textarea name="pa_${p.id}"></textarea></div>`;
+  });
+
+  document.getElementById('app').innerHTML = `
+    <div class="card">
+      <label class="field-label">¿Qué nivel educativo evalúas? *</label>
+      <select class="nivel" id="nivelSelect" required>
+        <option value="">Selecciona…</option>
+        ${NIVELES_EDUCATIVOS.map(n=>`<option value="${n}">${nivelLabels[n]||n}</option>`).join('')}
+      </select>
+      <p class="escala-hint">Escala de calificación: ${escalaHint}</p>
+    </div>
+
+    ${dimensionesHtml}
+
+    <div class="card">
+      <p class="coord-title">Comentarios — Coordinador General</p>
+      <p class="coord-sub">Opcional, pero muy útil para la mejora.</p>
+      ${openGralHtml}
+    </div>
+
+    <div class="card">
+      <p class="coord-title">Comentarios — Coordinador Académico</p>
+      <p class="coord-sub">Opcional, pero muy útil para la mejora.</p>
+      ${openAcadHtml}
+    </div>
+
+    <div class="card code-field">
+      <label class="field-label">Código de acceso (te lo da el colegio) *</label>
+      <input type="password" id="codigoInput" placeholder="Código" autocomplete="off">
+    </div>
+
+    <div class="submit-bar">
+      <button class="submit-btn" id="submitBtn">Enviar evaluación</button>
+    </div>
+  `;
+
+  document.getElementById('submitBtn').addEventListener('click', onSubmit);
+}
+
+async function onSubmit(){
+  const btn = document.getElementById('submitBtn');
+  const nivel = document.getElementById('nivelSelect').value;
+  const codigo = document.getElementById('codigoInput').value;
+
+  if(!nivel){ alert('Selecciona el nivel educativo que estás evaluando.'); return; }
+  if(!codigo){ alert('Ingresa el código de acceso.'); return; }
+
+  const puntajes_gral = {};
+  const puntajes_acad = {};
+  let faltantes = 0;
+  window.CONFIG.INDICADORES.forEach(ind=>{
+    const g = document.querySelector(`input[name="gral_${ind.id}"]:checked`);
+    const a = document.querySelector(`input[name="acad_${ind.id}"]:checked`);
+    if(!g || !a) faltantes++;
+    puntajes_gral[ind.id] = g ? g.value : null;
+    puntajes_acad[ind.id] = a ? a.value : null;
+  });
+
+  if(faltantes > 0){
+    alert(`Te faltan ${faltantes} indicador(es) por calificar. Revisa que hayas marcado un número en las dos columnas (General y Académico) de cada fila.`);
+    return;
+  }
+
+  const preguntas_gral = {};
+  const preguntas_acad = {};
+  window.CONFIG.PREGUNTAS_ABIERTAS.forEach(p=>{
+    preguntas_gral[p.id] = document.querySelector(`[name="pg_${p.id}"]`).value.trim();
+    preguntas_acad[p.id] = document.querySelector(`[name="pa_${p.id}"]`).value.trim();
+  });
+
+  btn.disabled = true; btn.textContent = 'Enviando…';
+
+  try{
+    const res = await fetch('/api/evaluaciones-coordinadores/publico', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        codigo, nivel_educativo: nivel,
+        fecha_eval: new Date().toISOString().slice(0,10),
+        puntajes_gral, puntajes_acad, preguntas_gral, preguntas_acad
+      })
+    });
+    const json = await res.json();
+    if(!res.ok || !json.ok) throw new Error(json.error || 'Error desconocido');
+    document.getElementById('stampOverlay').style.display = 'flex';
+  }catch(err){
+    alert('No se pudo enviar: ' + err.message);
+    console.error(err);
+  }
+  btn.disabled = false; btn.textContent = 'Enviar evaluación';
+}
+
+document.getElementById('btnOtra').addEventListener('click', ()=>{
+  document.getElementById('stampOverlay').style.display = 'none';
+  render();
+  window.scrollTo(0,0);
+});
+
+init();
+</script>
+</body>
+</html>
