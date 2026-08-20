@@ -1400,7 +1400,7 @@
       <div class="section active" id="section-aux-asistencia">
         <div class="page-header">
           <div class="page-title">Asistencia de hoy — <span id="aux-fecha-hoy"></span></div>
-          <div class="page-subtitle">Selecciona un salón, marca la asistencia de cada alumno y registra el celular u observación. Solo puedes registrar el día de hoy.</div>
+          <div class="page-subtitle">Selecciona un salón, marca la asistencia de cada alumno y registra el celular u observación. Solo puedes registrar el día de hoy, pero puedes guardar los cambios las veces que necesites durante el día.</div>
         </div>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
           <div class="form-group" style="max-width:320px;margin-bottom:0">
@@ -1418,8 +1418,8 @@
         <div class="table-card">
           <div class="table-header"><h3>Lista de asistencia</h3></div>
           <table>
-            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Observación</th><th>Acción</th><th>WhatsApp</th></tr></thead>
-            <tbody id="tabla-aux-alumnos"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
+            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Reforzamiento / Círculo</th><th>Observación</th><th>Acción</th><th>WhatsApp</th></tr></thead>
+            <tbody id="tabla-aux-alumnos"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2733,7 +2733,15 @@ async function guardarEvaluacionTutor() {
       { valor: 'FI', texto: 'Falta Injustificada' },
       { valor: 'FJ', texto: 'Falta Justificada' },
       { valor: 'TI', texto: 'Tardanza Injustificada' },
-      { valor: 'TJ', texto: 'Tardanza Justificada' },
+      { valor: 'TJ', texto: 'Tardanza Justificada' }
+    ];
+
+    // Reforzamiento/Círculo es independiente de la asistencia normal (columna
+    // "reforzamiento" aparte en la base de datos): así la auxiliar puede
+    // marcar "Presente" en la mañana y, más tarde el mismo día, marcar
+    // "No asistió a Reforzamiento" sin que uno borre al otro.
+    const ESTADOS_REFORZAMIENTO = [
+      { valor: '', texto: 'Sin marcar' },
       { valor: 'NR', texto: 'No asistió a Reforzamiento' },
       { valor: 'NC', texto: 'No asistió a Círculo' }
     ];
@@ -2741,20 +2749,27 @@ async function guardarEvaluacionTutor() {
     // Opciones predefinidas del desplegable de Observación
     const OBSERVACIONES_PREDEFINIDAS = ['Contestó', 'No contestó', 'Salud y Viaje'];
 
-    // Mensajes predeterminados de WhatsApp según el estado de asistencia marcado.
-    // Usa {NOMBRE} donde quieras que aparezca el nombre del alumno.
+    // Mensajes predeterminados de WhatsApp según el estado marcado.
+    // Usa {NOMBRE} donde quieras el nombre del alumno y {SALON} donde quieras
+    // el salón seleccionado.
     const MENSAJES_ASISTENCIA = {
       TI: 'Buenos días \u{1F917} Le hablamos del colegio Cervantes School para informarle que su menor {NOMBRE} llegó tarde el día de hoy (pasada las 7:40). Le pedimos tener un poco más de cuidado la próxima vez para que no vuelva a ocurrir \u{1F60A} Recuerde que en Cervantes School nos preocupamos por la integridad y bienestar de nuestros alumnos. Que tenga buen día \u{2728}',
       TJ: 'Buenos días \u{1F917} Le hablamos del colegio Cervantes School para informarle que su menor {NOMBRE} llegó tarde el día de hoy (pasada las 7:40). Le pedimos tener un poco más de cuidado la próxima vez para que no vuelva a ocurrir \u{1F60A} Recuerde que en Cervantes School nos preocupamos por la integridad y bienestar de nuestros alumnos. Que tenga buen día \u{2728}',
       FI: 'Buenos días \u{1F917} Le hablamos del colegio Cervantes School para informarle que su menor {NOMBRE} no asistió al colegio el día de hoy y no contamos con ninguna justificación registrada. Le agradeceríamos nos pueda indicar el motivo de la inasistencia \u{1F4CB} recuerde que en Cervantes School nos preocupamos por la integridad y bienestar de nuestros alumnos que tenga buen día\u{2728}'
     };
 
+    // Mensajes predeterminados de WhatsApp para Reforzamiento/Círculo.
+    const MENSAJES_REFORZAMIENTO = {
+      NR: 'Buenos días, nos comunicamos del colegio Cervantes School con respecto a {NOMBRE}. ¿Podría confirmarnos si recibió este mensaje? debido a que el día de ayer su menor no asistió a sus clases de {SALON} por la tarde \u{1F60A}',
+      NC: 'Buenos días, nos comunicamos del colegio Cervantes School con respecto a {NOMBRE}. ¿Podría confirmarnos si recibió este mensaje? debido a que el día de ayer su menor no asistió a sus clases de {SALON} por la tarde \u{1F60A}'
+    };
+
     // Mensaje genérico si el estado no tiene un mensaje predeterminado propio
     const MENSAJE_GENERICO = 'Buenos días, nos comunicamos del colegio Cervantes School con respecto a {NOMBRE}. ¿Podría confirmarnos si recibió este mensaje?';
 
-    function mensajePredeterminado(nombre, estado) {
-      const plantilla = MENSAJES_ASISTENCIA[estado] || MENSAJE_GENERICO;
-      return plantilla.replace('{NOMBRE}', nombre);
+    function mensajePredeterminado(nombre, estado, salon) {
+      const plantilla = MENSAJES_ASISTENCIA[estado] || MENSAJES_REFORZAMIENTO[estado] || MENSAJE_GENERICO;
+      return plantilla.replace('{NOMBRE}', nombre).replace('{SALON}', salon || '');
     }
 
     function opcionesObservacion(valorActual) {
@@ -2774,16 +2789,22 @@ async function guardarEvaluacionTutor() {
       if (sel && otro) otro.style.display = sel.value === 'Otro' ? 'block' : 'none';
     }
 
-    // Habilita/deshabilita el botón de WhatsApp: requiere celular Y estado de asistencia marcado
+    // Habilita/deshabilita el botón de WhatsApp: requiere celular Y (Asistencia
+    // o Reforzamiento/Círculo) marcado
     function actualizarBotonWhatsapp(alumnoId) {
       const cel = document.getElementById('cel-' + alumnoId).value.trim();
       const estadoSel = document.getElementById('est-' + alumnoId);
       const estado = estadoSel ? estadoSel.value : '';
+      const refSel = document.getElementById('ref-' + alumnoId);
+      const reforzamiento = refSel ? refSel.value : '';
       const btn = document.getElementById('wa-' + alumnoId);
-      if (btn) btn.disabled = !cel || !estado;
+      if (btn) btn.disabled = !cel || (!estado && !reforzamiento);
     }
 
-    // Abre WhatsApp Web/App con un mensaje predeterminado al celular del apoderado
+    // Abre WhatsApp Web/App con un mensaje predeterminado al celular del apoderado.
+    // Si hay algo marcado en Reforzamiento/Círculo, ese mensaje tiene prioridad
+    // sobre el de Asistencia (son casos independientes, pero solo se manda un
+    // mensaje a la vez desde este botón).
     function abrirWhatsappAlumno(alumnoId) {
       const celInput = document.getElementById('cel-' + alumnoId);
       let cel = (celInput.value || '').replace(/\D/g, '');
@@ -2793,8 +2814,11 @@ async function guardarEvaluacionTutor() {
       }
       const estadoSel = document.getElementById('est-' + alumnoId);
       const estado = estadoSel ? estadoSel.value : '';
-      if (!estado) {
-        alert('⚠️ Primero debes marcar la Asistencia (Tardanza o Falta) de este alumno antes de enviar el mensaje.');
+      const refSel = document.getElementById('ref-' + alumnoId);
+      const reforzamiento = refSel ? refSel.value : '';
+      const estadoParaMensaje = reforzamiento || estado;
+      if (!estadoParaMensaje) {
+        alert('⚠️ Primero debes marcar la Asistencia o el Reforzamiento/Círculo de este alumno antes de enviar el mensaje.');
         return;
       }
       // Código de país Perú (51) si el número tiene 9 dígitos y no lo incluye ya
@@ -2803,7 +2827,9 @@ async function guardarEvaluacionTutor() {
       }
       const fila = celInput.closest('tr');
       const nombre = fila ? fila.children[1].textContent.trim() : 'su hijo(a)';
-      const mensaje = mensajePredeterminado(nombre, estado);
+      const salonSel = document.getElementById('aux-salon-select');
+      const salon = salonSel && salonSel.selectedIndex >= 0 ? salonSel.options[salonSel.selectedIndex].textContent.trim() : '';
+      const mensaje = mensajePredeterminado(nombre, estadoParaMensaje, salon);
       window.open(`https://wa.me/${cel}?text=${encodeURIComponent(mensaje)}`, '_blank');
     }
 
@@ -2834,6 +2860,12 @@ async function guardarEvaluacionTutor() {
       ).join('');
     }
 
+    function opcionesReforzamiento(seleccionado) {
+      return ESTADOS_REFORZAMIENTO.map(e =>
+        `<option value="${e.valor}" ${e.valor === (seleccionado || '') ? 'selected' : ''}>${e.texto}</option>`
+      ).join('');
+    }
+
     async function cargarDatosAuxiliar() {
       document.getElementById('aux-fecha-hoy').textContent =
         new Date().toLocaleDateString('es-PE', { timeZone: 'America/Lima', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -2855,7 +2887,7 @@ async function guardarEvaluacionTutor() {
       const buscador = document.getElementById('aux-buscador');
       if (buscador) buscador.value = '';
       if (!salonId) {
-        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr>';
         return;
       }
       try {
@@ -2876,6 +2908,8 @@ async function guardarEvaluacionTutor() {
                 style="width:135px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
             <td><select id="est-${a.alumno_id}" onchange="actualizarBotonWhatsapp(${a.alumno_id})" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
                 ${opcionesEstado(a.estado)}</select></td>
+            <td><select id="ref-${a.alumno_id}" onchange="actualizarBotonWhatsapp(${a.alumno_id})" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+                ${opcionesReforzamiento(a.reforzamiento)}</select></td>
             <td>
               <select id="obs-sel-${a.alumno_id}" onchange="toggleObsOtro(${a.alumno_id})"
                   style="width:150px;padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
@@ -2884,9 +2918,9 @@ async function guardarEvaluacionTutor() {
                   style="display:${esOtro ? 'block' : 'none'};margin-top:4px;width:150px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
             </td>
             <td><button class="eval-btn" onclick="guardarAsistenciaAlumno(${a.alumno_id})">💾 Guardar</button></td>
-            <td><button class="whatsapp-btn" id="wa-${a.alumno_id}" onclick="abrirWhatsappAlumno(${a.alumno_id})" ${(a.celular_apoderado && a.estado) ? '' : 'disabled'}>💬 WhatsApp</button></td>
+            <td><button class="whatsapp-btn" id="wa-${a.alumno_id}" onclick="abrirWhatsappAlumno(${a.alumno_id})" ${(a.celular_apoderado && (a.estado || a.reforzamiento)) ? '' : 'disabled'}>💬 WhatsApp</button></td>
           </tr>`;
-        }).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
+        }).join('') : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
       } catch (err) {
         console.error('Error cargando alumnos:', err);
       }
@@ -2895,6 +2929,7 @@ async function guardarEvaluacionTutor() {
     async function guardarAsistenciaAlumno(alumnoId) {
       const celInput = document.getElementById('cel-' + alumnoId);
       const estado = document.getElementById('est-' + alumnoId).value;
+      const reforzamiento = document.getElementById('ref-' + alumnoId).value;
       const obsSel = document.getElementById('obs-sel-' + alumnoId).value;
       const obsOtro = document.getElementById('obs-otro-' + alumnoId).value.trim();
       const observacion = obsSel === 'Otro' ? obsOtro : obsSel;
@@ -2906,11 +2941,14 @@ async function guardarEvaluacionTutor() {
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ celular_apoderado })
         });
-        // 2) Guarda la asistencia + observación del día de hoy
+        // 2) Guarda la asistencia + reforzamiento/círculo + observación del día
+        //    de hoy. Se pueden guardar las veces que haga falta durante el día:
+        //    cada Guardar actualiza el mismo registro (no crea uno nuevo ni
+        //    bloquea futuros guardados).
         const res = await fetch('/api/asistencias', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ alumno_id: alumnoId, estado: estado || null, observacion: observacion || null })
+          body: JSON.stringify({ alumno_id: alumnoId, estado: estado || null, reforzamiento: reforzamiento || null, observacion: observacion || null })
         });
         if (!res.ok) throw new Error();
         celInput.style.borderColor = 'var(--green)';

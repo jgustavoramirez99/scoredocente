@@ -42,7 +42,7 @@ router.get('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req, 
 
     const result = await db.query(
       `SELECT a.id AS alumno_id, a.numero, a.apellidos_nombres, a.celular_apoderado,
-              asi.estado, asi.observacion
+              asi.estado, asi.observacion, asi.reforzamiento
        FROM alumnos a
        LEFT JOIN asistencias asi ON asi.alumno_id = a.id AND asi.fecha = $2
        WHERE a.salon_id = $1 AND a.activo = true
@@ -60,7 +60,7 @@ router.get('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req, 
 // El director SÍ puede mandar una fecha distinta, para corregir días pasados.
 router.post('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req, res) => {
   try {
-    const { alumno_id, estado, observacion } = req.body;
+    const { alumno_id, estado, observacion, reforzamiento } = req.body;
     if (!alumno_id) return res.status(400).json({ error: 'alumno_id es requerido' });
 
     let fecha = req.body.fecha;
@@ -75,13 +75,16 @@ router.post('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req,
     );
     const yaExistia = existiaRes.rows.length > 0;
 
+    // "estado" (Presente/Falta/Tardanza) y "reforzamiento" (No asistió a
+    // Reforzamiento/Círculo) son columnas independientes: se pueden registrar
+    // los dos el mismo día para el mismo alumno sin que uno borre al otro.
     const result = await db.query(
-      `INSERT INTO asistencias (alumno_id, fecha, estado, observacion, registrado_por, actualizado_por)
-       VALUES ($1, $2, $3, $4, $5, $5)
+      `INSERT INTO asistencias (alumno_id, fecha, estado, observacion, reforzamiento, registrado_por, actualizado_por)
+       VALUES ($1, $2, $3, $4, $5, $6, $6)
        ON CONFLICT (alumno_id, fecha)
-       DO UPDATE SET estado = $3, observacion = $4, actualizado_por = $5, actualizado_en = now()
+       DO UPDATE SET estado = $3, observacion = $4, reforzamiento = $5, actualizado_por = $6, actualizado_en = now()
        RETURNING *`,
-      [alumno_id, fecha, estado || null, observacion || null, req.usuario.id]
+      [alumno_id, fecha, estado || null, observacion || null, reforzamiento || null, req.usuario.id]
     );
     const fila = result.rows[0];
 
