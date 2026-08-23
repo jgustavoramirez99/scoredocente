@@ -33,32 +33,67 @@ router.post('/', verificarToken, permitirAuxiliar, async (req, res) => {
     return res.status(400).json({ error: 'La pregunta es demasiado larga (máximo 500 caracteres).' });
   }
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_GUSTIA}:generateContent?key=${process.env.GEMINI_API_KEY}`;
-    const geminiRes = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: { text: SYSTEM_INSTRUCTION } },
-        contents: [{ parts: [{ text: pregunta }] }],
-        generationConfig: { maxOutputTokens: 300 }
-      })
-    });
+  // Historial reciente de la conversación (para que recuerde el contexto,
+  // ej. "cuéntame un chiste" → "dime otro"). Lo manda el front, nosotros
+  // solo lo validamos y lo acotamos para no dejar crecer el contexto sin límite.
+  const historialCrudo = Array.isArray(req.body.historial) ? req.body.historial.slice(-10) : [];
+  const contents = historialCrudo
+    .filter((h) => h && typeof h.texto === 'string' && h.texto.trim())
+    .map((h) => ({
+      role: h.role === 'model' ? 'model' : 'user',
+      parts: [{ text: h.texto.trim().slice(0, 1000) }]
+    }));
+  contents.push({ role: 'user', parts: [{ text: pregunta }] });
 
-    const data = await geminiRes.json();
-    if (!geminiRes.ok) {
-      console.error('Error de la API de Gemini:', data);
-      return res.status(500).json({ error: 'GusTI (IA) no pudo responder en este momento.' });
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_GUSTIA}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const body = JSON.stringify({
+    system_instruction: { parts: { text: SYSTEM_INSTRUCTION } },
+    contents,
+    generationConfig: { maxOutputTokens: 300 }
+  });
+
+  // El modelo gratis a veces devuelve 503 "high demand" (Google saturado,
+  // no es un error nuestro) — reintentamos una vez tras una pausa corta
+  // antes de darnos por vencidos, así se resuelve solo casi siempre.
+  const intentos = 2;
+  let ultimoError = null;
+
+  for (let i = 0; i < intentos; i++) {
+    try {
+      const geminiRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const data = await geminiRes.json();
+
+      if (geminiRes.ok) {
+        const partes = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+        const texto = Array.isArray(partes) ? partes.map((p) => p.text || '').join('').trim() : '';
+        return res.json({ respuesta: texto || 'No tengo una respuesta para eso ahora mismo.' });
+      }
+
+      console.error('Error de la API de Gemini:', JSON.stringify(data));
+      ultimoError = data;
+      const esSaturado = geminiRes.status === 503 || (data.error && data.error.status === 'UNAVAILABLE');
+      if (esSaturado && i < intentos - 1) {
+        await new Promise((r) => setTimeout(r, 1200));
+        continue;
+      }
+      break;
+    } catch (err) {
+      console.error('Error en /api/gustia:', err);
+      ultimoError = err;
+      break;
     }
-
-    const partes = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
-    const texto = Array.isArray(partes) ? partes.map((p) => p.text || '').join('').trim() : '';
-
-    res.json({ respuesta: texto || 'No tengo una respuesta para eso ahora mismo.' });
-  } catch (err) {
-    console.error('Error en /api/gustia:', err);
-    res.status(500).json({ error: 'Error interno al conectar con GusTI (IA).' });
   }
+
+  const fueSaturado = ultimoError && ultimoError.error && ultimoError.error.status === 'UNAVAILABLE';
+  res.status(500).json({
+    error: fueSaturado
+      ? 'GusTI (IA) está muy solicitado en este momento 🙈 Intenta de nuevo en unos segundos.'
+      : 'GusTI (IA) no pudo responder en este momento.'
+  });
 });
 
 module.exports = router;

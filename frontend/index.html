@@ -3680,18 +3680,28 @@ async function guardarEvaluacionTutor() {
     // Pregunta general (no encontrada en el FAQ local) a la IA gratuita de
     // Google (Gemini, plan gratis). Pasa por el backend para no exponer la
     // clave en el navegador. Si no está configurada o falla, avisa con calma.
+    //
+    // chatbotHistorialIA guarda los últimos turnos de la conversación CON LA IA
+    // (no los del FAQ local) para que recuerde el contexto — ej. "cuéntame un
+    // chiste" → "dime otro" — en vez de tratar cada mensaje como si fuera el primero.
+    let chatbotHistorialIA = [];
+
     async function preguntarGustiaIA(pregunta) {
       try {
         const res = await fetch('/api/gustia', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ pregunta })
+          body: JSON.stringify({ pregunta, historial: chatbotHistorialIA })
         });
         const data = await res.json();
         if (!res.ok) {
           return data.error || 'No pude conectarme con la IA en este momento 🙈';
         }
-        return data.respuesta || 'No tengo una respuesta para eso ahora mismo.';
+        const respuesta = data.respuesta || 'No tengo una respuesta para eso ahora mismo.';
+        chatbotHistorialIA.push({ role: 'user', texto: pregunta });
+        chatbotHistorialIA.push({ role: 'model', texto: respuesta });
+        if (chatbotHistorialIA.length > 20) chatbotHistorialIA = chatbotHistorialIA.slice(-20);
+        return respuesta;
       } catch (err) {
         return 'No pude conectarme con la IA en este momento — revisa tu conexión e intenta de nuevo 🙈';
       }
