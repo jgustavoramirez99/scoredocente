@@ -463,6 +463,14 @@
       justify-content: space-between;
       align-items: center;
     }
+
+    /* ── Fila de asistencia coloreada según estado marcado ── */
+    tr[data-row].fila-presente { background: var(--green-bg); }
+    tr[data-row].fila-presente td:first-child { border-left: 3px solid var(--green); }
+    tr[data-row].fila-ausente { background: var(--red-bg); }
+    tr[data-row].fila-ausente td:first-child { border-left: 3px solid var(--red); }
+    tr[data-row].fila-tardanza { background: var(--amber-bg); }
+    tr[data-row].fila-tardanza td:first-child { border-left: 3px solid var(--amber); }
     .table-header h3 {
       font-family: 'Syne', sans-serif;
       font-size: 14px;
@@ -1558,8 +1566,42 @@
               style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
           </div>
         </div>
+        <div id="aux-resumen-wrap" style="display:none;margin-bottom:1.25rem">
+          <div class="stats-grid" style="margin-bottom:1rem">
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-number" id="stat-aux-presentes" style="color:var(--green)">—</div>
+              <div class="stat-label">Presentes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">❌</div>
+              <div class="stat-number" id="stat-aux-ausentes" style="color:var(--accent2)">—</div>
+              <div class="stat-label">Ausentes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⏰</div>
+              <div class="stat-number" id="stat-aux-tardanzas" style="color:var(--amber)">—</div>
+              <div class="stat-label">Tardanzas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">✏️</div>
+              <div class="stat-number" id="stat-aux-sinmarcar" style="color:var(--text2)">—</div>
+              <div class="stat-label">Sin marcar</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--text2)">
+            <span>Progreso de hoy</span>
+            <span id="aux-progreso-texto">0 de 0 marcados</span>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;height:8px;overflow:hidden">
+            <div id="aux-progreso-barra" style="height:100%;width:0%;background:linear-gradient(90deg, var(--navy2), var(--accent));transition:width 0.3s"></div>
+          </div>
+        </div>
         <div class="table-card">
-          <div class="table-header"><h3>Lista de asistencia</h3></div>
+          <div class="table-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h3>Lista de asistencia</h3>
+            <button class="eval-btn" onclick="marcarTodosPresentesAux()">✅ Marcar todos presentes</button>
+          </div>
           <table>
             <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Celular Apoderado</th><th>Asistencia</th><th>Reforzamiento / Círculo</th><th>Observación</th><th>Acción</th><th>WhatsApp</th></tr></thead>
             <tbody id="tabla-aux-alumnos"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr></tbody>
@@ -3012,6 +3054,70 @@ async function guardarEvaluacionTutor() {
       const reforzamiento = refSel ? refSel.value : '';
       const btn = document.getElementById('wa-' + alumnoId);
       if (btn) btn.disabled = !cel || (!estado && !reforzamiento);
+      actualizarResumenAsistenciaAux();
+    }
+
+    // Recalcula las tarjetas de resumen (Presentes/Ausentes/Tardanzas/Sin marcar),
+    // la barra de progreso y el color de cada fila según lo marcado en pantalla.
+    // Se llama cada vez que cambia un select de asistencia, y al cargar/recargar
+    // la lista de un salón.
+    function actualizarResumenAsistenciaAux() {
+      const filas = document.querySelectorAll('#tabla-aux-alumnos tr[data-row]');
+      const wrap = document.getElementById('aux-resumen-wrap');
+      const total = filas.length;
+      if (!wrap) return;
+      if (!total) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+
+      let presentes = 0, ausentes = 0, tardanzas = 0, sinMarcar = 0;
+      filas.forEach((tr) => {
+        const sel = tr.querySelector('select[id^="est-"]');
+        const val = sel ? sel.value : '';
+        tr.classList.remove('fila-presente', 'fila-ausente', 'fila-tardanza');
+        if (val === 'P') { presentes++; tr.classList.add('fila-presente'); }
+        else if (val === 'FI' || val === 'FJ') { ausentes++; tr.classList.add('fila-ausente'); }
+        else if (val === 'TI' || val === 'TJ') { tardanzas++; tr.classList.add('fila-tardanza'); }
+        else { sinMarcar++; }
+      });
+      const marcados = total - sinMarcar;
+
+      const elP = document.getElementById('stat-aux-presentes');
+      const elA = document.getElementById('stat-aux-ausentes');
+      const elT = document.getElementById('stat-aux-tardanzas');
+      const elS = document.getElementById('stat-aux-sinmarcar');
+      if (elP) elP.textContent = presentes;
+      if (elA) elA.textContent = ausentes;
+      if (elT) elT.textContent = tardanzas;
+      if (elS) elS.textContent = sinMarcar;
+
+      const barra = document.getElementById('aux-progreso-barra');
+      const texto = document.getElementById('aux-progreso-texto');
+      if (barra) barra.style.width = (total ? (marcados / total * 100) : 0) + '%';
+      if (texto) texto.textContent = `${marcados} de ${total} marcados`;
+    }
+
+    // Marca como "Presente" a todos los alumnos que todavía están "Sin marcar"
+    // en el salón actual (no toca a los que ya tienen algo marcado) y guarda
+    // el cambio de una vez para cada uno.
+    async function marcarTodosPresentesAux() {
+      const filas = Array.from(document.querySelectorAll('#tabla-aux-alumnos tr[data-row]'));
+      if (!filas.length) return;
+      const pendientes = filas.filter((tr) => {
+        const sel = tr.querySelector('select[id^="est-"]');
+        return sel && !sel.value;
+      });
+      if (!pendientes.length) {
+        alert('Ya no quedan alumnos sin marcar en este salón.');
+        return;
+      }
+      if (!confirm(`¿Marcar como Presente a ${pendientes.length} alumno(s) que están sin marcar?`)) return;
+      for (const tr of pendientes) {
+        const sel = tr.querySelector('select[id^="est-"]');
+        const alumnoId = sel.id.replace('est-', '');
+        sel.value = 'P';
+        actualizarBotonWhatsapp(alumnoId);
+        await guardarAsistenciaAlumno(alumnoId);
+      }
     }
 
     // Abre WhatsApp Web/App con un mensaje predeterminado al celular del apoderado.
@@ -3089,6 +3195,14 @@ async function guardarEvaluacionTutor() {
         const select = document.getElementById('aux-salon-select');
         select.innerHTML = '<option value="">Selecciona un salón...</option>' +
           salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+
+        // Recuerda el último salón que esta cuenta usó (por navegador) y lo
+        // deja preseleccionado, cargando su lista automáticamente.
+        const ultimoSalon = localStorage.getItem('sd_aux_salon_' + (usuario.email || ''));
+        if (ultimoSalon && salones.some((s) => String(s.id) === ultimoSalon)) {
+          select.value = ultimoSalon;
+          cargarAlumnosAuxiliar();
+        }
       } catch (err) {
         console.error('Error cargando salones:', err);
       }
@@ -3101,8 +3215,10 @@ async function guardarEvaluacionTutor() {
       if (buscador) buscador.value = '';
       if (!salonId) {
         tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón para ver los alumnos</p></div></td></tr>';
+        actualizarResumenAsistenciaAux();
         return;
       }
+      localStorage.setItem('sd_aux_salon_' + (usuario.email || ''), salonId);
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
         const res = await fetch('/api/asistencias?salon_id=' + salonId + '&fecha=' + fechaHoyISO(), { headers });
@@ -3134,6 +3250,7 @@ async function guardarEvaluacionTutor() {
             <td><button class="whatsapp-btn" id="wa-${a.alumno_id}" onclick="abrirWhatsappAlumno(${a.alumno_id})" ${(a.celular_apoderado && (a.estado || a.reforzamiento)) ? '' : 'disabled'}>💬 WhatsApp</button></td>
           </tr>`;
         }).join('') : '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>';
+        actualizarResumenAsistenciaAux();
       } catch (err) {
         console.error('Error cargando alumnos:', err);
       }
