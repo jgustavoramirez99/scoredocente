@@ -850,6 +850,162 @@
       color: var(--text3);
       letter-spacing: 0.3px;
     }
+
+    /* ══════════════════════════════
+       ASISTENTE VIRTUAL (chatbot) — Panel Auxiliar
+    ══════════════════════════════ */
+    .chatbot-fab {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--navy2), var(--accent));
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 500;
+      transition: transform 0.15s;
+    }
+    .chatbot-fab:hover { transform: scale(1.07); }
+    .chatbot-fab .chatbot-fab-dot {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2px solid var(--bg);
+    }
+    .chatbot-window {
+      position: fixed;
+      right: 24px;
+      bottom: 94px;
+      width: 350px;
+      max-width: calc(100vw - 48px);
+      height: 480px;
+      max-height: calc(100vh - 140px);
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      z-index: 501;
+      animation: laura-pop 0.25s ease;
+    }
+    .chatbot-window.show { display: flex; }
+    .chatbot-header {
+      padding: 14px 16px;
+      background: linear-gradient(120deg, var(--navy), var(--navy2), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chatbot-header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+    }
+    .chatbot-header-close {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .chatbot-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .chatbot-msg {
+      max-width: 84%;
+      padding: 9px 12px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .chatbot-msg.bot {
+      align-self: flex-start;
+      background: var(--surface2);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+    .chatbot-msg.user {
+      align-self: flex-end;
+      background: linear-gradient(120deg, var(--navy2), var(--accent));
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .chatbot-msg.error { color: var(--accent2); background: var(--red-bg); }
+    .chatbot-typing {
+      align-self: flex-start;
+      display: flex;
+      gap: 4px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+    }
+    .chatbot-typing span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+      animation: chatbot-bounce 1s infinite ease-in-out;
+    }
+    .chatbot-typing span:nth-child(2) { animation-delay: 0.15s; }
+    .chatbot-typing span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes chatbot-bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+    .chatbot-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .chatbot-input-row input {
+      flex: 1;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+    }
+    .chatbot-input-row button {
+      padding: 0 16px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .chatbot-input-row button:disabled { opacity: 0.5; cursor: default; }
     @keyframes laura-pop {
       from { opacity: 0; transform: scale(0.7); }
       to   { opacity: 1; transform: scale(1); }
@@ -1707,6 +1863,24 @@
             <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-censal-critico"></canvas></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Asistente virtual — solo dentro del Panel Auxiliar -->
+    <button class="chatbot-fab" id="chatbot-fab" onclick="toggleChatbot()">
+      💬<span class="chatbot-fab-dot"></span>
+    </button>
+    <div class="chatbot-window" id="chatbot-window">
+      <div class="chatbot-header">
+        <div class="chatbot-header-title">🤖 Asistente ScoreDocente</div>
+        <button class="chatbot-header-close" onclick="toggleChatbot()">✕</button>
+      </div>
+      <div class="chatbot-messages" id="chatbot-messages">
+        <div class="chatbot-msg bot">¡Hola! 👋 Soy el asistente del Panel Auxiliar. Puedo ayudarte a usar el sistema o contarte cómo va la asistencia de hoy en algún salón. ¿En qué te ayudo?</div>
+      </div>
+      <div class="chatbot-input-row">
+        <input type="text" id="chatbot-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') enviarMensajeChatbot()">
+        <button id="chatbot-send-btn" onclick="enviarMensajeChatbot()">➤</button>
       </div>
     </div>
   </div>
@@ -3118,6 +3292,126 @@ async function guardarEvaluacionTutor() {
         actualizarBotonWhatsapp(alumnoId);
         await guardarAsistenciaAlumno(alumnoId);
       }
+    }
+
+    // ══════════════════════════════
+    //  ASISTENTE VIRTUAL (chatbot) — Panel Auxiliar
+    // ══════════════════════════════
+    let chatbotEnviando = false;
+
+    // Base de preguntas frecuentes del asistente (sin IA, sin costo, sin backend).
+    // Cada item responde si el mensaje del usuario contiene alguna de sus "keywords".
+    const CHATBOT_FAQ = [
+      { keywords: ['marcar todos presentes', 'todos presentes'], respuesta: 'El botón "✅ Marcar todos presentes" (arriba de la tabla) marca y guarda como Presente a todos los alumnos que sigan "Sin marcar" en el salón que tengas abierto — no toca a los que ya tienen algo marcado, y te pide confirmar antes de aplicarlo.' },
+      { keywords: ['marcar asistencia', 'marco asistencia', 'como marco', 'registrar asistencia'], respuesta: 'Para marcar asistencia: selecciona un salón arriba, elige el estado en el desplegable "Asistencia" de cada alumno (Presente, Falta Injustificada/Justificada, Tardanza Injustificada/Justificada) y dale clic a "💾 Guardar" en esa fila.' },
+      { keywords: ['whatsapp'], respuesta: 'El botón "💬 WhatsApp" de cada fila abre un mensaje ya armado al celular del apoderado, según lo que hayas marcado. Solo se activa si el alumno tiene celular registrado y algo marcado en Asistencia o Reforzamiento.' },
+      { keywords: ['resumen por salon', 'resumen semanal'], respuesta: '"Resumen por salón", en el menú de la izquierda, te muestra el resumen semanal de asistencia de cada salón.' },
+      { keywords: ['censal'], respuesta: 'En "Evaluación Censal" registras los resultados de comprensión lectora de un salón: selecciona el salón, marca cada ítem con OK, X o "-", y el total y nivel de logro se calculan solos.' },
+      { keywords: ['dia pasado', 'dias pasados', 'otro dia', 'ayer', 'fecha anterior'], respuesta: 'Desde tu cuenta solo puedes registrar la asistencia del día de HOY. Si necesitas corregir un día pasado, pídele ayuda al director.' },
+      { keywords: ['celular', 'numero de apoderado', 'numero del apoderado'], respuesta: 'Puedes escribir o corregir el celular del apoderado directo en la columna "Celular Apoderado" de cada fila — se guarda junto con la asistencia al darle "💾 Guardar".' },
+      { keywords: ['observacion'], respuesta: 'La columna "Observación" tiene opciones rápidas (Contestó, No contestó, Salud y Viaje) y también puedes elegir "Otro" para escribir una propia.' },
+      { keywords: ['reforzamiento', 'circulo', 'círculo'], respuesta: 'La columna "Reforzamiento / Círculo" es independiente de la asistencia normal — puedes marcar "No asistió a Reforzamiento" o "No asistió a Círculo" el mismo día sin que se borre lo que marcaste en Asistencia.' }
+    ];
+    const CHATBOT_PALABRAS_DATOS = ['cuantos', 'presente', 'ausente', 'falta', 'tardanza', 'sin marcar', 'como va', 'resumen de hoy', 'avance'];
+    const CHATBOT_SALUDOS = ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buen dia'];
+    const CHATBOT_AGRADECIMIENTOS = ['gracias', 'genial', 'perfecto', 'excelente'];
+    const CHATBOT_COMO_ESTAS = ['como estas', 'que tal'];
+
+    function chatbotNormalizar(t) {
+      return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    }
+
+    // Responde localmente. Para preguntas de datos ("¿cuántos presentes?", etc.)
+    // lee las tarjetas de resumen que YA están en pantalla (aux-resumen-wrap) —
+    // así es información real del día de hoy, sin inventar nada y sin backend.
+    function responderChatbotLocal(pregunta) {
+      const q = chatbotNormalizar(pregunta);
+
+      if (CHATBOT_PALABRAS_DATOS.some((p) => q.includes(chatbotNormalizar(p)))) {
+        const salonSel = document.getElementById('aux-salon-select');
+        const nombreSalon = salonSel && salonSel.selectedIndex > 0 ? salonSel.options[salonSel.selectedIndex].textContent : null;
+        const wrap = document.getElementById('aux-resumen-wrap');
+        if (!nombreSalon || !wrap || wrap.style.display === 'none') {
+          return 'Todavía no has seleccionado un salón — elige uno arriba y te cuento cómo va la asistencia de hoy ahí 🙂';
+        }
+        const p = document.getElementById('stat-aux-presentes').textContent;
+        const a = document.getElementById('stat-aux-ausentes').textContent;
+        const t = document.getElementById('stat-aux-tardanzas').textContent;
+        const s = document.getElementById('stat-aux-sinmarcar').textContent;
+        return `En ${nombreSalon} llevas hoy: ✅ ${p} presentes, ❌ ${a} ausentes, ⏰ ${t} tardanzas y ✏️ ${s} sin marcar.`;
+      }
+
+      for (const item of CHATBOT_FAQ) {
+        if (item.keywords.some((k) => q.includes(chatbotNormalizar(k)))) return item.respuesta;
+      }
+
+      if (CHATBOT_SALUDOS.some((s) => q.includes(s))) return '¡Hola! 👋 ¿En qué te ayudo? Puedo explicarte cómo usar el panel o contarte cómo va la asistencia de hoy.';
+      if (CHATBOT_AGRADECIMIENTOS.some((s) => q.includes(s))) return '¡De nada! 💙 Aquí ando si necesitas algo más.';
+      if (CHATBOT_COMO_ESTAS.some((s) => q.includes(s))) return '¡Todo bien por aquí, gracias por preguntar! ¿En qué te ayudo con el panel?';
+
+      return 'No tengo una respuesta preparada para eso todavía 🙈 Prueba preguntándome cómo marcar asistencia, qué hace "Marcar todos presentes", cómo usar el botón de WhatsApp, o cómo va la asistencia de hoy en el salón que tengas abierto. Para otras dudas, mejor escríbele a Gustavo.';
+    }
+
+    function toggleChatbot() {
+      const win = document.getElementById('chatbot-window');
+      if (!win) return;
+      win.classList.toggle('show');
+      if (win.classList.contains('show')) {
+        const input = document.getElementById('chatbot-input');
+        if (input) input.focus();
+        const msgs = document.getElementById('chatbot-messages');
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+      }
+    }
+
+    function chatbotAgregarMensaje(texto, tipo) {
+      const msgs = document.getElementById('chatbot-messages');
+      if (!msgs) return;
+      const div = document.createElement('div');
+      div.className = 'chatbot-msg ' + tipo;
+      div.textContent = texto;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function chatbotMostrarEscribiendo(mostrar) {
+      const msgs = document.getElementById('chatbot-messages');
+      if (!msgs) return;
+      let indicador = document.getElementById('chatbot-typing');
+      if (mostrar) {
+        if (indicador) return;
+        indicador = document.createElement('div');
+        indicador.className = 'chatbot-typing';
+        indicador.id = 'chatbot-typing';
+        indicador.innerHTML = '<span></span><span></span><span></span>';
+        msgs.appendChild(indicador);
+        msgs.scrollTop = msgs.scrollHeight;
+      } else if (indicador) {
+        indicador.remove();
+      }
+    }
+
+    function enviarMensajeChatbot() {
+      if (chatbotEnviando) return;
+      const input = document.getElementById('chatbot-input');
+      const texto = input.value.trim();
+      if (!texto) return;
+      input.value = '';
+      chatbotAgregarMensaje(texto, 'user');
+
+      chatbotEnviando = true;
+      document.getElementById('chatbot-send-btn').disabled = true;
+      chatbotMostrarEscribiendo(true);
+
+      // Pequeña pausa artificial para que se sienta natural (no hay red real de por medio).
+      setTimeout(() => {
+        const respuesta = responderChatbotLocal(texto);
+        chatbotMostrarEscribiendo(false);
+        chatbotAgregarMensaje(respuesta, 'bot');
+        chatbotEnviando = false;
+        document.getElementById('chatbot-send-btn').disabled = false;
+        input.focus();
+      }, 450);
     }
 
     // Abre WhatsApp Web/App con un mensaje predeterminado al celular del apoderado.
