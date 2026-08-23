@@ -16,6 +16,9 @@
       --accent: #e63946;
       --accent2: #ff6b6b;
       --accent-glow: rgba(230,57,70,0.15);
+      --navy: #16325c;
+      --navy2: #1e4272;
+      --navy-glow: rgba(22,50,92,0.2);
       --text: #f0f0f5;
       --text2: #9090a8;
       --text3: #5a5a72;
@@ -35,7 +38,11 @@
 
     body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
+      background:
+        radial-gradient(ellipse 55% 40% at 15% 0%, rgba(22,50,92,0.14), transparent 60%),
+        radial-gradient(ellipse 45% 35% at 100% 100%, rgba(230,57,70,0.07), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
     }
@@ -195,7 +202,7 @@
       top: 0; left: 0;
       width: var(--sidebar-w);
       height: 100vh;
-      background: var(--surface);
+      background: linear-gradient(180deg, #0d1728 0%, var(--surface) 55%);
       border-right: 1px solid var(--border);
       padding: 1.5rem 0.75rem;
       display: flex;
@@ -351,18 +358,30 @@
 
     .page-header {
       margin-bottom: 1.75rem;
+      position: relative;
+      padding: 1.5rem 2rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border2);
+      overflow: hidden;
+      background:
+        linear-gradient(120deg, rgba(13,23,40,0.90), rgba(22,50,92,0.75), rgba(230,57,70,0.35)),
+        url('cervantes-fachada.jpg');
+      background-size: cover;
+      background-position: center 35%;
     }
     .page-title {
       font-family: 'Syne', sans-serif;
       font-size: 22px;
       font-weight: 700;
-      color: var(--text);
+      color: #ffffff;
       letter-spacing: -0.5px;
+      position: relative;
     }
     .page-subtitle {
       font-size: 13px;
-      color: var(--text3);
+      color: rgba(255,255,255,0.72);
       margin-top: 3px;
+      position: relative;
     }
 
     /* ── STATS ── */
@@ -386,9 +405,9 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--accent);
-      opacity: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--navy2), var(--accent));
+      opacity: 0.85;
       transition: opacity 0.2s;
     }
     .stat-card:hover { border-color: var(--border2); }
@@ -427,6 +446,14 @@
       border-radius: var(--radius);
       overflow: hidden;
       margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .table-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--navy2), var(--accent));
     }
 
     .table-header {
@@ -675,7 +702,17 @@
       padding: 3rem 1.5rem;
       color: var(--text3);
     }
-    .empty-state .empty-icon { font-size: 36px; margin-bottom: 0.75rem; opacity: 0.4; }
+    .empty-state .empty-icon {
+      width: 52px; height: 52px;
+      margin: 0 auto 0.85rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--navy-glow), var(--accent-glow));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      opacity: 1;
+    }
     .empty-state p { font-size: 13px; }
   
     .eval-seccion {
