@@ -4081,7 +4081,7 @@ async function guardarEvaluacionTutor() {
     function renderTablaVotosEE(respuestas) {
       const thead = document.getElementById('ee-votos-thead');
       const tbody = document.getElementById('tabla-ee-votos');
-      thead.innerHTML = '<th>Salón</th>' + CRITERIOS_EE_LABELS.map(c => `<th>${c}</th>`).join('') + '<th>Promedio</th><th>Fortaleza</th><th>Mejora</th><th>Fecha</th>';
+      thead.innerHTML = '<th>Salón</th>' + CRITERIOS_EE_LABELS.map(c => `<th>${c}</th>`).join('') + '<th>Promedio</th><th>Fortaleza</th><th>Mejora</th>';
       tbody.innerHTML = respuestas.length ? respuestas.map(r => `
         <tr>
           <td style="color:var(--text2)">${r.salon_nombre || '—'}</td>
@@ -4089,8 +4089,7 @@ async function guardarEvaluacionTutor() {
           <td style="font-weight:600">${badgeEvalEstudiante(r.puntaje_total)}</td>
           <td style="color:var(--text2);font-size:12px;max-width:180px">${r.fortaleza || '—'}</td>
           <td style="color:var(--text2);font-size:12px;max-width:180px">${r.mejora || '—'}</td>
-          <td style="color:var(--text3);font-size:12px">${new Date(r.creado_en).toLocaleDateString('es-PE')}</td>
-        </tr>`).join('') : `<tr><td colspan="${2 + CRITERIOS_EE_LABELS.length + 3}"><div class="empty-state"><div class="empty-icon">🗳️</div><p>Este docente aún no tiene votos</p></div></td></tr>`;
+        </tr>`).join('') : `<tr><td colspan="${2 + CRITERIOS_EE_LABELS.length + 2}"><div class="empty-state"><div class="empty-icon">🗳️</div><p>Este docente aún no tiene votos</p></div></td></tr>`;
     }
 
     function cerrarDetalleEvalEstudiantes() {
