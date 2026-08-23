@@ -3580,7 +3580,12 @@ async function guardarEvaluacionTutor() {
       { keywords: ['dia pasado', 'dias pasados', 'otro dia', 'ayer', 'fecha anterior'], respuesta: 'Desde tu cuenta solo puedes registrar la asistencia del día de HOY. Si necesitas corregir un día pasado, pídele ayuda al director.' },
       { keywords: ['celular', 'numero de apoderado', 'numero del apoderado'], respuesta: 'Puedes escribir o corregir el celular del apoderado directo en la columna "Celular Apoderado" de cada fila — se guarda junto con la asistencia al darle "💾 Guardar".' },
       { keywords: ['observacion'], respuesta: 'La columna "Observación" tiene opciones rápidas (Contestó, No contestó, Salud y Viaje) y también puedes elegir "Otro" para escribir una propia.' },
-      { keywords: ['reforzamiento', 'circulo', 'círculo'], respuesta: 'La columna "Reforzamiento / Círculo" es independiente de la asistencia normal — puedes marcar "No asistió a Reforzamiento" o "No asistió a Círculo" el mismo día sin que se borre lo que marcaste en Asistencia.' }
+      { keywords: ['reforzamiento', 'circulo', 'círculo'], respuesta: 'La columna "Reforzamiento / Círculo" es independiente de la asistencia normal — puedes marcar "No asistió a Reforzamiento" o "No asistió a Círculo" el mismo día sin que se borre lo que marcaste en Asistencia.' },
+      { keywords: ['reporte', 'reportes', 'informe', 'historial de asistencia'], respuesta: '"📄 Reportes" (en el menú de la izquierda, solo disponible en algunas cuentas) te deja ver el historial de asistencia de un rango de fechas: elige "Desde" y "Hasta" y dale clic a "🔎 Filtrar". Te muestra todos los salones juntos en ese rango, con un resumen de Presentes/Faltas/Tardanzas, un gráfico circular y la tabla detallada — y ahí mismo puedes descargar el PDF.' },
+      { keywords: ['descargar pdf', 'descargar el pdf', 'donde descargo', 'descargar reporte', 'exportar pdf'], respuesta: 'Para descargar el PDF: entra a "📄 Reportes", elige un rango de fechas ("Desde"/"Hasta") y dale clic a "🔎 Filtrar". Cuando aparezcan los resultados, va a salir el botón "📄 Descargar PDF" — al hacerle clic se descarga un documento con el resumen, el gráfico y la tabla de ese rango.' },
+      { keywords: ['filtrar por fecha', 'rango de fechas', 'filtrar reporte', 'buscar por fecha'], respuesta: 'En "📄 Reportes" eliges una fecha "Desde" y una "Hasta" y le das clic a "🔎 Filtrar" — te muestra la asistencia de todos los salones juntos, solo en ese rango de fechas.' },
+      { keywords: ['grafico circular', 'gráfico circular', 'grafico de torta', 'gráfico de torta', 'grafico', 'gráfico'], respuesta: 'El gráfico circular que aparece en "📄 Reportes" muestra, para el rango de fechas que filtraste, cuántos registros hay de Presentes, Faltas y Tardanzas en total, sumando todos los salones.' },
+      { keywords: ['quien es gustavo', 'quién es gustavo', 'gustavo'], respuesta: 'Gustavo Ramírez es de Soporte TI del colegio — él arma y cuida este sistema (ScoreDocente), incluyéndome a mí 🤖. Si tienes algo que este panel no resuelve, escríbele a él directamente.' }
     ];
     const CHATBOT_PALABRAS_DATOS = ['cuantos', 'presente', 'ausente', 'falta', 'tardanza', 'sin marcar', 'como va', 'resumen de hoy', 'avance'];
     const CHATBOT_SALUDOS = ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buen dia'];
@@ -3619,7 +3624,7 @@ async function guardarEvaluacionTutor() {
       if (CHATBOT_AGRADECIMIENTOS.some((s) => q.includes(s))) return '¡De nada! 💙 Aquí ando si necesitas algo más.';
       if (CHATBOT_COMO_ESTAS.some((s) => q.includes(s))) return '¡Todo bien por aquí, gracias por preguntar! ¿En qué te ayudo con el panel?';
 
-      return 'No tengo una respuesta preparada para eso todavía 🙈 Prueba preguntándome cómo marcar asistencia, qué hace "Marcar todos presentes", cómo usar el botón de WhatsApp, o cómo va la asistencia de hoy en el salón que tengas abierto. Para otras dudas, mejor escríbele a Gustavo.';
+      return 'No tengo una respuesta preparada para eso todavía 🙈 Prueba preguntándome cómo marcar asistencia, qué hace "Marcar todos presentes", cómo usar el botón de WhatsApp, cómo descargar el PDF de reportes, o cómo va la asistencia de hoy en el salón que tengas abierto. Para otras dudas, mejor escríbele a Gustavo.';
     }
 
     function toggleChatbot() {
