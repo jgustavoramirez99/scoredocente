@@ -3585,7 +3585,8 @@ async function guardarEvaluacionTutor() {
       { keywords: ['descargar pdf', 'descargar el pdf', 'donde descargo', 'descargar reporte', 'exportar pdf'], respuesta: 'Para descargar el PDF: entra a "📄 Reportes", elige un rango de fechas ("Desde"/"Hasta") y dale clic a "🔎 Filtrar". Cuando aparezcan los resultados, va a salir el botón "📄 Descargar PDF" — al hacerle clic se descarga un documento con el resumen, el gráfico y la tabla de ese rango.' },
       { keywords: ['filtrar por fecha', 'rango de fechas', 'filtrar reporte', 'buscar por fecha'], respuesta: 'En "📄 Reportes" eliges una fecha "Desde" y una "Hasta" y le das clic a "🔎 Filtrar" — te muestra la asistencia de todos los salones juntos, solo en ese rango de fechas.' },
       { keywords: ['grafico circular', 'gráfico circular', 'grafico de torta', 'gráfico de torta', 'grafico', 'gráfico'], respuesta: 'El gráfico circular que aparece en "📄 Reportes" muestra, para el rango de fechas que filtraste, cuántos registros hay de Presentes, Faltas y Tardanzas en total, sumando todos los salones.' },
-      { keywords: ['quien es gustavo', 'quién es gustavo', 'gustavo'], respuesta: 'Gustavo Ramírez es de Soporte TI del colegio — él arma y cuida este sistema (ScoreDocente), incluyéndome a mí 🤖. Si tienes algo que este panel no resuelve, escríbele a él directamente.' }
+      { keywords: ['quien es gustavo', 'quién es gustavo', 'gustavo'], respuesta: 'Gustavo Ramírez es de Soporte TI del colegio — él arma y cuida este sistema (ScoreDocente), incluyéndome a mí 🤖. Si tienes algo que este panel no resuelve, puedes escribirle directo al WhatsApp 943706872 📱.' },
+      { keywords: ['como le escribo', 'cómo le escribo', 'como se le escribe', 'por donde le escribo', 'por donde escribo', 'numero de gustavo', 'número de gustavo', 'celular de gustavo', 'contacto de gustavo', 'whatsapp de gustavo', 'como contacto a gustavo', 'como lo contacto'], respuesta: 'Puedes escribirle a Gustavo directo por WhatsApp al 943706872 📱.' }
     ];
     const CHATBOT_PALABRAS_DATOS = ['cuantos', 'presente', 'ausente', 'falta', 'tardanza', 'sin marcar', 'como va', 'resumen de hoy', 'avance'];
     const CHATBOT_SALUDOS = ['hola', 'buenos dias', 'buenas tardes', 'buenas noches', 'buen dia'];
@@ -3601,6 +3602,12 @@ async function guardarEvaluacionTutor() {
     // así es información real del día de hoy, sin inventar nada y sin backend.
     function responderChatbotLocal(pregunta) {
       const q = chatbotNormalizar(pregunta);
+
+      // Un "ok"/"okay" suelto normalmente es la persona confirmando que no
+      // encontró lo que buscaba en el panel — le dejamos el contacto directo.
+      if (['ok', 'oka', 'okay', 'okey', 'listo', 'ya'].includes(q)) {
+        return '¡Listo! 🙂 Si necesitas algo más que no esté aquí, escríbele a Gustavo por WhatsApp al 943706872 📱.';
+      }
 
       if (CHATBOT_PALABRAS_DATOS.some((p) => q.includes(chatbotNormalizar(p)))) {
         const salonSel = document.getElementById('aux-salon-select');
@@ -3624,7 +3631,7 @@ async function guardarEvaluacionTutor() {
       if (CHATBOT_AGRADECIMIENTOS.some((s) => q.includes(s))) return '¡De nada! 💙 Aquí ando si necesitas algo más.';
       if (CHATBOT_COMO_ESTAS.some((s) => q.includes(s))) return '¡Todo bien por aquí, gracias por preguntar! ¿En qué te ayudo con el panel?';
 
-      return 'No tengo una respuesta preparada para eso todavía 🙈 Prueba preguntándome cómo marcar asistencia, qué hace "Marcar todos presentes", cómo usar el botón de WhatsApp, cómo descargar el PDF de reportes, o cómo va la asistencia de hoy en el salón que tengas abierto. Para otras dudas, mejor escríbele a Gustavo.';
+      return 'No tengo una respuesta preparada para eso todavía 🙈 Prueba preguntándome cómo marcar asistencia, qué hace "Marcar todos presentes", cómo usar el botón de WhatsApp, cómo descargar el PDF de reportes, o cómo va la asistencia de hoy en el salón que tengas abierto. Para otras dudas, escríbele a Gustavo por WhatsApp al 943706872 📱.';
     }
 
     function toggleChatbot() {
