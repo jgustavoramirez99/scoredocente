@@ -1935,7 +1935,7 @@
         <button class="chatbot-header-close" onclick="toggleChatbot()">✕</button>
       </div>
       <div class="chatbot-messages" id="chatbot-messages">
-        <div class="chatbot-msg bot">¡Hola! 👋 Soy GusTI, el asistente del Panel Auxiliar. Puedo ayudarte a usar el sistema o contarte cómo va la asistencia de hoy en algún salón. ¿En qué te ayudo?</div>
+        <div class="chatbot-msg bot">¡Hola! 👋 Soy GusTI, el asistente del Panel Auxiliar. Puedo ayudarte a usar el sistema, contarte cómo va la asistencia de hoy en algún salón, o responder preguntas generales. ¿En qué te ayudo?</div>
       </div>
       <div class="chatbot-input-row">
         <input type="text" id="chatbot-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') enviarMensajeChatbot()">
@@ -3627,11 +3627,15 @@ async function guardarEvaluacionTutor() {
         if (item.keywords.some((k) => q.includes(chatbotNormalizar(k)))) return item.respuesta;
       }
 
-      if (CHATBOT_SALUDOS.some((s) => q.includes(s))) return '¡Hola! 👋 Soy GusTI. Puedo explicarte cómo usar el panel o contarte cómo va la asistencia de hoy.';
+      if (CHATBOT_SALUDOS.some((s) => q.includes(s))) return '¡Hola! 👋 Soy GusTI. Puedo explicarte cómo usar el panel, contarte cómo va la asistencia de hoy, o responder preguntas generales.';
       if (CHATBOT_AGRADECIMIENTOS.some((s) => q.includes(s))) return '¡De nada! 💙 Aquí ando si necesitas algo más.';
       if (CHATBOT_COMO_ESTAS.some((s) => q.includes(s))) return '¡Todo bien por aquí, gracias por preguntar! ¿En qué te ayudo con el panel?';
 
-      return 'No tengo una respuesta preparada para eso todavía 🙈 Prueba preguntándome cómo marcar asistencia, qué hace "Marcar todos presentes", cómo usar el botón de WhatsApp, cómo descargar el PDF de reportes, o cómo va la asistencia de hoy en el salón que tengas abierto. Para otras dudas, escríbele a Gustavo por WhatsApp al 943706872 📱.';
+      // Si no coincide con nada de lo anterior, no es necesariamente un "no sé":
+      // se lo pasamos a la IA de Google (gratis, ver preguntarGustiaIA) como
+      // pregunta general. Devolver null le indica a enviarMensajeChatbot que
+      // debe intentar eso antes de rendirse.
+      return null;
     }
 
     function toggleChatbot() {
@@ -3673,7 +3677,27 @@ async function guardarEvaluacionTutor() {
       }
     }
 
-    function enviarMensajeChatbot() {
+    // Pregunta general (no encontrada en el FAQ local) a la IA gratuita de
+    // Google (Gemini, plan gratis). Pasa por el backend para no exponer la
+    // clave en el navegador. Si no está configurada o falla, avisa con calma.
+    async function preguntarGustiaIA(pregunta) {
+      try {
+        const res = await fetch('/api/gustia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ pregunta })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return data.error || 'No pude conectarme con la IA en este momento 🙈';
+        }
+        return data.respuesta || 'No tengo una respuesta para eso ahora mismo.';
+      } catch (err) {
+        return 'No pude conectarme con la IA en este momento — revisa tu conexión e intenta de nuevo 🙈';
+      }
+    }
+
+    async function enviarMensajeChatbot() {
       if (chatbotEnviando) return;
       const input = document.getElementById('chatbot-input');
       const texto = input.value.trim();
@@ -3685,15 +3709,29 @@ async function guardarEvaluacionTutor() {
       document.getElementById('chatbot-send-btn').disabled = true;
       chatbotMostrarEscribiendo(true);
 
-      // Pequeña pausa artificial para que se sienta natural (no hay red real de por medio).
-      setTimeout(() => {
-        const respuesta = responderChatbotLocal(texto);
-        chatbotMostrarEscribiendo(false);
-        chatbotAgregarMensaje(respuesta, 'bot');
-        chatbotEnviando = false;
-        document.getElementById('chatbot-send-btn').disabled = false;
-        input.focus();
-      }, 450);
+      // Primero intenta responder localmente (gratis, instantáneo). Si no
+      // encuentra nada (responderChatbotLocal devuelve null), se lo pasa a
+      // la IA de Google como pregunta general.
+      const respuestaLocal = responderChatbotLocal(texto);
+
+      if (respuestaLocal !== null) {
+        // Pequeña pausa artificial para que se sienta natural (no hay red real de por medio).
+        setTimeout(() => {
+          chatbotMostrarEscribiendo(false);
+          chatbotAgregarMensaje(respuestaLocal, 'bot');
+          chatbotEnviando = false;
+          document.getElementById('chatbot-send-btn').disabled = false;
+          input.focus();
+        }, 450);
+        return;
+      }
+
+      const respuestaIA = await preguntarGustiaIA(texto);
+      chatbotMostrarEscribiendo(false);
+      chatbotAgregarMensaje(respuestaIA, 'bot');
+      chatbotEnviando = false;
+      document.getElementById('chatbot-send-btn').disabled = false;
+      input.focus();
     }
 
     // Abre WhatsApp Web/App con un mensaje predeterminado al celular del apoderado.

@@ -30,6 +30,8 @@ const evaluacionCensalRouter = require('./routes/evaluacionCensal');
 app.use('/api/evaluacion-censal', evaluacionCensalRouter);
 const auditoriaRouter = require('./routes/auditoria');
 app.use('/api/auditoria', auditoriaRouter);
+const gustiaRouter = require('./routes/gustia');
+app.use('/api/gustia', gustiaRouter);
 app.use('/api/auth', authRouter);
 
 app.get('/{*path}', (req, res) => {
