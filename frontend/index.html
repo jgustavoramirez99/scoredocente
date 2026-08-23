@@ -1872,11 +1872,11 @@
     </button>
     <div class="chatbot-window" id="chatbot-window">
       <div class="chatbot-header">
-        <div class="chatbot-header-title">🤖 Asistente ScoreDocente</div>
+        <div class="chatbot-header-title">🤖 GusTI</div>
         <button class="chatbot-header-close" onclick="toggleChatbot()">✕</button>
       </div>
       <div class="chatbot-messages" id="chatbot-messages">
-        <div class="chatbot-msg bot">¡Hola! 👋 Soy el asistente del Panel Auxiliar. Puedo ayudarte a usar el sistema o contarte cómo va la asistencia de hoy en algún salón. ¿En qué te ayudo?</div>
+        <div class="chatbot-msg bot">¡Hola! 👋 Soy GusTI, el asistente del Panel Auxiliar. Puedo ayudarte a usar el sistema o contarte cómo va la asistencia de hoy en algún salón. ¿En qué te ayudo?</div>
       </div>
       <div class="chatbot-input-row">
         <input type="text" id="chatbot-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') enviarMensajeChatbot()">
@@ -3345,7 +3345,7 @@ async function guardarEvaluacionTutor() {
         if (item.keywords.some((k) => q.includes(chatbotNormalizar(k)))) return item.respuesta;
       }
 
-      if (CHATBOT_SALUDOS.some((s) => q.includes(s))) return '¡Hola! 👋 ¿En qué te ayudo? Puedo explicarte cómo usar el panel o contarte cómo va la asistencia de hoy.';
+      if (CHATBOT_SALUDOS.some((s) => q.includes(s))) return '¡Hola! 👋 Soy GusTI. Puedo explicarte cómo usar el panel o contarte cómo va la asistencia de hoy.';
       if (CHATBOT_AGRADECIMIENTOS.some((s) => q.includes(s))) return '¡De nada! 💙 Aquí ando si necesitas algo más.';
       if (CHATBOT_COMO_ESTAS.some((s) => q.includes(s))) return '¡Todo bien por aquí, gracias por preguntar! ¿En qué te ayudo con el panel?';
 
