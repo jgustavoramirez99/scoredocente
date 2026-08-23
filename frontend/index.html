@@ -772,6 +772,74 @@
       height: 16px;
       cursor: pointer;
     }
+
+    /* ══════════════════════════════
+       BIENVENIDA PERSONALIZADA (Laura)
+    ══════════════════════════════ */
+    #laura-confetti-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .laura-welcome-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,15,0.75);
+      backdrop-filter: blur(3px);
+    }
+    .laura-welcome-overlay.show { display: flex; }
+    .laura-welcome-card {
+      position: relative;
+      z-index: 10000;
+      background: linear-gradient(135deg, #ff6b9d 0%, #ffb347 25%, #ffd93d 50%, #6bcb77 75%, #4d96ff 100%);
+      padding: 3px;
+      border-radius: 24px;
+      max-width: 420px;
+      width: 90%;
+      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .laura-welcome-card-inner {
+      background: #14141c;
+      border-radius: 22px;
+      padding: 2.75rem 2rem;
+      text-align: center;
+    }
+    .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
+    .laura-welcome-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 21px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ff6b9d, #ffd93d, #4d96ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+    .laura-welcome-sub { color: var(--text2); font-size: 14px; margin-bottom: 1.85rem; }
+    .laura-welcome-btn {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #ff6b9d, #ffb347);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: transform 0.15s;
+    }
+    .laura-welcome-btn:hover { transform: scale(1.05); }
+    @keyframes laura-pop {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -786,6 +854,19 @@
   <meta name="apple-mobile-web-app-title" content="EduScore CS">
 </head>
 <body>
+
+  <!-- BIENVENIDA PERSONALIZADA (solo cuenta de Laura) -->
+  <canvas id="laura-confetti-canvas"></canvas>
+  <div class="laura-welcome-overlay" id="laura-welcome-overlay">
+    <div class="laura-welcome-card">
+      <div class="laura-welcome-card-inner">
+        <div class="laura-welcome-emoji">🎉</div>
+        <div class="laura-welcome-title">Bienvenida señorita Laura,<br>que tenga un excelente día</div>
+        <div class="laura-welcome-sub">✨ Panel Auxiliar — ScoreDocente ✨</div>
+        <button class="laura-welcome-btn" onclick="cerrarBienvenidaLaura()">Gracias 💐</button>
+      </div>
+    </div>
+  </div>
 
   <!-- LOGIN -->
   <div id="login-page">
@@ -2406,6 +2487,73 @@
       }
     }
 
+    const EMAIL_LAURA_BIENVENIDA = 'laurachavez@cervantesschool.edu.pe';
+
+    function mostrarBienvenidaLaura() {
+      const overlay = document.getElementById('laura-welcome-overlay');
+      if (overlay) overlay.classList.add('show');
+      iniciarConfettiLaura();
+    }
+
+    function cerrarBienvenidaLaura() {
+      const overlay = document.getElementById('laura-welcome-overlay');
+      if (overlay) overlay.classList.remove('show');
+      detenerConfettiLaura();
+    }
+
+    let confettiLauraAnimId = null;
+    function iniciarConfettiLaura() {
+      const canvas = document.getElementById('laura-confetti-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const colores = ['#ff6b9d', '#ffb347', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff'];
+      const piezas = Array.from({ length: 140 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 8,
+        color: colores[Math.floor(Math.random() * colores.length)],
+        speedY: 2 + Math.random() * 3,
+        speedX: (Math.random() - 0.5) * 2,
+        rot: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 8
+      }));
+      let frames = 0;
+      const maxFrames = 260;
+      function tick() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        piezas.forEach((p) => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.rot += p.rotSpeed;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        frames++;
+        if (frames < maxFrames) {
+          confettiLauraAnimId = requestAnimationFrame(tick);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      tick();
+    }
+
+    function detenerConfettiLaura() {
+      if (confettiLauraAnimId) cancelAnimationFrame(confettiLauraAnimId);
+      const canvas = document.getElementById('laura-confetti-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
     function mostrarPanel() {
   document.getElementById('login-page').style.display = 'none';
   const rolesDirector = ['director', 'directora', 'coordinador_general'];
@@ -2413,6 +2561,9 @@
     document.getElementById('auxiliar-page').style.display = 'flex';
     document.getElementById('aux-user-info').textContent = usuario.nombre;
     cargarDatosAuxiliar();
+    if ((usuario.email || '').trim().toLowerCase() === EMAIL_LAURA_BIENVENIDA) {
+      mostrarBienvenidaLaura();
+    }
   } else if (rolesDirector.includes(usuario.rol)) {
     document.getElementById('director-page').style.display = 'flex';
     document.getElementById('dir-user-info').textContent = usuario.nombre;
