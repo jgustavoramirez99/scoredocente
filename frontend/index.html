@@ -1690,6 +1690,7 @@
       <div class="nav-section">Asistencia</div>
       <div class="nav-item active" onclick="showSectionAux('aux-asistencia', this)">🗓 Asistencia de hoy</div>
       <div class="nav-item" onclick="showSectionAux('aux-resumen', this)">📊 Resumen por salón</div>
+      <div class="nav-item" id="nav-aux-reportes" style="display:none" onclick="showSectionAux('aux-reportes', this)">📄 Reportes</div>
       <div class="nav-section">Evaluaciones</div>
       <div class="nav-item" onclick="showSectionAux('aux-censal', this)">📝 Evaluación Censal</div>
       <div class="sidebar-footer">
@@ -1792,6 +1793,64 @@
             <thead><tr><th>Alumno</th><th>Celular</th><th>Tardanzas</th><th>Faltas injustificadas</th><th>Total</th></tr></thead>
             <tbody id="tabla-aux-detalle-salon"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🗓</div><p>Selecciona un salón en la tabla de arriba para ver el detalle</p></div></td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-aux-reportes">
+        <div class="page-header">
+          <div class="page-title">Reportes</div>
+          <div class="page-subtitle">Elige un rango de fechas para ver la asistencia de todos los salones en ese periodo, y descarga el reporte en PDF.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-end">
+          <div class="form-group" style="max-width:180px;margin-bottom:0">
+            <label>Desde</label>
+            <input type="date" id="rep-desde" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          </div>
+          <div class="form-group" style="max-width:180px;margin-bottom:0">
+            <label>Hasta</label>
+            <input type="date" id="rep-hasta" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          </div>
+          <button class="primary" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="filtrarReporteAuxiliar()">🔎 Filtrar</button>
+        </div>
+
+        <div id="rep-resultados-wrap" style="display:none">
+          <div class="stats-grid" style="margin-bottom:1rem">
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-number" id="rep-stat-presentes" style="color:var(--green)">—</div>
+              <div class="stat-label">Presentes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">❌</div>
+              <div class="stat-number" id="rep-stat-faltas" style="color:var(--accent2)">—</div>
+              <div class="stat-label">Faltas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⏰</div>
+              <div class="stat-number" id="rep-stat-tardanzas" style="color:var(--amber)">—</div>
+              <div class="stat-label">Tardanzas</div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header"><h3>Distribución del periodo</h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.5rem"><canvas id="chart-aux-reportes-torta"></canvas></div>
+          </div>
+
+          <div class="table-card" style="margin-top:1.5rem">
+            <div class="table-header">
+              <h3>Detalle de asistencia — todos los salones</h3>
+              <button class="eval-btn" id="rep-descargar-pdf-btn" onclick="descargarPDFReporteAuxiliar()">📄 Descargar PDF</button>
+            </div>
+            <table>
+              <thead><tr><th>Fecha</th><th>Salón</th><th>Alumno</th><th>Estado</th></tr></thead>
+              <tbody id="tabla-aux-reportes"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="table-card" id="rep-vacio-wrap">
+          <div class="empty-state"><div class="empty-icon">📄</div><p>Elige un rango de fechas y dale "Filtrar" para ver el reporte.</p></div>
         </div>
       </div>
 
@@ -2784,9 +2843,13 @@
     document.getElementById('auxiliar-page').style.display = 'flex';
     document.getElementById('aux-user-info').textContent = usuario.nombre;
     cargarDatosAuxiliar();
-    if ((usuario.email || '').trim().toLowerCase() === EMAIL_LAURA_BIENVENIDA) {
+    const esLaura = (usuario.email || '').trim().toLowerCase() === EMAIL_LAURA_BIENVENIDA;
+    if (esLaura) {
       mostrarBienvenidaLaura();
     }
+    // "Reportes" (rango de fechas + PDF) es exclusivo de la cuenta de Laura, a pedido suyo.
+    const navRep = document.getElementById('nav-aux-reportes');
+    if (navRep) navRep.style.display = esLaura ? 'flex' : 'none';
   } else if (rolesDirector.includes(usuario.rol)) {
     document.getElementById('director-page').style.display = 'flex';
     document.getElementById('dir-user-info').textContent = usuario.nombre;
@@ -2865,6 +2928,7 @@
       el.classList.add('active');
       if (id === 'aux-resumen') cargarResumenSemanalAuxiliar();
       if (id === 'aux-censal') cargarSalonesCensalAuxiliar();
+      if (id === 'aux-reportes') inicializarReporteAuxiliar();
     }
 
     window.addEventListener('pagehide', () => {
@@ -3292,6 +3356,212 @@ async function guardarEvaluacionTutor() {
         actualizarBotonWhatsapp(alumnoId);
         await guardarAsistenciaAlumno(alumnoId);
       }
+    }
+
+    // ══════════════════════════════
+    //  REPORTES POR RANGO DE FECHAS (solo cuenta de Laura)
+    // ══════════════════════════════
+    let chartAuxReportesTorta = null;
+    let repAuxiliarFilas = [];       // últimas filas filtradas, para el PDF
+    let repAuxiliarRangoTexto = '';  // "dd/mm/aaaa – dd/mm/aaaa", para el PDF
+
+    // Al abrir la pestaña por primera vez, precarga "últimos 7 días" y filtra de una vez.
+    function inicializarReporteAuxiliar() {
+      const desdeInput = document.getElementById('rep-desde');
+      const hastaInput = document.getElementById('rep-hasta');
+      if (!desdeInput.value || !hastaInput.value) {
+        const hoy = new Date();
+        const hace7 = new Date();
+        hace7.setDate(hoy.getDate() - 6);
+        const aISO = (d) => d.toISOString().slice(0, 10);
+        hastaInput.value = aISO(hoy);
+        desdeInput.value = aISO(hace7);
+        filtrarReporteAuxiliar();
+      }
+    }
+
+    // El backend devuelve "fecha" como texto "YYYY-MM-DD" (no como Date), así que
+    // la reformateamos con texto plano — usar new Date() aquí podría correrla un
+    // día por la zona horaria del navegador.
+    function _repFechaLegible(fechaStr) {
+      if (!fechaStr) return '—';
+      const [y, m, d] = String(fechaStr).slice(0, 10).split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function _repEstadoTexto(estado) {
+      if (estado === 'P') return 'Presente';
+      if (estado === 'FI') return 'Falta Injustificada';
+      if (estado === 'FJ') return 'Falta Justificada';
+      if (estado === 'TI') return 'Tardanza Injustificada';
+      if (estado === 'TJ') return 'Tardanza Justificada';
+      return 'Sin marcar';
+    }
+
+    async function filtrarReporteAuxiliar() {
+      const desde = document.getElementById('rep-desde').value;
+      const hasta = document.getElementById('rep-hasta').value;
+      if (!desde || !hasta) { alert('Elige una fecha de inicio y una fecha final.'); return; }
+      if (desde > hasta) { alert('La fecha "Desde" no puede ser posterior a la fecha "Hasta".'); return; }
+
+      const resultadosWrap = document.getElementById('rep-resultados-wrap');
+      const vacioWrap = document.getElementById('rep-vacio-wrap');
+      const tbody = document.getElementById('tabla-aux-reportes');
+      const pdfBtn = document.getElementById('rep-descargar-pdf-btn');
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hasta}`, { headers });
+        if (!res.ok) throw new Error();
+        const filas = await res.json();
+
+        // Solo nos interesan los registros que sí tienen algo marcado (no filas vacías)
+        const filasConEstado = filas.filter((f) => f.estado);
+        repAuxiliarFilas = filasConEstado;
+        const desdeTexto = new Date(desde + 'T00:00:00').toLocaleDateString('es-PE');
+        const hastaTexto = new Date(hasta + 'T00:00:00').toLocaleDateString('es-PE');
+        repAuxiliarRangoTexto = `${desdeTexto} – ${hastaTexto}`;
+
+        if (!filasConEstado.length) {
+          resultadosWrap.style.display = 'none';
+          vacioWrap.style.display = 'block';
+          vacioWrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><p>No hay asistencia registrada en ese rango de fechas.</p></div>';
+          if (pdfBtn) pdfBtn.style.display = 'none';
+          return;
+        }
+
+        vacioWrap.style.display = 'none';
+        resultadosWrap.style.display = 'block';
+        if (pdfBtn) pdfBtn.style.display = 'inline-block';
+
+        const presentes = filasConEstado.filter((f) => f.estado === 'P');
+        const faltas = filasConEstado.filter((f) => f.estado === 'FI' || f.estado === 'FJ');
+        const tardanzas = filasConEstado.filter((f) => f.estado === 'TI' || f.estado === 'TJ');
+
+        document.getElementById('rep-stat-presentes').textContent = presentes.length;
+        document.getElementById('rep-stat-faltas').textContent = faltas.length;
+        document.getElementById('rep-stat-tardanzas').textContent = tardanzas.length;
+
+        // Tabla — más reciente primero (así viene ordenado desde el backend)
+        tbody.innerHTML = filasConEstado.map((f) => `
+          <tr>
+            <td>${_repFechaLegible(f.fecha)}</td>
+            <td>${f.salon || '—'}</td>
+            <td style="color:var(--text);font-weight:500">${f.apellidos_nombres}</td>
+            <td>${_repEstadoTexto(f.estado)}</td>
+          </tr>`).join('');
+
+        if (chartAuxReportesTorta) chartAuxReportesTorta.destroy();
+        const ctx = document.getElementById('chart-aux-reportes-torta').getContext('2d');
+        chartAuxReportesTorta = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Presentes', 'Faltas', 'Tardanzas'],
+            datasets: [{ data: [presentes.length, faltas.length, tardanzas.length], backgroundColor: ['#2ecc71', '#e63946', '#f39c12'] }]
+          },
+          plugins: [ChartDataLabels],
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } },
+              datalabels: {
+                color: '#fff', font: { weight: 'bold', size: 12 },
+                formatter: (value) => value > 0 ? value : ''
+              }
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error al filtrar el reporte:', err);
+        alert('No se pudo generar el reporte. Verifica tu conexión e intenta de nuevo.');
+      }
+    }
+
+    async function descargarPDFReporteAuxiliar() {
+      if (!repAuxiliarFilas.length) return;
+
+      const imgTorta = _canvasCensalConFondo('chart-aux-reportes-torta');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = logoImg.width; c.height = logoImg.height;
+        c.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarPDFReporteAuxiliarConLogo(doc, imgTorta, c.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarPDFReporteAuxiliarConLogo(doc, imgTorta, null);
+    }
+
+    function _generarPDFReporteAuxiliarConLogo(doc, imgTorta, logoData) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 10;
+
+      const dibujarEncabezado = () => {
+        doc.setFillColor(180, 0, 30);
+        doc.rect(0, 0, pageW, 2, 'F');
+        if (logoData) doc.addImage(logoData, 'PNG', margin, 3, 26, 18);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 80);
+        doc.text('REPORTE DE ASISTENCIA', pageW / 2 + 8, 10, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('I.E.P. Cervantes School  —  Periodo: ' + repAuxiliarRangoTexto, pageW / 2 + 8, 16, { align: 'center' });
+        doc.setDrawColor(180, 0, 30);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 24, pageW - margin, 24);
+      };
+      dibujarEncabezado();
+
+      const presentes = repAuxiliarFilas.filter((f) => f.estado === 'P').length;
+      const faltas = repAuxiliarFilas.filter((f) => f.estado === 'FI' || f.estado === 'FJ').length;
+      const tardanzas = repAuxiliarFilas.filter((f) => f.estado === 'TI' || f.estado === 'TJ').length;
+
+      const stats = [
+        { label: 'Presentes', valor: presentes, color: [46, 204, 113] },
+        { label: 'Faltas', valor: faltas, color: [230, 57, 70] },
+        { label: 'Tardanzas', valor: tardanzas, color: [243, 156, 18] }
+      ];
+      let y = 30;
+      stats.forEach((s, i) => {
+        const x = margin + i * 62;
+        doc.setFillColor(...s.color);
+        doc.roundedRect(x, y, 58, 18, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(String(s.valor), x + 29, y + 8, { align: 'center' });
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(s.label, x + 29, y + 14, { align: 'center' });
+      });
+      y += 24;
+
+      if (imgTorta) {
+        const alto = _addImagenAjustada(doc, imgTorta, margin, y, 70, 55);
+        y += alto + 8;
+      }
+
+      const head = [['Fecha', 'Salón', 'Alumno', 'Estado']];
+      const body = repAuxiliarFilas.map((f) => [
+        _repFechaLegible(f.fecha),
+        f.salon || '—',
+        f.apellidos_nombres,
+        _repEstadoTexto(f.estado)
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: y,
+        margin: { left: margin, right: margin },
+        styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, lineColor: [220, 220, 230], lineWidth: 0.1 },
+        headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        alternateRowStyles: { fillColor: [246, 246, 250] },
+        didDrawPage: () => { dibujarEncabezado(); }
+      });
+
+      doc.save(`reporte-asistencia_${document.getElementById('rep-desde').value}_a_${document.getElementById('rep-hasta').value}.pdf`);
     }
 
     // ══════════════════════════════
