@@ -91,6 +91,9 @@ router.post('/', verificarToken, permitirRoles(...ROLES_PERMITIDOS), async (req,
     const alumnoRes = await db.query('SELECT apellidos_nombres FROM alumnos WHERE id = $1', [alumno_id]);
     const nombreAlumno = alumnoRes.rows[0] ? alumnoRes.rows[0].apellidos_nombres : `alumno_id ${alumno_id}`;
 
+    // Se modifico el codigo par  que se brinde un pdf de los reportes de los niños que mas faltas tengas (Mayores a 2 faltas o tardanzas) asi se tiene 
+    // tiene un control de los mejores tardanzas injusificadas y faltas injustificadas de los niños y niñas del colegio. 
+
     registrarAuditoria({
       tabla: 'asistencias',
       registro_id: fila.id,
