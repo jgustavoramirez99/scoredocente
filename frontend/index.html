@@ -1938,6 +1938,25 @@
               <tbody id="tabla-aux-reportes"></tbody>
             </table>
           </div>
+
+          <div class="table-card" style="margin-top:1.5rem">
+            <div class="table-header">
+              <h3>⚠️ Alumnos con inasistencias frecuentes</h3>
+              <button class="eval-btn" id="rep-riesgo-pdf-btn" onclick="descargarPDFRiesgoAsistencia()" style="display:none">📄 Descargar PDF</button>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;padding:0.25rem 1.5rem 1.1rem">
+              <div class="form-group" style="max-width:110px;margin-bottom:0">
+                <label>Más de</label>
+                <input type="number" id="rep-riesgo-umbral" value="2" min="1" oninput="calcularAlumnosRiesgo()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              </div>
+              <div style="font-size:13px;color:var(--text2)">faltas o tardanzas, dentro del rango de fechas filtrado arriba 👆</div>
+            </div>
+            <table>
+              <thead><tr><th>Alumno</th><th>Salón</th><th>F. Injust.</th><th>F. Just.</th><th>Tardanzas</th><th>Total</th><th>Apoderado</th></tr></thead>
+              <tbody id="tabla-aux-riesgo"></tbody>
+            </table>
+            <div class="empty-state" id="rep-riesgo-vacio" style="display:none"><div class="empty-icon">✅</div><p>Nadie superó el umbral en este rango de fechas.</p></div>
+          </div>
         </div>
         <div class="table-card" id="rep-vacio-wrap">
           <div class="empty-state"><div class="empty-icon">📄</div><p>Elige un rango de fechas y dale "Filtrar" para ver el reporte.</p></div>
@@ -3488,6 +3507,7 @@ async function guardarEvaluacionTutor() {
     let chartAuxReportesTorta = null;
     let repAuxiliarFilas = [];       // últimas filas filtradas, para el PDF
     let repAuxiliarRangoTexto = '';  // "dd/mm/aaaa – dd/mm/aaaa", para el PDF
+    let repRiesgoFilas = [];         // alumnos que superan el umbral de faltas/tardanzas, para el PDF de riesgo
 
     // Al abrir la pestaña por primera vez, precarga "últimos 7 días" y filtra de una vez.
     function inicializarReporteAuxiliar() {
@@ -3551,6 +3571,9 @@ async function guardarEvaluacionTutor() {
           vacioWrap.style.display = 'block';
           vacioWrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><p>No hay asistencia registrada en ese rango de fechas.</p></div>';
           if (pdfBtn) pdfBtn.style.display = 'none';
+          repRiesgoFilas = [];
+          const tbodyRiesgo = document.getElementById('tabla-aux-riesgo');
+          if (tbodyRiesgo) tbodyRiesgo.innerHTML = '';
           return;
         }
 
@@ -3595,10 +3618,130 @@ async function guardarEvaluacionTutor() {
             }
           }
         });
+
+        calcularAlumnosRiesgo();
       } catch (err) {
         console.error('Error al filtrar el reporte:', err);
         alert('No se pudo generar el reporte. Verifica tu conexión e intenta de nuevo.');
       }
+    }
+
+    // Agrupa repAuxiliarFilas (el mismo rango de fechas ya filtrado arriba) por alumno,
+    // y marca a quienes superan el umbral de faltas o tardanzas — no hace ninguna
+    // llamada nueva al backend, solo reprocesa lo que ya se trajo.
+    function calcularAlumnosRiesgo() {
+      const umbralInput = document.getElementById('rep-riesgo-umbral');
+      const umbral = parseInt(umbralInput && umbralInput.value, 10) || 2;
+      const tbody = document.getElementById('tabla-aux-riesgo');
+      const vacio = document.getElementById('rep-riesgo-vacio');
+      const pdfBtn = document.getElementById('rep-riesgo-pdf-btn');
+      if (!tbody) return;
+
+      const porAlumno = {};
+      repAuxiliarFilas.forEach((f) => {
+        const key = `${f.salon || '—'}|${f.numero || ''}|${f.apellidos_nombres}`;
+        if (!porAlumno[key]) {
+          porAlumno[key] = {
+            alumno: f.apellidos_nombres,
+            salon: f.salon || '—',
+            celular: f.celular_apoderado || '',
+            fi: 0, fj: 0, ti: 0, tj: 0
+          };
+        }
+        const g = porAlumno[key];
+        if (f.estado === 'FI') g.fi++;
+        else if (f.estado === 'FJ') g.fj++;
+        else if (f.estado === 'TI') g.ti++;
+        else if (f.estado === 'TJ') g.tj++;
+      });
+
+      const lista = Object.values(porAlumno).map((g) => {
+        const faltas = g.fi + g.fj;
+        const tardanzas = g.ti + g.tj;
+        return { ...g, faltas, tardanzas, total: faltas + tardanzas };
+      })
+        .filter((g) => g.faltas > umbral || g.tardanzas > umbral)
+        .sort((a, b) => b.total - a.total);
+
+      repRiesgoFilas = lista;
+
+      if (!lista.length) {
+        tbody.innerHTML = '';
+        if (vacio) vacio.style.display = 'block';
+        if (pdfBtn) pdfBtn.style.display = 'none';
+        return;
+      }
+
+      if (vacio) vacio.style.display = 'none';
+      if (pdfBtn) pdfBtn.style.display = 'inline-block';
+
+      tbody.innerHTML = lista.map((g) => `
+        <tr>
+          <td style="color:var(--text);font-weight:500">${g.alumno}</td>
+          <td>${g.salon}</td>
+          <td>${g.fi}</td>
+          <td>${g.fj}</td>
+          <td>${g.tardanzas}</td>
+          <td style="font-weight:700;color:var(--accent2)">${g.total}</td>
+          <td>${g.celular || '—'}</td>
+        </tr>`).join('');
+    }
+
+    async function descargarPDFRiesgoAsistencia() {
+      if (!repRiesgoFilas.length) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = logoImg.width; c.height = logoImg.height;
+        c.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarPDFRiesgoConLogo(doc, c.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarPDFRiesgoConLogo(doc, null);
+    }
+
+    function _generarPDFRiesgoConLogo(doc, logoData) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 10;
+      const umbralInput = document.getElementById('rep-riesgo-umbral');
+      const umbral = parseInt(umbralInput && umbralInput.value, 10) || 2;
+
+      const dibujarEncabezado = () => {
+        doc.setFillColor(180, 0, 30);
+        doc.rect(0, 0, pageW, 2, 'F');
+        if (logoData) doc.addImage(logoData, 'PNG', margin, 3, 26, 18);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 80);
+        doc.text('ALUMNOS CON INASISTENCIAS FRECUENTES', pageW / 2 + 8, 10, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`I.E.P. Cervantes School  —  Periodo: ${repAuxiliarRangoTexto}  —  Más de ${umbral} faltas o tardanzas`, pageW / 2 + 8, 16, { align: 'center' });
+        doc.setDrawColor(180, 0, 30);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 24, pageW - margin, 24);
+      };
+      dibujarEncabezado();
+
+      const head = [['Alumno', 'Salón', 'F. Injust.', 'F. Just.', 'Tardanzas', 'Total', 'Apoderado']];
+      const body = repRiesgoFilas.map((g) => [
+        g.alumno, g.salon, String(g.fi), String(g.fj), String(g.tardanzas), String(g.total), g.celular || '—'
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: 30,
+        margin: { left: margin, right: margin },
+        styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, lineColor: [220, 220, 230], lineWidth: 0.1 },
+        headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        alternateRowStyles: { fillColor: [246, 246, 250] },
+        didDrawPage: () => { dibujarEncabezado(); }
+      });
+
+      doc.save(`riesgo-asistencia_${document.getElementById('rep-desde').value}_a_${document.getElementById('rep-hasta').value}.pdf`);
     }
 
     async function descargarPDFReporteAuxiliar() {
