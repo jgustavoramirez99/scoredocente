@@ -806,7 +806,7 @@
       z-index: 10000;
       background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
       padding: 3px;
-      border-radius: 24px;
+      clip-path: url(#laura-heart-clip);
       max-width: 420px;
       width: 90%;
       animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
@@ -815,26 +815,25 @@
     .laura-welcome-card-inner {
       position: relative;
       background: #14141c;
-      border-radius: 22px;
-      padding: 2.75rem 2rem;
+      clip-path: url(#laura-heart-clip);
+      padding: 4.4rem 2.2rem 2.8rem;
       text-align: center;
       overflow: visible;
     }
     .laura-welcome-sticker {
-      position: absolute;
-      top: -14px;
-      right: -10px;
+      display: inline-block;
       background: linear-gradient(90deg, #ffddd2, #ffc2d1);
       color: #14141c;
       font-family: 'DM Sans', sans-serif;
       font-weight: 800;
       font-size: 11px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 999px;
       box-shadow: 0 6px 16px rgba(0,0,0,0.35);
-      transform: rotate(-8deg);
+      transform: rotate(-3deg);
       animation: laura-sticker-pop 0.6s 0.35s cubic-bezier(.34,1.56,.64,1) both;
       white-space: nowrap;
+      margin-bottom: 0.9rem;
     }
     .laura-welcome-photo-wrap {
       position: relative;
@@ -1108,11 +1107,17 @@
 <body>
 
   <!-- BIENVENIDA PERSONALIZADA (solo cuenta de Laura) -->
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <clipPath id="laura-heart-clip" clipPathUnits="objectBoundingBox">
+        <path d="M 0.5 0.10 C 0.5 0.04 0.42 0.0 0.30 0.0 C 0.12 0.0 0.0 0.07 0.0 0.18 C 0.0 0.35 0.01 0.55 0.03 0.72 C 0.05 0.85 0.22 0.92 0.5 1.0 C 0.78 0.92 0.95 0.85 0.97 0.72 C 0.99 0.55 1.0 0.35 1.0 0.18 C 1.0 0.07 0.88 0.0 0.70 0.0 C 0.58 0.0 0.5 0.04 0.5 0.10 Z"/>
+      </clipPath>
+    </defs>
+  </svg>
   <canvas id="laura-confetti-canvas"></canvas>
   <div class="laura-welcome-overlay" id="laura-welcome-overlay">
     <div class="laura-welcome-card">
       <div class="laura-welcome-card-inner">
-        <div class="laura-welcome-sticker">💕 Mi persona favorita</div>
         <div class="laura-welcome-photo-wrap">
           <span class="laura-sparkle s1">✨</span>
           <span class="laura-sparkle s2">✨</span>
@@ -1120,6 +1125,7 @@
           <span class="laura-sparkle s4">✨</span>
           <img class="laura-welcome-photo" src="/laura-gustavo.jpg" alt="Laura y Gustavo">
         </div>
+        <div class="laura-welcome-sticker">✨ Eres la razón de mi sonrisa</div>
         <div class="laura-welcome-date" id="laura-welcome-date"></div>
         <div class="laura-welcome-title" id="laura-welcome-title"></div>
         <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
@@ -2881,7 +2887,7 @@
     const EMAIL_LAURA_BIENVENIDA = 'laurachavez@cervantesschool.edu.pe';
 
     // ✏️ Gustavo: cambia este mensaje cada día para sorprender a Laura :)
-    const MENSAJE_BIENVENIDA_LAURA = "Última hora: se ha detectado una excelente energía en el aire... resultó que ya llegó la señorita Laura. Que tu jueves sea tan increíble como tú ❤️";
+    const MENSAJE_BIENVENIDA_LAURA = "Advertencia: este panel tiene forma de corazón porque fue programado por alguien perdidamente enamorado de ti jaja ❤️";
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
