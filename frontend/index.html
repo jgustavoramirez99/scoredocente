@@ -802,66 +802,24 @@
     }
     .laura-welcome-overlay.show { display: flex; }
     .laura-welcome-card {
-      position: relative;
+      position: absolute;
       z-index: 10000;
       background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
       padding: 3px;
-      clip-path: url(#laura-heart-clip);
-      max-width: 560px;
-      width: 94%;
-      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
+      border-radius: 20px;
+      max-width: 380px;
+      width: 90%;
+      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-float 26s ease-in-out infinite;
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .laura-welcome-card-inner {
       position: relative;
       background: #14141c;
-      clip-path: url(#laura-heart-clip);
-      padding: 4rem 2.2rem 3.2rem;
+      border-radius: 18px;
+      padding: 2.6rem 2.2rem 2.4rem;
       text-align: center;
       overflow: visible;
     }
-    .laura-welcome-sticker {
-      display: inline-block;
-      background: linear-gradient(90deg, #ffddd2, #ffc2d1);
-      color: #14141c;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 800;
-      font-size: 11px;
-      padding: 6px 14px;
-      border-radius: 999px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
-      transform: rotate(-3deg);
-      animation: laura-sticker-pop 0.6s 0.35s cubic-bezier(.34,1.56,.64,1) both;
-      white-space: nowrap;
-      margin-bottom: 0.9rem;
-    }
-    .laura-welcome-photo-wrap {
-      position: relative;
-      width: 88px;
-      height: 88px;
-      margin: 0 auto 1rem;
-      animation: laura-photo-pop 0.65s 0.15s cubic-bezier(.34,1.56,.64,1) both;
-    }
-    .laura-welcome-photo {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      display: block;
-      padding: 3px;
-      background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
-      box-shadow: 0 10px 28px rgba(0,0,0,0.45);
-    }
-    .laura-sparkle {
-      position: absolute;
-      font-size: 16px;
-      pointer-events: none;
-      animation: laura-sparkle-float 2.2s ease-in-out infinite;
-    }
-    .laura-sparkle.s1 { top: -8px; left: -10px; animation-delay: 0s; }
-    .laura-sparkle.s2 { top: -4px; right: -12px; font-size: 13px; animation-delay: 0.5s; }
-    .laura-sparkle.s3 { bottom: -6px; left: -14px; font-size: 13px; animation-delay: 1s; }
-    .laura-sparkle.s4 { bottom: -10px; right: -8px; animation-delay: 1.5s; }
     .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
     .laura-welcome-date {
       font-family: 'DM Sans', sans-serif;
@@ -903,13 +861,6 @@
       transition: transform 0.15s;
     }
     .laura-welcome-btn:hover { transform: scale(1.05); }
-    .laura-welcome-credit {
-      margin-top: 16px;
-      font-size: 11px;
-      color: var(--text3);
-      letter-spacing: 0.3px;
-    }
-
     /* ══════════════════════════════
        ASISTENTE VIRTUAL (chatbot) — Panel Auxiliar
     ══════════════════════════════ */
@@ -1069,19 +1020,13 @@
       from { opacity: 0; transform: scale(0.7); }
       to   { opacity: 1; transform: scale(1); }
     }
-    @keyframes laura-photo-pop {
-      0% { transform: scale(0) rotate(-18deg); opacity: 0; }
-      60% { transform: scale(1.15) rotate(6deg); opacity: 1; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-    @keyframes laura-sticker-pop {
-      0% { transform: scale(0) rotate(-25deg); opacity: 0; }
-      70% { transform: scale(1.12) rotate(5deg); }
-      100% { transform: scale(1) rotate(-8deg); opacity: 1; }
-    }
-    @keyframes laura-sparkle-float {
-      0%, 100% { transform: translateY(0) scale(1); opacity: 0.95; }
-      50% { transform: translateY(-7px) scale(1.25); opacity: 0.35; }
+    @keyframes laura-float {
+      0%   { top: 12%; left: 8%; }
+      20%  { top: 58%; left: 62%; }
+      40%  { top: 14%; left: 56%; }
+      60%  { top: 64%; left: 10%; }
+      80%  { top: 30%; left: 66%; }
+      100% { top: 12%; left: 8%; }
     }
     @keyframes laura-blink-caret {
       0%, 100% { opacity: 1; }
@@ -1107,30 +1052,14 @@
 <body>
 
   <!-- BIENVENIDA PERSONALIZADA (solo cuenta de Laura) -->
-  <svg width="0" height="0" style="position:absolute">
-    <defs>
-      <clipPath id="laura-heart-clip" clipPathUnits="objectBoundingBox">
-        <path d="M 0.5 0.13 C 0.5 0.05 0.40 0.0 0.24 0.0 C 0.08 0.0 0.0 0.06 0.0 0.16 C 0.0 0.32 0.01 0.50 0.02 0.65 C 0.03 0.80 0.18 0.90 0.5 1.0 C 0.82 0.90 0.97 0.80 0.98 0.65 C 0.99 0.50 1.0 0.32 1.0 0.16 C 1.0 0.06 0.92 0.0 0.76 0.0 C 0.60 0.0 0.5 0.05 0.5 0.13 Z"/>
-      </clipPath>
-    </defs>
-  </svg>
   <canvas id="laura-confetti-canvas"></canvas>
   <div class="laura-welcome-overlay" id="laura-welcome-overlay">
     <div class="laura-welcome-card">
       <div class="laura-welcome-card-inner">
-        <div class="laura-welcome-photo-wrap">
-          <span class="laura-sparkle s1">✨</span>
-          <span class="laura-sparkle s2">✨</span>
-          <span class="laura-sparkle s3">✨</span>
-          <span class="laura-sparkle s4">✨</span>
-          <img class="laura-welcome-photo" src="/laura-gustavo.jpg" alt="Laura y Gustavo">
-        </div>
-        <div class="laura-welcome-sticker">✨ Eres la razón de mi sonrisa</div>
         <div class="laura-welcome-date" id="laura-welcome-date"></div>
         <div class="laura-welcome-title" id="laura-welcome-title"></div>
         <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
-        <button class="laura-welcome-btn" onclick="cerrarBienvenidaLaura()">Gracias 💐</button>
-        <div class="laura-welcome-credit">Siempre pensando en ti, Gustavo ❤️</div>
+        <button class="laura-welcome-btn" onclick="cerrarBienvenidaLaura()">Gracias</button>
       </div>
     </div>
   </div>
@@ -2939,7 +2868,7 @@
     const EMAIL_LAURA_BIENVENIDA = 'laurachavez@cervantesschool.edu.pe';
 
     // ✏️ Gustavo: cambia este mensaje cada día para sorprender a Laura :)
-    const MENSAJE_BIENVENIDA_LAURA = "Advertencia: este panel tiene forma de corazón porque fue programado por alguien perdidamente enamorado de ti jaja ❤️";
+    const MENSAJE_BIENVENIDA_LAURA = "Hola Laura, bienvenida a tu panel de siempre. Que tengas un excelente día 🙌";
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
