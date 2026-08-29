@@ -6,16 +6,20 @@ const { verificarToken } = require('./auth');
 // así no hay que estar actualizando el nombre del modelo a mano.
 const MODEL_GUSTIA = 'gemini-flash-latest';
 
-// Solo las cuentas con rol "auxiliar" pueden usar este asistente, igual que
-// el resto de GusTI (así lo pidió Gustavo: exclusivo del Panel Auxiliar).
+// Solo las cuentas con rol "auxiliar" (Panel Auxiliar) y la cuenta exacta del
+// Gerente General (Panel Director, solo charla general por ahora) pueden usar
+// este asistente — así lo pidió Gustavo.
+const EMAIL_GERENTE_GENERAL = 'gerentegeneralcervantino@cervantesschool.edu.pe';
 function permitirAuxiliar(req, res, next) {
-  if (req.usuario.rol !== 'auxiliar') {
-    return res.status(403).json({ error: 'Este asistente solo está disponible para el Panel Auxiliar' });
+  const esAuxiliar = req.usuario.rol === 'auxiliar';
+  const esGerenteGeneral = req.usuario.email === EMAIL_GERENTE_GENERAL;
+  if (!esAuxiliar && !esGerenteGeneral) {
+    return res.status(403).json({ error: 'Este asistente no está disponible para tu cuenta' });
   }
   next();
 }
 
-const SYSTEM_INSTRUCTION = `Eres GusTI, el asistente virtual del Panel Auxiliar de ScoreDocente, un sistema de un colegio en Perú (Cervantes School). Trabajas codo a codo con personal auxiliar que pasa el día con niños, así que tu tono es cercano, alegre y positivo — no formal ni robótico.
+const SYSTEM_INSTRUCTION = `Eres GusTI, el asistente virtual de ScoreDocente, un sistema de un colegio en Perú (Cervantes School). Lo usa tanto el personal auxiliar como la Gerencia General, así que tu tono es cercano, alegre y positivo — no formal ni robótico.
 Aquí solo te llegan preguntas GENERALES que no tienen que ver con el uso del panel (esas ya las responde otra parte del sistema) — cosas como cultura general, dudas rápidas, clima, y también charla casual.
 Te encanta contar chistes cortos y buenos (limpios, sin groserías, aptos para un ambiente escolar) cuando te los pidan, y dar mensajes motivadores cálidos cuando te los pidan o cuando sientas que la persona necesita ánimo — con emojis si encajan, sin exagerar.
 Responde siempre en español, de forma breve y directa (máximo 4-5 líneas salvo que pidan más detalle o sea un chiste que necesite su remate).
