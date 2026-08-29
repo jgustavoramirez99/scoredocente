@@ -58,6 +58,7 @@
   .fg input::placeholder{color:var(--text3)}
   .fg input:focus,.fg select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(22,50,92,0.10)}
   .fg.invalid input,.fg.invalid select{border-color:var(--accent);box-shadow:0 0 0 3px var(--red-bg)}
+  .dropzone.invalid{border-color:var(--accent);box-shadow:0 0 0 3px var(--red-bg)}
   .req{color:var(--accent)}
 
   /* ---- Bloques de nivel educativo ---- */
@@ -256,13 +257,13 @@
         </div>
 
         <div class="card" id="secE" style="margin-bottom:0">
-          <div class="sec-title"><span class="letter">E</span> Foto tipo carnet</div>
-          <div class="sec-sub">Fondo claro, formal, rostro centrado</div>
+          <div class="sec-title"><span class="letter">E</span> Foto tipo carnet <span class="req">*</span></div>
+          <div class="sec-sub">Fondo claro, formal, rostro centrado (obligatoria)</div>
           <hr class="sec-hr">
           <label class="dropzone" id="dropzone" for="f-foto">
             <input type="file" id="f-foto" accept="image/png,image/jpeg" onchange="previsualizarFoto(event)">
             <div id="dropzone-content">
-              <h4>Toca para subir tu foto (JPG o PNG)</h4>
+              <h4>Toca para subir tu foto (JPG o PNG) — obligatoria</h4>
               <p>Sube una foto formal tamaño carnet: fondo blanco o celeste claro, rostro centrado y descubierto, sin lentes de sol ni gorra, buena iluminación.</p>
             </div>
           </label>
@@ -396,6 +397,12 @@
     marcarInvalidos(ids);
     return val('f-sistema-pension') && val('f-cuenta-bcp');
   }
+  function validarSeccionE(){
+    const dz = document.getElementById('dropzone');
+    const valido = !!fotoBase64;
+    if (dz) dz.classList.toggle('invalid', !valido);
+    return valido;
+  }
 
   function formatoNivel(centro, grado, desde, hasta){
     if (!centro && !grado && !desde && !hasta) return '';
@@ -419,6 +426,11 @@
     if (!validarSeccionD()){
       document.getElementById('secD').scrollIntoView({ behavior:'smooth', block:'start' });
       mostrarMensaje('Falta completar la sección D (Pensión)', true);
+      return;
+    }
+    if (!validarSeccionE()){
+      document.getElementById('secE').scrollIntoView({ behavior:'smooth', block:'start' });
+      mostrarMensaje('Falta subir tu foto tipo carnet (sección E)', true);
       return;
     }
 
