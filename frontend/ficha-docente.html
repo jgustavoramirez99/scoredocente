@@ -7,91 +7,103 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0a0f; --surface:#111118; --surface2:#18181f; --surface3:#1f1f28;
-    --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1);
-    --accent:#e63946; --accent2:#ff6b6b; --accent-glow:rgba(230,57,70,0.15);
-    --text:#f0f0f5; --text2:#9090a8; --text3:#5a5a72;
-    --green:#2ecc71; --green-bg:rgba(46,204,113,0.1);
-    --radius:12px;
+    --bg:#f3f5f9; --card:#ffffff; --border:#e6e9f0; --border2:#dbe0ea;
+    --navy:#16325c; --navy2:#1e4272; --navy-glow:rgba(22,50,92,0.10);
+    --text:#1c2333; --text2:#6b7280; --text3:#9aa0ae;
+    --green:#1f9d55; --green-bg:rgba(31,157,85,0.10);
+    --amber:#c9820a; --amber-bg:rgba(201,130,10,0.10);
+    --red:#e63946; --red-bg:rgba(230,57,70,0.08);
+    --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:24px 16px 60px}
-  .wrap{max-width:720px;margin:0 auto}
-  .head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-  .head img{width:38px;height:38px;border-radius:9px}
-  .head h1{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800}
-  .head p{color:var(--text2);font-size:13px;margin-top:2px}
-  .tabs{display:flex;gap:6px;margin:22px 0;flex-wrap:wrap}
-  .tab{flex:1;min-width:100px;text-align:center;padding:10px 6px;border-radius:9px;background:var(--surface2);
-       border:1px solid var(--border2);color:var(--text3);font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
-  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .tab.done{color:var(--green)}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
-  .ficha-section{display:none}
-  .ficha-section.active{display:block;animation:fade .2s ease}
-  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .sec-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:4px}
-  .sec-sub{color:var(--text2);font-size:12.5px;margin-bottom:20px}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:60px}
+  a{color:inherit}
+
+  /* ---- Cabecera azul con foto + logo ---- */
+  .hero{position:relative;height:240px;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;background-image:url('cervantes-fachada.jpg');background-size:cover;background-position:center}
+  .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(16,34,64,0.80), rgba(22,50,92,0.94))}
+  .hero-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:0 16px}
+  .hero-logo{width:62px;height:62px;border-radius:16px;object-fit:cover;background:#fff;box-shadow:0 8px 22px rgba(0,0,0,0.28);margin-bottom:10px}
+  .hero-content h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:.2px}
+  .hero-content p{font-size:13px;opacity:.92;margin-top:4px}
+
+  /* ---- Sub-menú pegajoso para saltar de sección (todo sigue siendo una sola página) ---- */
+  .subnav{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;box-shadow:0 2px 10px rgba(20,30,60,0.05)}
+  .subnav a{flex:1;min-width:92px;text-align:center;padding:13px 8px;font-size:12px;font-weight:700;color:var(--text3);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;transition:.15s}
+  .subnav a.active{color:var(--navy);border-color:var(--navy)}
+
+  .wrap{max-width:720px;margin:0 auto;padding:26px 16px 0}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;margin-bottom:20px;box-shadow:0 2px 14px rgba(20,30,60,0.04)}
+  .sec-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--navy-glow);color:var(--navy);font-weight:800;font-size:13px;margin-right:8px}
+  .sec-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;display:flex;align-items:center;margin-bottom:4px;scroll-margin-top:66px}
+  .sec-sub{color:var(--text2);font-size:12.5px;margin-bottom:20px;margin-left:34px}
+
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:560px){.grid{grid-template-columns:1fr}}
   .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
   .fg label{font-size:12px;color:var(--text2);font-weight:600}
-  .fg input,.fg select{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;
+  .fg input,.fg select{background:#fbfcfe;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;
        color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
-  .fg input:focus,.fg select:focus{border-color:var(--accent)}
+  .fg input:focus,.fg select:focus{border-color:var(--navy);box-shadow:0 0 0 3px var(--navy-glow)}
+  .fg.invalid input,.fg.invalid select{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
   .hint{font-size:11px;color:var(--text3)}
-  .btns{display:flex;justify-content:space-between;margin-top:24px;gap:10px}
-  .btn{padding:11px 22px;border-radius:9px;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-primary:disabled{opacity:.5;cursor:not-allowed}
-  .btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
-  .kids-item{background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:14px;margin-bottom:10px;position:relative}
+
+  .kids-item{background:#fbfcfe;border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
   .kids-item .rm{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px}
   .add-kid{border:1.5px dashed var(--border2);background:none;color:var(--text2);border-radius:9px;padding:10px;width:100%;cursor:pointer;font-size:13px}
-  .photo-box{display:flex;align-items:center;gap:18px;margin-bottom:18px}
-  .photo-preview{width:96px;height:96px;border-radius:12px;background:var(--surface2);border:1px solid var(--border2);
-       display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--text3);font-size:28px}
+
+  .photo-box{display:flex;align-items:center;gap:18px;margin-bottom:6px}
+  .photo-preview{width:96px;height:96px;border-radius:12px;background:#fbfcfe;border:1px solid var(--border2);
+       display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--text3);font-size:28px;flex-shrink:0}
   .photo-preview img{width:100%;height:100%;object-fit:cover}
+
   .pension-choice{display:flex;gap:10px;margin-bottom:16px}
-  .pension-choice label{flex:1;text-align:center;padding:12px;border-radius:9px;background:var(--surface2);
+  .pension-choice label{flex:1;text-align:center;padding:12px;border-radius:9px;background:#fbfcfe;
        border:1px solid var(--border2);cursor:pointer;font-size:13px;font-weight:700;color:var(--text2)}
   .pension-choice input{display:none}
-  .pension-choice input:checked + span{color:var(--accent)}
-  .pension-choice:has(input:checked){}
-  .msg{font-size:13px;font-weight:600;margin-top:10px;min-height:18px}
-  .msg.err{color:var(--accent2)}
+  .pension-choice input:checked + span{color:var(--navy)}
+
+  .submit-bar{position:sticky;bottom:0;background:linear-gradient(180deg, rgba(243,245,249,0), var(--bg) 30%);padding:16px 0 6px}
+  .btn-enviar{width:100%;padding:15px;border-radius:11px;border:none;background:var(--navy);color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 6px 18px rgba(22,50,92,0.25)}
+  .btn-enviar:hover{background:var(--navy2)}
+  .btn-enviar:disabled{opacity:.55;cursor:not-allowed}
+  .msg{font-size:13px;font-weight:600;margin-top:10px;min-height:18px;text-align:center}
+  .msg.err{color:var(--red)}
   .msg.ok{color:var(--green)}
-  .done-screen{text-align:center;padding:50px 20px}
+
+  .done-screen{text-align:center;padding:70px 20px}
   .done-screen .ico{font-size:52px;margin-bottom:14px}
   .done-screen h2{font-family:'Syne',sans-serif;margin-bottom:8px}
   .done-screen p{color:var(--text2)}
-  .req{color:var(--accent)}
+  .req{color:var(--red)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="head">
-    <img src="/icon-192.png" onerror="this.style.display='none'">
-    <div>
+
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <img class="hero-logo" src="icon-192.png" onerror="this.style.display='none'">
       <h1>Ficha del Docente</h1>
-      <p>Cervantes School · Colegio — completa tus datos personales</p>
+      <p>Cervantes School · Completa tus datos personales</p>
     </div>
   </div>
 
-  <div class="tabs" id="tabs">
-    <div class="tab active" data-sec="A" onclick="irASeccion('A')">A. Personal</div>
-    <div class="tab" data-sec="B" onclick="irASeccion('B')">B. Formación</div>
-    <div class="tab" data-sec="C" onclick="irASeccion('C')">C. Familiares</div>
-    <div class="tab" data-sec="D" onclick="irASeccion('D')">D. Pensión</div>
-    <div class="tab" data-sec="E" onclick="irASeccion('E')">E. Foto</div>
-  </div>
+  <nav class="subnav" id="subnav">
+    <a href="#secA" data-sec="A" class="active">A. Personal</a>
+    <a href="#secB" data-sec="B">B. Formación</a>
+    <a href="#secC" data-sec="C">C. Familiares</a>
+    <a href="#secD" data-sec="D">D. Pensión</a>
+    <a href="#secE" data-sec="E">E. Foto</a>
+  </nav>
 
-  <div class="card" id="card-form">
+  <div class="wrap" id="form-wrap">
     <form id="ficha-form" onsubmit="return false">
 
-      <!-- SECCION A -->
-      <div class="ficha-section active" id="secA">
-        <div class="sec-title">Datos personales</div>
+      <div class="card" id="secA">
+        <div class="sec-title"><span class="sec-badge">A</span> Datos personales</div>
         <div class="sec-sub">Todos los campos son obligatorios salvo que se indique lo contrario</div>
         <div class="grid">
           <div class="fg"><label>Nombres <span class="req">*</span></label><input id="f-nombres" required></div>
@@ -115,12 +127,10 @@
           <div class="fg"><label>Correo electrónico <span class="req">*</span></label><input id="f-correo" type="email" required></div>
         </div>
         <div class="fg"><label>Dirección <span class="req">*</span></label><input id="f-direccion" required></div>
-        <div class="btns"><span></span><button class="btn btn-primary" onclick="irASeccion('B')">Siguiente →</button></div>
       </div>
 
-      <!-- SECCION B -->
-      <div class="ficha-section" id="secB">
-        <div class="sec-title">Formación académica</div>
+      <div class="card" id="secB">
+        <div class="sec-title"><span class="sec-badge">B</span> Formación académica</div>
         <div class="sec-sub">Institución y/o título obtenido en cada nivel (deja en blanco si no aplica)</div>
         <div class="grid">
           <div class="fg"><label>Nivel educativo máximo <span class="req">*</span></label>
@@ -142,12 +152,10 @@
         <div class="fg"><label>Educación técnica</label><input id="f-edu-tecnica" placeholder="Instituto / carrera"></div>
         <div class="fg"><label>Educación universitaria</label><input id="f-edu-universitaria" placeholder="Universidad / carrera"></div>
         <div class="fg"><label>Postgrado</label><input id="f-edu-postgrado" placeholder="Universidad / especialidad"></div>
-        <div class="btns"><button class="btn btn-ghost" onclick="irASeccion('A')">← Atrás</button><button class="btn btn-primary" onclick="irASeccion('C')">Siguiente →</button></div>
       </div>
 
-      <!-- SECCION C -->
-      <div class="ficha-section" id="secC">
-        <div class="sec-title">Datos familiares</div>
+      <div class="card" id="secC">
+        <div class="sec-title"><span class="sec-badge">C</span> Datos familiares</div>
         <div class="sec-sub">Sección opcional</div>
         <div class="grid">
           <div class="fg"><label>Nombre del cónyuge</label><input id="f-conyuge-nombre"></div>
@@ -156,12 +164,10 @@
         <div class="fg"><label>Hijos (hasta 3)</label></div>
         <div id="kids-list"></div>
         <button type="button" class="add-kid" id="btn-add-kid" onclick="agregarHijo()">+ Agregar hijo/a</button>
-        <div class="btns"><button class="btn btn-ghost" onclick="irASeccion('B')">← Atrás</button><button class="btn btn-primary" onclick="irASeccion('D')">Siguiente →</button></div>
       </div>
 
-      <!-- SECCION D -->
-      <div class="ficha-section" id="secD">
-        <div class="sec-title">Sistema de pensiones</div>
+      <div class="card" id="secD">
+        <div class="sec-title"><span class="sec-badge">D</span> Sistema de pensiones</div>
         <div class="sec-sub">Selecciona tu sistema de pensiones</div>
         <div class="pension-choice">
           <label><input type="radio" name="pension" value="AFP" onchange="onCambioPension()"><span>AFP</span></label>
@@ -177,57 +183,64 @@
           <div class="fg"><label>CUSPP</label><input id="f-cuspp"></div>
         </div>
         <div class="fg"><label>N° de cuenta BCP (para pago de haberes) <span class="req">*</span></label><input id="f-cuenta-bcp" required></div>
-        <div class="btns"><button class="btn btn-ghost" onclick="irASeccion('C')">← Atrás</button><button class="btn btn-primary" onclick="irASeccion('E')">Siguiente →</button></div>
       </div>
 
-      <!-- SECCION E -->
-      <div class="ficha-section" id="secE">
-        <div class="sec-title">Foto tipo carnet</div>
-        <div class="sec-sub">Formato JPG o PNG</div>
+      <div class="card" id="secE">
+        <div class="sec-title"><span class="sec-badge">E</span> Foto tipo carnet</div>
+        <div class="sec-sub">Formato JPG o PNG, máximo 4 MB</div>
         <div class="photo-box">
           <div class="photo-preview" id="photo-preview">🖼️</div>
           <div>
             <input type="file" id="f-foto" accept="image/png,image/jpeg" onchange="previsualizarFoto(event)">
-            <div class="hint">Máximo 4 MB</div>
           </div>
         </div>
-        <div class="btns">
-          <button class="btn btn-ghost" onclick="irASeccion('D')">← Atrás</button>
-          <button class="btn btn-primary" id="btn-enviar" onclick="enviarFicha()">Registrar mis datos</button>
-        </div>
+      </div>
+
+      <div class="submit-bar">
+        <button class="btn-enviar" id="btn-enviar" onclick="enviarFicha()">Registrar mis datos</button>
         <div class="msg" id="ficha-msg"></div>
       </div>
 
     </form>
-  </div>
 
-  <div class="card done-screen" id="card-done" style="display:none">
-    <div class="ico">✅</div>
-    <h2>Datos guardados</h2>
-    <p>Gracias, ya puedes cerrar esta ventana.</p>
+    <div class="card done-screen" id="card-done" style="display:none">
+      <div class="ico">✅</div>
+      <h2>Datos guardados</h2>
+      <p>Gracias, ya puedes cerrar esta ventana.</p>
+    </div>
   </div>
-</div>
 
 <script>
   const ORDEN = ['A','B','C','D','E'];
   let fotoBase64 = null;
   let numHijos = 0;
 
-  function irASeccion(id){
-    document.querySelectorAll('.ficha-section').forEach(s=>s.classList.remove('active'));
-    document.getElementById('sec'+id).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t=>{
-      t.classList.toggle('active', t.dataset.sec === id);
-      if (ORDEN.indexOf(t.dataset.sec) < ORDEN.indexOf(id)) t.classList.add('done');
+  // Sub-menú: hace scroll suave a la sección, todo sigue en una sola página
+  document.querySelectorAll('.subnav a').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = 'sec' + a.dataset.sec;
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + id);
     });
-    history.replaceState(null, '', '#sec'+id);
-    window.scrollTo({top:0, behavior:'smooth'});
-  }
+  });
 
-  // Si llegan con un link tipo ...#secE, abre directo esa sección
+  // Resalta la pestaña activa del sub-menú según lo que se ve al hacer scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const letra = entry.target.id.replace('sec', '');
+        document.querySelectorAll('.subnav a').forEach(a => a.classList.toggle('active', a.dataset.sec === letra));
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  ORDEN.forEach(l => { const el = document.getElementById('sec' + l); if (el) observer.observe(el); });
+
+  // Si llegan con un link tipo ...#secE, baja directo a esa sección
   window.addEventListener('load', () => {
-    const h = location.hash.replace('#sec','');
-    if (ORDEN.includes(h)) irASeccion(h);
+    if (ORDEN.includes(location.hash.replace('#sec',''))) {
+      setTimeout(() => document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' }), 50);
+    }
   });
 
   function agregarHijo(){
@@ -235,7 +248,6 @@
     numHijos++;
     const div = document.createElement('div');
     div.className = 'kids-item';
-    div.dataset.kid = numHijos;
     div.innerHTML = `
       <button type="button" class="rm" onclick="this.parentElement.remove()">✕</button>
       <div class="grid">
@@ -277,22 +289,46 @@
 
   function val(id){ return document.getElementById(id).value.trim(); }
 
+  function marcarInvalidos(ids){
+    ids.forEach(id => {
+      const campo = document.getElementById(id);
+      if (campo) campo.closest('.fg')?.classList.toggle('invalid', !campo.value.trim());
+    });
+  }
+
   function validarSeccionA(){
+    const ids = ['f-nombres','f-apellidos','f-dni','f-fecha-nac','f-genero','f-estado-civil','f-celular','f-correo','f-direccion'];
+    marcarInvalidos(ids);
     return val('f-nombres') && val('f-apellidos') && val('f-dni').length === 8 &&
            val('f-fecha-nac') && val('f-genero') && val('f-estado-civil') &&
            val('f-celular').length === 9 && val('f-correo') && val('f-direccion');
   }
   function validarSeccionB(){
+    const ids = ['f-nivel-educativo','f-ingles'];
+    marcarInvalidos(ids);
     return val('f-nivel-educativo') && val('f-ingles');
   }
   function validarSeccionD(){
+    document.getElementById('f-cuenta-bcp').closest('.fg')?.classList.toggle('invalid', !val('f-cuenta-bcp'));
     return document.querySelector('input[name="pension"]:checked') && val('f-cuenta-bcp');
   }
 
   async function enviarFicha(){
-    if (!validarSeccionA()){ irASeccion('A'); mostrarMensaje('Falta completar la sección A (Personal)', true); return; }
-    if (!validarSeccionB()){ irASeccion('B'); mostrarMensaje('Falta completar la sección B (Formación)', true); return; }
-    if (!validarSeccionD()){ irASeccion('D'); mostrarMensaje('Falta completar la sección D (Pensión)', true); return; }
+    if (!validarSeccionA()){
+      document.getElementById('secA').scrollIntoView({ behavior:'smooth', block:'start' });
+      mostrarMensaje('Falta completar la sección A (Personal)', true);
+      return;
+    }
+    if (!validarSeccionB()){
+      document.getElementById('secB').scrollIntoView({ behavior:'smooth', block:'start' });
+      mostrarMensaje('Falta completar la sección B (Formación)', true);
+      return;
+    }
+    if (!validarSeccionD()){
+      document.getElementById('secD').scrollIntoView({ behavior:'smooth', block:'start' });
+      mostrarMensaje('Falta completar la sección D (Pensión)', true);
+      return;
+    }
 
     const hijos = [...document.querySelectorAll('.kids-item')].map(k => ({
       nombre: k.querySelector('.kid-nombre').value.trim(),
@@ -324,9 +360,10 @@
         btn.disabled = false; btn.textContent = 'Registrar mis datos';
         return;
       }
-      document.getElementById('card-form').style.display = 'none';
-      document.getElementById('tabs').style.display = 'none';
+      document.getElementById('ficha-form').style.display = 'none';
+      document.getElementById('subnav').style.display = 'none';
       document.getElementById('card-done').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       mostrarMensaje('Error de conexión, inténtalo de nuevo', true);
       btn.disabled = false; btn.textContent = 'Registrar mis datos';
