@@ -51,7 +51,7 @@
 
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:16px 18px}
   .fg{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
-  .fg label{font-size:12.5px;color:var(--text);font-weight:700}
+  .fg label{font-size:12.5px;color:var(--text);font-weight:700;min-height:2.5em;display:flex;align-items:flex-end;line-height:1.2}
   .fg label .opt{color:var(--text3);font-weight:500;font-style:italic}
   .fg input,.fg select{background:#fff;border:1px solid var(--border2);border-radius:9px;padding:10px 12px;
        color:var(--text);font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;width:100%}
@@ -66,8 +66,8 @@
   .edu-label{font-size:11px;font-weight:800;letter-spacing:1.1px;color:var(--accent);text-transform:uppercase;margin-bottom:14px}
 
   /* ---- Familiares ---- */
-  .kids-item{background:#f7f8fb;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:12px;position:relative}
-  .kids-item .rm{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px}
+  .fam-item{border-left:3px solid var(--accent);padding-left:18px;margin-bottom:20px}
+  .fam-quitar{display:inline-block;margin-top:8px;font-size:12.5px;color:var(--accent);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif}
   .add-kid{border:1.5px dashed var(--border2);background:none;color:var(--text2);border-radius:10px;padding:12px;width:100%;cursor:pointer;font-size:13px;font-weight:600}
 
   /* ---- Pensión ---- */
@@ -222,15 +222,10 @@
 
       <div class="card" id="secC">
         <div class="sec-title"><span class="letter">C</span> Datos Familiares</div>
-        <div class="sec-sub">Sección opcional</div>
+        <div class="sec-sub">Cónyuge / conviviente e hijos (opcional, hasta 3)</div>
         <hr class="sec-hr">
-        <div class="grid">
-          <div class="fg"><label>Nombre del cónyuge <span class="opt">(opcional)</span></label><input id="f-conyuge-nombre"></div>
-          <div class="fg"><label>DNI del cónyuge <span class="opt">(opcional)</span></label><input id="f-conyuge-dni" maxlength="8" inputmode="numeric"></div>
-        </div>
-        <div class="fg" style="margin-top:6px"><label>Hijos <span class="opt">(hasta 3, opcional)</span></label></div>
-        <div id="kids-list"></div>
-        <button type="button" class="add-kid" id="btn-add-kid" onclick="agregarHijo()">+ Agregar hijo/a</button>
+        <div id="fam-list"></div>
+        <button type="button" class="add-kid" id="btn-add-fam" onclick="agregarFamiliar()">+ Agregar familiar</button>
       </div>
 
       <div class="grid2">
@@ -318,21 +313,33 @@
     }
   });
 
-  function agregarHijo(){
+  function agregarFamiliar(){
     if (numHijos >= 3) return;
     numHijos++;
     const div = document.createElement('div');
-    div.className = 'kids-item';
+    div.className = 'fam-item';
     div.innerHTML = `
-      <button type="button" class="rm" onclick="this.parentElement.remove()">✕</button>
       <div class="grid">
-        <div class="fg"><label>Nombre del hijo/a</label><input class="kid-nombre"></div>
-        <div class="fg"><label>Fecha de nacimiento</label><input class="kid-fecha" type="date"></div>
-      </div>`;
-    document.getElementById('kids-list').appendChild(div);
-    if (document.querySelectorAll('.kids-item').length >= 3) {
-      document.getElementById('btn-add-kid').style.display = 'none';
+        <div class="fg"><label>Vínculo</label>
+          <select class="fam-vinculo">
+            <option value="">Selecciona</option>
+            <option>Cónyuge</option><option>Conviviente</option><option>Hijo/a</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="fg"><label>Nombres completos</label><input class="fam-nombre"></div>
+        <div class="fg"><label>Fecha de nacimiento</label><input class="fam-fecha" type="date"></div>
+      </div>
+      <button type="button" class="fam-quitar" onclick="quitarFamiliar(this)">Quitar</button>`;
+    document.getElementById('fam-list').appendChild(div);
+    if (document.querySelectorAll('.fam-item').length >= 3) {
+      document.getElementById('btn-add-fam').style.display = 'none';
     }
+  }
+
+  function quitarFamiliar(btn){
+    btn.closest('.fam-item').remove();
+    numHijos--;
+    document.getElementById('btn-add-fam').style.display = 'block';
   }
 
   function onCambioPension(){ /* reservado por si luego se quiere condicionar CUSPP a AFP */ }
@@ -415,10 +422,13 @@
       return;
     }
 
-    const hijos = [...document.querySelectorAll('.kids-item')].map(k => ({
-      nombre: k.querySelector('.kid-nombre').value.trim(),
-      fecha_nacimiento: k.querySelector('.kid-fecha').value || null
-    })).filter(h => h.nombre);
+    const familiares = [...document.querySelectorAll('.fam-item')].map(f => ({
+      vinculo: f.querySelector('.fam-vinculo').value,
+      nombre: f.querySelector('.fam-nombre').value.trim(),
+      fecha_nacimiento: f.querySelector('.fam-fecha').value || null
+    })).filter(f => f.nombre);
+    const conyuge = familiares.find(f => f.vinculo === 'Cónyuge' || f.vinculo === 'Conviviente');
+    const hijos = familiares.filter(f => f !== conyuge).map(f => ({ nombre: f.nombre, fecha_nacimiento: f.fecha_nacimiento }));
 
     const pensionSel = val('f-sistema-pension');
     const esAFP = pensionSel.startsWith('AFP');
@@ -434,7 +444,7 @@
       educacion_tecnica: formatoNivel(val('edu-tec-centro'), val('edu-tec-grado'), val('edu-tec-desde'), val('edu-tec-hasta')),
       educacion_universitaria: formatoNivel(val('edu-uni-centro'), val('edu-uni-grado'), val('edu-uni-desde'), val('edu-uni-hasta')),
       educacion_postgrado: formatoNivel(val('edu-pos-centro'), val('edu-pos-grado'), val('edu-pos-desde'), val('edu-pos-hasta')),
-      conyuge_nombre: val('f-conyuge-nombre'), conyuge_dni: val('f-conyuge-dni'), hijos,
+      conyuge_nombre: conyuge ? conyuge.nombre : '', conyuge_dni: '', hijos,
       sistema_pension: esAFP ? 'AFP' : 'ONP',
       entidad_pension: esAFP ? pensionSel.replace('AFP ', '') : '',
       cuspp: val('f-cuspp'), cuenta_bcp: val('f-cuenta-bcp'),
