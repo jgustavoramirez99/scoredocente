@@ -25,4 +25,41 @@ pool.query('ALTER TABLE asistencias ADD COLUMN IF NOT EXISTS reforzamiento VARCH
   .then(() => console.log('✅ Columna "reforzamiento" verificada en asistencias'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la columna "reforzamiento":', err.message));
 
+
+// Migración idempotente: crea la tabla "fichas_docentes" si no existe.
+// Guarda la ficha de datos personales que cada docente llena una sola vez
+// (antes se llenaba en una página aparte -Netlify- y quedaba en un Excel;
+// ahora queda centralizada aquí, visible solo para el Gerente General).
+pool.query(`CREATE TABLE IF NOT EXISTS fichas_docentes (
+  id SERIAL PRIMARY KEY,
+  nombres VARCHAR(150) NOT NULL,
+  apellidos VARCHAR(150) NOT NULL,
+  dni VARCHAR(15) UNIQUE NOT NULL,
+  fecha_nacimiento DATE,
+  genero VARCHAR(20),
+  estado_civil VARCHAR(30),
+  celular VARCHAR(20),
+  correo VARCHAR(150),
+  direccion VARCHAR(255),
+  nivel_educativo VARCHAR(50),
+  ingles VARCHAR(50),
+  educacion_secundaria VARCHAR(255),
+  educacion_tecnica VARCHAR(255),
+  educacion_universitaria VARCHAR(255),
+  educacion_postgrado VARCHAR(255),
+  conyuge_nombre VARCHAR(150),
+  conyuge_dni VARCHAR(15),
+  hijos JSONB DEFAULT '[]',
+  sistema_pension VARCHAR(20),
+  entidad_pension VARCHAR(50),
+  cuspp VARCHAR(30),
+  cuenta_bcp VARCHAR(30),
+  foto_base64 TEXT,
+  procesado BOOLEAN DEFAULT false,
+  creado_en TIMESTAMP DEFAULT NOW(),
+  actualizado_en TIMESTAMP DEFAULT NOW()
+)`)
+  .then(() => console.log('✅ Tabla "fichas_docentes" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "fichas_docentes":', err.message));
+
 module.exports = pool;

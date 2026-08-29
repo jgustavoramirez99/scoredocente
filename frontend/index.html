@@ -1181,6 +1181,7 @@
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
       <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
       <div class="nav-item" id="nav-coordinadores" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
+      <div class="nav-item" id="nav-fichas" onclick="showSection('fichas', this)">🗂️ Fichas de Docentes</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -1645,6 +1646,44 @@
             </button>
           </div>
           <div id="coord-reporte-container" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem"></div>
+        </div>
+      </div>
+
+      <div class="section" id="section-fichas">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="page-title">Fichas de Docentes</div>
+            <div class="page-subtitle">Datos personales registrados por cada docente en el formulario público — visible solo para el Gerente General</div>
+          </div>
+          <button onclick="exportarFichasCSV()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+            📄 Exportar CSV
+          </button>
+        </div>
+
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="margin:0;max-width:280px">
+            <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase">Buscar por nombre o DNI</label>
+            <input id="fichas-buscar" placeholder="Ej: Pérez, 45678901..." oninput="filtrarFichasDebounce()" style="width:100%;padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+          </div>
+          <div class="form-group" style="margin:0;max-width:200px">
+            <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase">Estado</label>
+            <select id="fichas-estado" onchange="cargarFichasDocentes()" style="width:100%;padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+              <option value="">Todos</option>
+              <option value="pendiente">Pendientes de revisar</option>
+              <option value="procesado">Ya revisados</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <h3>Docentes que han completado su ficha</h3>
+            <span id="fichas-contador" style="font-size:12px;color:var(--text2)"></span>
+          </div>
+          <table>
+            <thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Correo</th><th>Registrado</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-fichas"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -2831,6 +2870,19 @@
     </div>
   </div>
 </div>
+
+<div class="modal" id="modal-ficha-detalle">
+  <div class="modal-card" style="max-width:640px;max-height:90vh;overflow-y:auto">
+    <div class="modal-title" id="mfd-nombre">Ficha del docente</div>
+    <div class="modal-subtitle">Datos registrados por el propio docente</div>
+    <div id="mfd-foto-wrap" style="text-align:center;margin-bottom:1rem"></div>
+    <div id="mfd-contenido" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;font-size:13.5px;margin-bottom:0.5rem"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalFichaDetalle()">Cerrar</button>
+      <button class="btn-save" id="mfd-btn-procesado" onclick="toggleProcesadoDesdeModal()">Marcar como procesado</button>
+    </div>
+  </div>
+</div>
   <script>
     let usuario = null;
     let token = null;
@@ -3025,6 +3077,8 @@
     const EMAIL_COORDINADORES = 'gerentegeneralcervantino@cervantesschool.edu.pe';
     const navCoord = document.getElementById('nav-coordinadores');
     if (navCoord && usuario.email !== EMAIL_COORDINADORES) navCoord.style.display = 'none';
+    const navFichas = document.getElementById('nav-fichas');
+    if (navFichas && usuario.email !== EMAIL_COORDINADORES) navFichas.style.display = 'none';
     } else if (usuario.rol === 'psicologa') {
   document.getElementById('psicologa-page').style.display = 'flex';
   document.getElementById('psico-user-info').textContent = usuario.nombre;
@@ -3055,6 +3109,7 @@
       if (id === 'auditoria') cargarAuditoria();
       if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
       if (id === 'coordinadores') cargarCoordinadores();
+      if (id === 'fichas') cargarFichasDocentes();
     }
 
     function showSectionSup(id, el) {
@@ -7892,6 +7947,129 @@ function _dibujarBloqueCoordinadorPDF(doc, titulo, r, y, imgPie) {
   });
 
   return y + 8;
+}
+// ── FICHAS DE DOCENTES (solo Gerente General) ──
+let fichasCache = [];
+let fichasDebounceTimer = null;
+let fichaAbiertaId = null;
+
+function filtrarFichasDebounce() {
+  clearTimeout(fichasDebounceTimer);
+  fichasDebounceTimer = setTimeout(cargarFichasDocentes, 350);
+}
+
+async function cargarFichasDocentes() {
+  const buscar = (document.getElementById('fichas-buscar') || {}).value || '';
+  const estado = (document.getElementById('fichas-estado') || {}).value || '';
+  const params = new URLSearchParams();
+  if (buscar.trim()) params.set('buscar', buscar.trim());
+  if (estado) params.set('estado', estado);
+  const tbody = document.getElementById('tabla-fichas');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+  try {
+    const res = await fetch('/api/fichas?' + params.toString(), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error();
+    fichasCache = await res.json();
+    renderTablaFichas();
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar</p></div></td></tr>';
+  }
+}
+
+function renderTablaFichas() {
+  const tbody = document.getElementById('tabla-fichas');
+  const contador = document.getElementById('fichas-contador');
+  if (contador) contador.textContent = fichasCache.length + ' registrado(s)';
+  if (!fichasCache.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗂️</div><p>Sin resultados</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = fichasCache.map(f => `
+    <tr>
+      <td>${f.nombres} ${f.apellidos}</td>
+      <td>${f.dni}</td>
+      <td>${f.celular || '—'}</td>
+      <td>${f.correo || '—'}</td>
+      <td>${new Date(f.creado_en).toLocaleDateString('es-PE')}</td>
+      <td><span class="badge ${f.procesado ? 'badge-green' : 'badge-amber'}">${f.procesado ? 'Revisado' : 'Pendiente'}</span></td>
+      <td><button class="eval-btn" style="padding:6px 14px;font-size:12px" onclick="verFichaDetalle(${f.id})">Ver ficha</button></td>
+    </tr>
+  `).join('');
+}
+
+async function verFichaDetalle(id) {
+  try {
+    const res = await fetch('/api/fichas/' + id, { headers: { 'Authorization': 'Bearer ' + token } });
+    const f = await res.json();
+    if (!res.ok) throw new Error(f.error || 'Error');
+    fichaAbiertaId = f.id;
+    document.getElementById('mfd-nombre').textContent = f.nombres + ' ' + f.apellidos;
+    document.getElementById('mfd-foto-wrap').innerHTML = f.foto_base64
+      ? `<img src="${f.foto_base64}" style="width:96px;height:96px;border-radius:12px;object-fit:cover">`
+      : '';
+    const hijos = Array.isArray(f.hijos) ? f.hijos : [];
+    const filas = [
+      ['DNI', f.dni],
+      ['Fecha de nacimiento', f.fecha_nacimiento ? new Date(f.fecha_nacimiento).toLocaleDateString('es-PE') : '—'],
+      ['Género', f.genero || '—'], ['Estado civil', f.estado_civil || '—'],
+      ['Celular', f.celular || '—'], ['Correo', f.correo || '—'], ['Dirección', f.direccion || '—'],
+      ['Nivel educativo', f.nivel_educativo || '—'], ['Inglés', f.ingles || '—'],
+      ['Educ. secundaria', f.educacion_secundaria || '—'], ['Educ. técnica', f.educacion_tecnica || '—'],
+      ['Educ. universitaria', f.educacion_universitaria || '—'], ['Postgrado', f.educacion_postgrado || '—'],
+      ['Cónyuge', f.conyuge_nombre || '—'], ['DNI cónyuge', f.conyuge_dni || '—'],
+      ['Hijos', hijos.length ? hijos.map(h => h.nombre).join(', ') : '—'],
+      ['Sistema de pensión', f.sistema_pension || '—'], ['AFP', f.entidad_pension || '—'],
+      ['CUSPP', f.cuspp || '—'], ['Cuenta BCP', f.cuenta_bcp || '—']
+    ];
+    document.getElementById('mfd-contenido').innerHTML = filas.map(([k, v]) => `
+      <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase">${k}</div><div>${v}</div></div>
+    `).join('');
+    const btn = document.getElementById('mfd-btn-procesado');
+    btn.textContent = f.procesado ? 'Marcar como pendiente' : 'Marcar como procesado';
+    document.getElementById('modal-ficha-detalle').style.display = 'flex';
+  } catch (e) {
+    alert('No se pudo cargar la ficha');
+  }
+}
+
+function cerrarModalFichaDetalle() {
+  document.getElementById('modal-ficha-detalle').style.display = 'none';
+  fichaAbiertaId = null;
+}
+
+async function toggleProcesadoDesdeModal() {
+  if (!fichaAbiertaId) return;
+  const actual = fichasCache.find(f => f.id === fichaAbiertaId);
+  const nuevoValor = !(actual && actual.procesado);
+  try {
+    const res = await fetch('/api/fichas/' + fichaAbiertaId + '/procesado', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ procesado: nuevoValor })
+    });
+    if (!res.ok) throw new Error();
+    cerrarModalFichaDetalle();
+    cargarFichasDocentes();
+  } catch (e) {
+    alert('No se pudo actualizar');
+  }
+}
+
+function exportarFichasCSV() {
+  fetch('/api/fichas/export/csv', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(res => res.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fichas_docentes.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    })
+    .catch(() => alert('No se pudo exportar'));
 }
 </script>
 </body>

@@ -33,6 +33,8 @@ app.use('/api/auditoria', auditoriaRouter);
 const gustiaRouter = require('./routes/gustia');
 app.use('/api/gustia', gustiaRouter);
 app.use('/api/auth', authRouter);
+const fichasRouter = require('./routes/fichas');
+app.use('/api/fichas', fichasRouter);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
