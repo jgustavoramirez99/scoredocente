@@ -4,138 +4,169 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ficha del Docente — Cervantes School</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f3f5f9; --card:#ffffff; --border:#e6e9f0; --border2:#dbe0ea;
-    --navy:#16325c; --navy2:#1e4272; --navy-glow:rgba(22,50,92,0.10);
-    --text:#1c2333; --text2:#6b7280; --text3:#9aa0ae;
+    --bg:#eef1f6; --card:#ffffff; --border:#e6e9f0; --border2:#dde1ea;
+    --navy:#16325c; --navy2:#1e4272;
+    --accent:#e63946; --accent2:#ff6b6b; --accent-soft:#fdecec;
+    --text:#1c2333; --text2:#68707f; --text3:#98a0ae;
     --green:#1f9d55; --green-bg:rgba(31,157,85,0.10);
-    --amber:#c9820a; --amber-bg:rgba(201,130,10,0.10);
-    --red:#e63946; --red-bg:rgba(230,57,70,0.08);
-    --radius:14px;
+    --red-bg:rgba(230,57,70,0.08);
+    --radius:16px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding-bottom:60px}
-  a{color:inherit}
 
-  /* ---- Cabecera azul con foto + logo ---- */
-  .hero{position:relative;height:240px;overflow:hidden}
-  .hero-bg{position:absolute;inset:0;background-image:url('cervantes-fachada.jpg');background-size:cover;background-position:center}
-  .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(16,34,64,0.80), rgba(22,50,92,0.94))}
-  .hero-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:0 16px}
-  .hero-logo{width:62px;height:62px;border-radius:16px;object-fit:cover;background:#fff;box-shadow:0 8px 22px rgba(0,0,0,0.28);margin-bottom:10px}
-  .hero-content h1{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:.2px}
-  .hero-content p{font-size:13px;opacity:.92;margin-top:4px}
+  /* ---- Cabecera azul ---- */
+  .hero{background:var(--navy);
+        background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 28px);
+        padding:38px 24px}
+  .hero-inner{max-width:1120px;margin:0 auto;display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+  .hero-logo{width:84px;height:84px;border-radius:20px;background:#fff;padding:12px;object-fit:contain;
+             box-shadow:0 10px 26px rgba(0,0,0,0.28);flex-shrink:0}
+  .hero-text{flex:1;min-width:260px}
+  .hero-eyebrow{color:var(--accent2);font-size:12px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;margin-bottom:10px}
+  .hero-text h1{font-family:'Lora',serif;color:#fff;font-size:1.85rem;font-weight:700;line-height:1.3;margin-bottom:10px}
+  .hero-text p{color:#c7d2e3;font-size:13.5px;line-height:1.65;max-width:640px}
 
-  /* ---- Sub-menú pegajoso para saltar de sección (todo sigue siendo una sola página) ---- */
-  .subnav{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--border);display:flex;overflow-x:auto;box-shadow:0 2px 10px rgba(20,30,60,0.05)}
-  .subnav a{flex:1;min-width:92px;text-align:center;padding:13px 8px;font-size:12px;font-weight:700;color:var(--text3);text-decoration:none;white-space:nowrap;border-bottom:3px solid transparent;transition:.15s}
-  .subnav a.active{color:var(--navy);border-color:var(--navy)}
+  /* ---- Sub-menú de secciones ---- */
+  .subnav{position:sticky;top:0;z-index:20;background:var(--bg);padding:20px 24px 14px}
+  .subnav-inner{max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px}
+  .pill{padding:9px 18px;border-radius:999px;background:#fff;border:1px solid var(--border2);
+        color:var(--text2);font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:.15s}
+  .pill.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 
-  .wrap{max-width:720px;margin:0 auto;padding:26px 16px 0}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;margin-bottom:20px;box-shadow:0 2px 14px rgba(20,30,60,0.04)}
-  .sec-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--navy-glow);color:var(--navy);font-weight:800;font-size:13px;margin-right:8px}
-  .sec-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;display:flex;align-items:center;margin-bottom:4px;scroll-margin-top:66px}
-  .sec-sub{color:var(--text2);font-size:12.5px;margin-bottom:20px;margin-left:34px}
+  .wrap{max-width:1120px;margin:0 auto;padding:4px 24px 0}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:30px 32px;
+        margin-bottom:22px;box-shadow:0 2px 16px rgba(20,30,60,0.04);scroll-margin-top:78px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
 
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:560px){.grid{grid-template-columns:1fr}}
-  .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-  .fg label{font-size:12px;color:var(--text2);font-weight:600}
-  .fg input,.fg select{background:#fbfcfe;border:1px solid var(--border2);border-radius:8px;padding:10px 12px;
-       color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
-  .fg input:focus,.fg select:focus{border-color:var(--navy);box-shadow:0 0 0 3px var(--navy-glow)}
-  .fg.invalid input,.fg.invalid select{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
-  .hint{font-size:11px;color:var(--text3)}
+  .sec-title{display:flex;align-items:baseline;gap:11px;font-family:'Lora',serif;font-weight:700;
+             font-size:1.35rem;color:var(--text)}
+  .sec-title .letter{color:var(--accent);font-size:1.55rem;font-weight:700}
+  .sec-sub{color:var(--text2);font-size:13px;margin:6px 0 18px 33px}
+  .sec-hr{border:none;border-top:1px solid var(--border);margin-bottom:24px}
 
-  .kids-item{background:#fbfcfe;border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
-  .kids-item .rm{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px}
-  .add-kid{border:1.5px dashed var(--border2);background:none;color:var(--text2);border-radius:9px;padding:10px;width:100%;cursor:pointer;font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:16px 18px}
+  .fg{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+  .fg label{font-size:12.5px;color:var(--text);font-weight:700}
+  .fg label .opt{color:var(--text3);font-weight:500;font-style:italic}
+  .fg input,.fg select{background:#fff;border:1px solid var(--border2);border-radius:9px;padding:10px 12px;
+       color:var(--text);font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;width:100%}
+  .fg input::placeholder{color:var(--text3)}
+  .fg input:focus,.fg select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(22,50,92,0.10)}
+  .fg.invalid input,.fg.invalid select{border-color:var(--accent);box-shadow:0 0 0 3px var(--red-bg)}
+  .req{color:var(--accent)}
 
-  .photo-box{display:flex;align-items:center;gap:18px;margin-bottom:6px}
-  .photo-preview{width:96px;height:96px;border-radius:12px;background:#fbfcfe;border:1px solid var(--border2);
-       display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--text3);font-size:28px;flex-shrink:0}
-  .photo-preview img{width:100%;height:100%;object-fit:cover}
+  /* ---- Bloques de nivel educativo ---- */
+  .edu-block{background:#f7f8fb;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .edu-block:last-child{margin-bottom:0}
+  .edu-label{font-size:11px;font-weight:800;letter-spacing:1.1px;color:var(--accent);text-transform:uppercase;margin-bottom:14px}
 
-  .pension-choice{display:flex;gap:10px;margin-bottom:16px}
-  .pension-choice label{flex:1;text-align:center;padding:12px;border-radius:9px;background:#fbfcfe;
-       border:1px solid var(--border2);cursor:pointer;font-size:13px;font-weight:700;color:var(--text2)}
-  .pension-choice input{display:none}
-  .pension-choice input:checked + span{color:var(--navy)}
+  /* ---- Familiares ---- */
+  .kids-item{background:#f7f8fb;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:12px;position:relative}
+  .kids-item .rm{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px}
+  .add-kid{border:1.5px dashed var(--border2);background:none;color:var(--text2);border-radius:10px;padding:12px;width:100%;cursor:pointer;font-size:13px;font-weight:600}
 
-  .submit-bar{position:sticky;bottom:0;background:linear-gradient(180deg, rgba(243,245,249,0), var(--bg) 30%);padding:16px 0 6px}
-  .btn-enviar{width:100%;padding:15px;border-radius:11px;border:none;background:var(--navy);color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 6px 18px rgba(22,50,92,0.25)}
+  /* ---- Pensión ---- */
+  .bank-badge{display:flex;align-items:center;gap:12px;border:1px solid var(--border2);border-radius:10px;
+              padding:13px 16px;background:#f7f8fb;margin-bottom:16px}
+  .bank-chip{background:var(--navy);color:#fff;font-weight:800;font-size:11.5px;padding:7px 11px;border-radius:7px;letter-spacing:.4px}
+  .bank-badge .bank-name{font-size:13px;font-weight:700;color:var(--text)}
+  .bank-badge .bank-sub{font-size:11.5px;color:var(--text3)}
+
+  /* ---- Foto ---- */
+  .dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--border2);border-radius:14px;padding:38px 24px;text-align:center;
+            cursor:pointer;background:#fbfcfe;transition:.15s;min-height:160px}
+  .dropzone:hover{border-color:var(--navy)}
+  .dropzone input{display:none}
+  .dropzone h4{font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;margin-bottom:6px;color:var(--text)}
+  .dropzone p{font-size:12px;color:var(--text2);max-width:420px;margin:0 auto;line-height:1.55}
+  .dropzone.has-photo{padding:18px;display:flex;align-items:center;gap:16px;text-align:left}
+  .dropzone img{width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0}
+
+  .submit-bar{position:sticky;bottom:0;background:linear-gradient(180deg, rgba(238,241,246,0), var(--bg) 35%);padding:18px 0 6px}
+  .btn-enviar{width:100%;padding:15px;border-radius:12px;border:none;background:var(--navy);color:#fff;
+             font-weight:700;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 8px 20px rgba(22,50,92,0.25)}
   .btn-enviar:hover{background:var(--navy2)}
   .btn-enviar:disabled{opacity:.55;cursor:not-allowed}
   .msg{font-size:13px;font-weight:600;margin-top:10px;min-height:18px;text-align:center}
-  .msg.err{color:var(--red)}
+  .msg.err{color:var(--accent)}
   .msg.ok{color:var(--green)}
 
   .done-screen{text-align:center;padding:70px 20px}
   .done-screen .ico{font-size:52px;margin-bottom:14px}
-  .done-screen h2{font-family:'Syne',sans-serif;margin-bottom:8px}
+  .done-screen h2{font-family:'Lora',serif;margin-bottom:8px}
   .done-screen p{color:var(--text2)}
-  .req{color:var(--red)}
 </style>
 </head>
 <body>
 
-  <div class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
+  <header class="hero">
+    <div class="hero-inner">
       <img class="hero-logo" src="icon-192.png" onerror="this.style.display='none'">
-      <h1>Ficha del Docente</h1>
-      <p>Cervantes School · Completa tus datos personales</p>
+      <div class="hero-text">
+        <div class="hero-eyebrow">Cervantes School · Recursos Humanos</div>
+        <h1>Ficha de Datos del Personal Docente</h1>
+        <p>Completa cada sección con tu información. Al finalizar, tus datos quedan registrados y el área correspondiente los revisará antes de incorporarlos al sistema.</p>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <nav class="subnav" id="subnav">
-    <a href="#secA" data-sec="A" class="active">A. Personal</a>
-    <a href="#secB" data-sec="B">B. Formación</a>
-    <a href="#secC" data-sec="C">C. Familiares</a>
-    <a href="#secD" data-sec="D">D. Pensión</a>
-    <a href="#secE" data-sec="E">E. Foto</a>
+  <nav class="subnav">
+    <div class="subnav-inner" id="subnav-inner">
+      <a href="#secA" class="pill active" data-sec="A">A · Personal</a>
+      <a href="#secB" class="pill" data-sec="B">B · Formación</a>
+      <a href="#secC" class="pill" data-sec="C">C · Familiares</a>
+      <a href="#secD" class="pill" data-sec="D">D · Pensión y banco</a>
+      <a href="#secE" class="pill" data-sec="E">E · Foto</a>
+    </div>
   </nav>
 
-  <div class="wrap" id="form-wrap">
+  <div class="wrap">
     <form id="ficha-form" onsubmit="return false">
 
       <div class="card" id="secA">
-        <div class="sec-title"><span class="sec-badge">A</span> Datos personales</div>
-        <div class="sec-sub">Todos los campos son obligatorios salvo que se indique lo contrario</div>
+        <div class="sec-title"><span class="letter">A</span> Información Personal</div>
+        <div class="sec-sub">Datos básicos de identificación y contacto</div>
+        <hr class="sec-hr">
         <div class="grid">
           <div class="fg"><label>Nombres <span class="req">*</span></label><input id="f-nombres" required></div>
-          <div class="fg"><label>Apellidos <span class="req">*</span></label><input id="f-apellidos" required></div>
-          <div class="fg"><label>DNI <span class="req">*</span></label><input id="f-dni" maxlength="8" inputmode="numeric" required></div>
-          <div class="fg"><label>Fecha de nacimiento <span class="req">*</span></label><input id="f-fecha-nac" type="date" required></div>
+          <div class="fg"><label>Apellido Paterno <span class="req">*</span></label><input id="f-ap-paterno" required></div>
+          <div class="fg"><label>Apellido Materno <span class="req">*</span></label><input id="f-ap-materno" required></div>
+          <div class="fg"><label>DNI <span class="req">*</span></label><input id="f-dni" maxlength="8" inputmode="numeric" placeholder="8 dígitos" required></div>
+          <div class="fg"><label>Fecha de Nacimiento <span class="req">*</span></label><input id="f-fecha-nac" type="date" required></div>
           <div class="fg"><label>Género <span class="req">*</span></label>
             <select id="f-genero" required>
-              <option value="">Selecciona...</option>
+              <option value="">Selecciona</option>
               <option>Masculino</option><option>Femenino</option><option>Otro</option><option>Prefiero no decir</option>
             </select>
           </div>
-          <div class="fg"><label>Estado civil <span class="req">*</span></label>
+        </div>
+        <div class="grid">
+          <div class="fg"><label>Estado Civil <span class="req">*</span></label>
             <select id="f-estado-civil" required>
-              <option value="">Selecciona...</option>
+              <option value="">Selecciona</option>
               <option>Soltero(a)</option><option>Casado(a)</option><option>Conviviente</option>
               <option>Divorciado(a)</option><option>Viudo(a)</option>
             </select>
           </div>
           <div class="fg"><label>Celular <span class="req">*</span></label><input id="f-celular" maxlength="9" inputmode="numeric" required></div>
-          <div class="fg"><label>Correo electrónico <span class="req">*</span></label><input id="f-correo" type="email" required></div>
+          <div class="fg"><label>Correo Electrónico <span class="req">*</span></label><input id="f-correo" type="email" required></div>
+          <div class="fg" style="grid-column:span 2"><label>Dirección actual <span class="req">*</span></label><input id="f-direccion" placeholder="Av./Jr./Calle, número, distrito" required></div>
         </div>
-        <div class="fg"><label>Dirección <span class="req">*</span></label><input id="f-direccion" required></div>
       </div>
 
       <div class="card" id="secB">
-        <div class="sec-title"><span class="sec-badge">B</span> Formación académica</div>
-        <div class="sec-sub">Institución y/o título obtenido en cada nivel (deja en blanco si no aplica)</div>
-        <div class="grid">
+        <div class="sec-title"><span class="letter">B</span> Formación Académica</div>
+        <div class="sec-sub">Centro de estudios y años cursados por nivel</div>
+        <hr class="sec-hr">
+        <div class="grid" style="margin-bottom:20px">
           <div class="fg"><label>Nivel educativo máximo <span class="req">*</span></label>
             <select id="f-nivel-educativo" required>
-              <option value="">Selecciona...</option>
+              <option value="">Selecciona</option>
               <option>Secundaria completa</option><option>Técnico</option>
               <option>Universitario — Bachiller</option><option>Universitario — Titulado</option>
               <option>Postgrado — Maestría</option><option>Postgrado — Doctorado</option>
@@ -143,56 +174,103 @@
           </div>
           <div class="fg"><label>Nivel de inglés <span class="req">*</span></label>
             <select id="f-ingles" required>
-              <option value="">Selecciona...</option>
+              <option value="">Selecciona</option>
               <option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option><option>Ninguno</option>
             </select>
           </div>
         </div>
-        <div class="fg"><label>Educación secundaria</label><input id="f-edu-secundaria" placeholder="Institución"></div>
-        <div class="fg"><label>Educación técnica</label><input id="f-edu-tecnica" placeholder="Instituto / carrera"></div>
-        <div class="fg"><label>Educación universitaria</label><input id="f-edu-universitaria" placeholder="Universidad / carrera"></div>
-        <div class="fg"><label>Postgrado</label><input id="f-edu-postgrado" placeholder="Universidad / especialidad"></div>
+
+        <div class="edu-block">
+          <div class="edu-label">Secundaria</div>
+          <div class="grid">
+            <div class="fg"><label>Centro de estudios</label><input id="edu-sec-centro"></div>
+            <div class="fg"><label>Desde (año)</label><input id="edu-sec-desde" maxlength="4" inputmode="numeric" placeholder="2005"></div>
+            <div class="fg"><label>Hasta (año)</label><input id="edu-sec-hasta" maxlength="4" inputmode="numeric" placeholder="2010"></div>
+          </div>
+        </div>
+
+        <div class="edu-block">
+          <div class="edu-label">Técnico</div>
+          <div class="grid">
+            <div class="fg"><label>Centro de estudios</label><input id="edu-tec-centro"></div>
+            <div class="fg"><label>Especialidad / grado obtenido</label><input id="edu-tec-grado"></div>
+            <div class="fg"><label>Desde (año)</label><input id="edu-tec-desde" maxlength="4" inputmode="numeric"></div>
+            <div class="fg"><label>Hasta (año)</label><input id="edu-tec-hasta" maxlength="4" inputmode="numeric"></div>
+          </div>
+        </div>
+
+        <div class="edu-block">
+          <div class="edu-label">Universitario</div>
+          <div class="grid">
+            <div class="fg"><label>Centro de estudios</label><input id="edu-uni-centro"></div>
+            <div class="fg"><label>Especialidad / grado obtenido</label><input id="edu-uni-grado"></div>
+            <div class="fg"><label>Desde (año)</label><input id="edu-uni-desde" maxlength="4" inputmode="numeric"></div>
+            <div class="fg"><label>Hasta (año)</label><input id="edu-uni-hasta" maxlength="4" inputmode="numeric"></div>
+          </div>
+        </div>
+
+        <div class="edu-block">
+          <div class="edu-label">Postgrado</div>
+          <div class="grid">
+            <div class="fg"><label>Centro de estudios</label><input id="edu-pos-centro"></div>
+            <div class="fg"><label>Especialidad / grado obtenido</label><input id="edu-pos-grado"></div>
+            <div class="fg"><label>Desde (año)</label><input id="edu-pos-desde" maxlength="4" inputmode="numeric"></div>
+            <div class="fg"><label>Hasta (año)</label><input id="edu-pos-hasta" maxlength="4" inputmode="numeric"></div>
+          </div>
+        </div>
       </div>
 
       <div class="card" id="secC">
-        <div class="sec-title"><span class="sec-badge">C</span> Datos familiares</div>
+        <div class="sec-title"><span class="letter">C</span> Datos Familiares</div>
         <div class="sec-sub">Sección opcional</div>
+        <hr class="sec-hr">
         <div class="grid">
-          <div class="fg"><label>Nombre del cónyuge</label><input id="f-conyuge-nombre"></div>
-          <div class="fg"><label>DNI del cónyuge</label><input id="f-conyuge-dni" maxlength="8" inputmode="numeric"></div>
+          <div class="fg"><label>Nombre del cónyuge <span class="opt">(opcional)</span></label><input id="f-conyuge-nombre"></div>
+          <div class="fg"><label>DNI del cónyuge <span class="opt">(opcional)</span></label><input id="f-conyuge-dni" maxlength="8" inputmode="numeric"></div>
         </div>
-        <div class="fg"><label>Hijos (hasta 3)</label></div>
+        <div class="fg" style="margin-top:6px"><label>Hijos <span class="opt">(hasta 3, opcional)</span></label></div>
         <div id="kids-list"></div>
         <button type="button" class="add-kid" id="btn-add-kid" onclick="agregarHijo()">+ Agregar hijo/a</button>
       </div>
 
-      <div class="card" id="secD">
-        <div class="sec-title"><span class="sec-badge">D</span> Sistema de pensiones</div>
-        <div class="sec-sub">Selecciona tu sistema de pensiones</div>
-        <div class="pension-choice">
-          <label><input type="radio" name="pension" value="AFP" onchange="onCambioPension()"><span>AFP</span></label>
-          <label><input type="radio" name="pension" value="ONP" onchange="onCambioPension()"><span>ONP</span></label>
-        </div>
-        <div class="grid" id="afp-fields" style="display:none">
-          <div class="fg"><label>AFP</label>
-            <select id="f-entidad-pension">
-              <option value="">Selecciona...</option>
-              <option>Integra</option><option>Prima</option><option>Profuturo</option><option>Habitat</option>
+      <div class="grid2">
+        <div class="card" id="secD" style="margin-bottom:0">
+          <div class="sec-title"><span class="letter">D</span> Pensión y Datos Bancarios</div>
+          <div class="sec-sub">Para el depósito de haberes y aportes</div>
+          <hr class="sec-hr">
+          <div class="fg">
+            <label>Sistema de Pensiones <span class="req">*</span></label>
+            <select id="f-sistema-pension" required onchange="onCambioPension()">
+              <option value="">Selecciona</option>
+              <option>AFP Integra</option><option>AFP Prima</option><option>AFP Profuturo</option><option>AFP Habitat</option>
+              <option>ONP</option>
             </select>
           </div>
-          <div class="fg"><label>CUSPP</label><input id="f-cuspp"></div>
-        </div>
-        <div class="fg"><label>N° de cuenta BCP (para pago de haberes) <span class="req">*</span></label><input id="f-cuenta-bcp" required></div>
-      </div>
-
-      <div class="card" id="secE">
-        <div class="sec-title"><span class="sec-badge">E</span> Foto tipo carnet</div>
-        <div class="sec-sub">Formato JPG o PNG, máximo 4 MB</div>
-        <div class="photo-box">
-          <div class="photo-preview" id="photo-preview">🖼️</div>
-          <div>
-            <input type="file" id="f-foto" accept="image/png,image/jpeg" onchange="previsualizarFoto(event)">
+          <div class="fg">
+            <label>N° CUSPP <span class="opt">(si estás en AFP)</span></label>
+            <input id="f-cuspp">
           </div>
+          <div class="bank-badge">
+            <div class="bank-chip">BCP</div>
+            <div>
+              <div class="bank-name">Banco de Crédito del Perú</div>
+              <div class="bank-sub">único banco habilitado</div>
+            </div>
+          </div>
+          <div class="fg"><label>N° de Cuenta BCP <span class="req">*</span></label><input id="f-cuenta-bcp" placeholder="Cuenta de ahorros o CTS" required></div>
+        </div>
+
+        <div class="card" id="secE" style="margin-bottom:0">
+          <div class="sec-title"><span class="letter">E</span> Foto tipo carnet</div>
+          <div class="sec-sub">Fondo claro, formal, rostro centrado</div>
+          <hr class="sec-hr">
+          <label class="dropzone" id="dropzone" for="f-foto">
+            <input type="file" id="f-foto" accept="image/png,image/jpeg" onchange="previsualizarFoto(event)">
+            <div id="dropzone-content">
+              <h4>Toca para subir tu foto (JPG o PNG)</h4>
+              <p>Sube una foto formal tamaño carnet: fondo blanco o celeste claro, rostro centrado y descubierto, sin lentes de sol ni gorra, buena iluminación.</p>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -215,31 +293,28 @@
   let fotoBase64 = null;
   let numHijos = 0;
 
-  // Sub-menú: hace scroll suave a la sección, todo sigue en una sola página
-  document.querySelectorAll('.subnav a').forEach(a => {
+  document.querySelectorAll('.pill').forEach(a => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
-      const id = 'sec' + a.dataset.sec;
-      document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.replaceState(null, '', '#' + id);
+      document.getElementById('sec' + a.dataset.sec).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#sec' + a.dataset.sec);
     });
   });
 
-  // Resalta la pestaña activa del sub-menú según lo que se ve al hacer scroll
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const letra = entry.target.id.replace('sec', '');
-        document.querySelectorAll('.subnav a').forEach(a => a.classList.toggle('active', a.dataset.sec === letra));
+        document.querySelectorAll('.pill').forEach(a => a.classList.toggle('active', a.dataset.sec === letra));
       }
     });
-  }, { rootMargin: '-30% 0px -60% 0px' });
+  }, { rootMargin: '-25% 0px -60% 0px' });
   ORDEN.forEach(l => { const el = document.getElementById('sec' + l); if (el) observer.observe(el); });
 
-  // Si llegan con un link tipo ...#secE, baja directo a esa sección
   window.addEventListener('load', () => {
-    if (ORDEN.includes(location.hash.replace('#sec',''))) {
-      setTimeout(() => document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' }), 50);
+    const h = location.hash.replace('#sec', '');
+    if (ORDEN.includes(h)) {
+      setTimeout(() => document.getElementById('sec' + h)?.scrollIntoView({ block: 'start' }), 50);
     }
   });
 
@@ -260,10 +335,7 @@
     }
   }
 
-  function onCambioPension(){
-    const val = document.querySelector('input[name="pension"]:checked')?.value;
-    document.getElementById('afp-fields').style.display = (val === 'AFP') ? 'grid' : 'none';
-  }
+  function onCambioPension(){ /* reservado por si luego se quiere condicionar CUSPP a AFP */ }
 
   function previsualizarFoto(ev){
     const file = ev.target.files[0];
@@ -276,7 +348,11 @@
     const reader = new FileReader();
     reader.onload = () => {
       fotoBase64 = reader.result;
-      document.getElementById('photo-preview').innerHTML = `<img src="${fotoBase64}">`;
+      const dz = document.getElementById('dropzone');
+      dz.classList.add('has-photo');
+      document.getElementById('dropzone-content').innerHTML = `
+        <img src="${fotoBase64}">
+        <div><h4 style="margin-bottom:2px">Foto lista</h4><p style="margin:0">Toca para cambiarla</p></div>`;
     };
     reader.readAsDataURL(file);
   }
@@ -287,7 +363,7 @@
     el.className = 'msg ' + (esError ? 'err' : 'ok');
   }
 
-  function val(id){ return document.getElementById(id).value.trim(); }
+  function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 
   function marcarInvalidos(ids){
     ids.forEach(id => {
@@ -297,9 +373,9 @@
   }
 
   function validarSeccionA(){
-    const ids = ['f-nombres','f-apellidos','f-dni','f-fecha-nac','f-genero','f-estado-civil','f-celular','f-correo','f-direccion'];
+    const ids = ['f-nombres','f-ap-paterno','f-ap-materno','f-dni','f-fecha-nac','f-genero','f-estado-civil','f-celular','f-correo','f-direccion'];
     marcarInvalidos(ids);
-    return val('f-nombres') && val('f-apellidos') && val('f-dni').length === 8 &&
+    return val('f-nombres') && val('f-ap-paterno') && val('f-ap-materno') && val('f-dni').length === 8 &&
            val('f-fecha-nac') && val('f-genero') && val('f-estado-civil') &&
            val('f-celular').length === 9 && val('f-correo') && val('f-direccion');
   }
@@ -309,8 +385,17 @@
     return val('f-nivel-educativo') && val('f-ingles');
   }
   function validarSeccionD(){
-    document.getElementById('f-cuenta-bcp').closest('.fg')?.classList.toggle('invalid', !val('f-cuenta-bcp'));
-    return document.querySelector('input[name="pension"]:checked') && val('f-cuenta-bcp');
+    const ids = ['f-sistema-pension','f-cuenta-bcp'];
+    marcarInvalidos(ids);
+    return val('f-sistema-pension') && val('f-cuenta-bcp');
+  }
+
+  function formatoNivel(centro, grado, desde, hasta){
+    if (!centro && !grado && !desde && !hasta) return '';
+    let txt = centro || '';
+    if (grado) txt += (txt ? ' — ' : '') + grado;
+    if (desde || hasta) txt += ` (${desde || '?'}–${hasta || '?'})`;
+    return txt;
   }
 
   async function enviarFicha(){
@@ -335,16 +420,24 @@
       fecha_nacimiento: k.querySelector('.kid-fecha').value || null
     })).filter(h => h.nombre);
 
+    const pensionSel = val('f-sistema-pension');
+    const esAFP = pensionSel.startsWith('AFP');
+
     const payload = {
-      nombres: val('f-nombres'), apellidos: val('f-apellidos'), dni: val('f-dni'),
+      nombres: val('f-nombres'),
+      apellidos: (val('f-ap-paterno') + ' ' + val('f-ap-materno')).trim(),
+      dni: val('f-dni'),
       fecha_nacimiento: val('f-fecha-nac'), genero: val('f-genero'), estado_civil: val('f-estado-civil'),
       celular: val('f-celular'), correo: val('f-correo'), direccion: val('f-direccion'),
       nivel_educativo: val('f-nivel-educativo'), ingles: val('f-ingles'),
-      educacion_secundaria: val('f-edu-secundaria'), educacion_tecnica: val('f-edu-tecnica'),
-      educacion_universitaria: val('f-edu-universitaria'), educacion_postgrado: val('f-edu-postgrado'),
+      educacion_secundaria: formatoNivel(val('edu-sec-centro'), '', val('edu-sec-desde'), val('edu-sec-hasta')),
+      educacion_tecnica: formatoNivel(val('edu-tec-centro'), val('edu-tec-grado'), val('edu-tec-desde'), val('edu-tec-hasta')),
+      educacion_universitaria: formatoNivel(val('edu-uni-centro'), val('edu-uni-grado'), val('edu-uni-desde'), val('edu-uni-hasta')),
+      educacion_postgrado: formatoNivel(val('edu-pos-centro'), val('edu-pos-grado'), val('edu-pos-desde'), val('edu-pos-hasta')),
       conyuge_nombre: val('f-conyuge-nombre'), conyuge_dni: val('f-conyuge-dni'), hijos,
-      sistema_pension: document.querySelector('input[name="pension"]:checked')?.value || '',
-      entidad_pension: val('f-entidad-pension'), cuspp: val('f-cuspp'), cuenta_bcp: val('f-cuenta-bcp'),
+      sistema_pension: esAFP ? 'AFP' : 'ONP',
+      entidad_pension: esAFP ? pensionSel.replace('AFP ', '') : '',
+      cuspp: val('f-cuspp'), cuenta_bcp: val('f-cuenta-bcp'),
       foto_base64: fotoBase64
     };
 
@@ -361,7 +454,7 @@
         return;
       }
       document.getElementById('ficha-form').style.display = 'none';
-      document.getElementById('subnav').style.display = 'none';
+      document.querySelector('.subnav').style.display = 'none';
       document.getElementById('card-done').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
