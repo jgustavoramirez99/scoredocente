@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){try{var t=localStorage.getItem('tema');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
   <title>EduScore CS</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
   <style>
@@ -32,6 +33,20 @@
       --gold-bg: rgba(212,175,55,0.15);
       --radius: 12px;
       --sidebar-w: 220px;
+      --sidebar-top: #0d1728;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #eef1f6;
+      --surface: #ffffff;
+      --surface2: #f1f3f8;
+      --surface3: #e6e9f0;
+      --border: rgba(20,30,60,0.08);
+      --border2: rgba(20,30,60,0.14);
+      --sidebar-top: #eef1f6;
+      --text: #1c2333;
+      --text2: #5a6270;
+      --text3: #8890a0;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -202,7 +217,7 @@
       top: 0; left: 0;
       width: var(--sidebar-w);
       height: 100vh;
-      background: linear-gradient(180deg, #0d1728 0%, var(--surface) 55%);
+      background: linear-gradient(180deg, var(--sidebar-top) 0%, var(--surface) 55%);
       border-right: 1px solid var(--border);
       padding: 1.5rem 0.75rem;
       display: flex;
@@ -335,6 +350,24 @@
       transition: all 0.15s;
     }
     .logout-btn:hover { background: var(--red-bg); color: var(--accent2); }
+    .theme-toggle-btn {
+      width: 100%;
+      padding: 9px 12px;
+      background: transparent;
+      color: var(--text3);
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+    .theme-toggle-btn:hover { background: var(--surface2); color: var(--text); }
 
     .powered-by {
       text-align: center;
@@ -724,8 +757,8 @@
     .empty-state p { font-size: 13px; }
   
     .eval-seccion {
-      background: #1a1a2e;
-      border: 1px solid #2a2a3e;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
       border-radius: 8px;
       padding: 0.75rem 1rem;
       margin-bottom: 0.75rem;
@@ -754,10 +787,10 @@
       justify-content: space-between;
       align-items: center;
       padding: 0.4rem 0;
-      border-bottom: 1px solid #2a2a3e;
+      border-bottom: 1px solid var(--border2);
       gap: 1rem;
       font-size: 0.82rem;
-      color: #ccc;
+      color: var(--text2);
     }
     .eval-indicador:last-child { border-bottom: none; }
     .eval-radio-group {
@@ -771,7 +804,7 @@
       align-items: center;
       gap: 2px;
       font-size: 0.78rem;
-      color: #aaa;
+      color: var(--text3);
       cursor: pointer;
     }
     .eval-radio-group input[type="radio"] {
@@ -1118,6 +1151,9 @@
         </div>
         <button class="logout-btn" onclick="logout()">
           <span>↩</span> Cerrar sesión
+        </button>
+        <button class="theme-toggle-btn" onclick="alternarTema()">
+          <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
         </button>
         <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
       </div>
@@ -1701,6 +1737,9 @@
         <button class="logout-btn" onclick="logout()">
           <span>↩</span> Cerrar sesión
         </button>
+        <button class="theme-toggle-btn" onclick="alternarTema()">
+          <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
+        </button>
         <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
       </div>
     </div>
@@ -1764,6 +1803,9 @@
         </div>
         <button class="logout-btn" onclick="logout()">
           <span>↩</span> Cerrar sesión
+        </button>
+        <button class="theme-toggle-btn" onclick="alternarTema()">
+          <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
         </button>
         <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
       </div>
@@ -2046,7 +2088,10 @@
         <div class="user-name" id="psico-user-info"></div>
       </div>
       <button class="logout-btn" onclick="logout()"><span>↩</span> Cerrar sesión</button>
-      <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
+      <button class="theme-toggle-btn" onclick="alternarTema()">
+          <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
+        </button>
+        <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
     </div>
   </div>
   <div class="main-content">
@@ -2862,7 +2907,26 @@
     let token = null;
     let pollingInterval = null;
 
+    // ── Tema claro/oscuro (todas las cuentas) ──
+    function temaActual() {
+      return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    }
+    function chartTickColor() { return temaActual() === 'light' ? '#5a6270' : '#9090a8'; }
+    function chartGridColor() { return temaActual() === 'light' ? 'rgba(20,30,60,0.06)' : 'rgba(255,255,255,0.05)'; }
+    function chartMutedFill() { return temaActual() === 'light' ? 'rgba(20,30,60,0.08)' : 'rgba(255,255,255,0.08)'; }
+    function aplicarTema(tema) {
+      document.documentElement.setAttribute('data-theme', tema);
+      document.querySelectorAll('.theme-toggle-icon').forEach(el => el.textContent = tema === 'light' ? '☀️' : '🌙');
+      document.querySelectorAll('.theme-toggle-label').forEach(el => el.textContent = tema === 'light' ? 'Modo claro' : 'Modo oscuro');
+    }
+    function alternarTema() {
+      const nuevo = temaActual() === 'light' ? 'dark' : 'light';
+      try { localStorage.setItem('tema', nuevo); } catch (e) {}
+      location.reload();
+    }
+
     window.onload = async () => {
+  aplicarTema(temaActual());
   const t = localStorage.getItem('token');
   const u = localStorage.getItem('usuario');
   if (t && u) {
@@ -3645,7 +3709,7 @@ async function guardarEvaluacionTutor() {
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } },
+              legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } },
               datalabels: {
                 color: '#fff', font: { weight: 'bold', size: 12 },
                 formatter: (value) => value > 0 ? value : ''
@@ -4483,11 +4547,11 @@ async function guardarEvaluacionTutor() {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } }
+            legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', maxRotation: 40, font: { size: 10 } }, grid: { display: false } }
+            y: { beginAtZero: true, ticks: { color: chartTickColor(), stepSize: 1 }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), maxRotation: 40, font: { size: 10 } }, grid: { display: false } }
           }
         }
       });
@@ -4615,11 +4679,11 @@ async function guardarEvaluacionTutor() {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } }
+            legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', maxRotation: 40, font: { size: 10 } }, grid: { display: false } }
+            y: { beginAtZero: true, ticks: { color: chartTickColor(), stepSize: 1 }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), maxRotation: 40, font: { size: 10 } }, grid: { display: false } }
           }
         }
       });
@@ -4907,8 +4971,8 @@ async function guardarEvaluacionTutor() {
             }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', font: { size: 10 } }, grid: { display: false } }
+            y: { beginAtZero: true, ticks: { color: chartTickColor(), stepSize: 1 }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), font: { size: 10 } }, grid: { display: false } }
           }
         }
       });
@@ -4937,8 +5001,8 @@ async function guardarEvaluacionTutor() {
             }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', font: { size: 11 } }, grid: { display: false } }
+            y: { beginAtZero: true, ticks: { color: chartTickColor(), stepSize: 1 }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), font: { size: 11 } }, grid: { display: false } }
           }
         }
       });
@@ -4952,7 +5016,7 @@ async function guardarEvaluacionTutor() {
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } },
+            legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } },
             tooltip: {
               callbacks: {
                 label: (ctx) => {
@@ -5137,11 +5201,11 @@ async function guardarEvaluacionTutor() {
           responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            datalabels: { anchor: 'end', align: 'top', color: '#9090a8', font: { weight: 'bold', size: 11 } }
+            datalabels: { anchor: 'end', align: 'top', color: chartTickColor(), font: { weight: 'bold', size: 11 } }
           },
           scales: {
-            y: { beginAtZero: true, max: 5, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', font: { size: 10 } }, grid: { display: false } }
+            y: { beginAtZero: true, max: 5, ticks: { color: chartTickColor(), stepSize: 1 }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), font: { size: 10 } }, grid: { display: false } }
           }
         }
       });
@@ -5218,7 +5282,7 @@ async function guardarEvaluacionTutor() {
       if (noAlcanzado > 0.05) {
         labels.push('No alcanzado');
         valores.push(Math.round(noAlcanzado * 100) / 100);
-        colores.push('rgba(255,255,255,0.08)');
+        colores.push(chartMutedFill());
       }
 
       const ctx = canvas.getContext('2d');
@@ -5309,7 +5373,7 @@ async function guardarEvaluacionTutor() {
             options: {
               responsive: true, maintainAspectRatio: false,
               plugins: {
-                legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 9 }, boxWidth: 8, padding: 6 } },
+                legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 9 }, boxWidth: 8, padding: 6 } },
                 tooltip: {
                   callbacks: {
                     label: (ctx) => {
@@ -5580,8 +5644,8 @@ async function guardarEvaluacionTutor() {
             }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#9090a8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#9090a8', font: { size: 11 } }, grid: { display: false } }
+            y: { beginAtZero: true, ticks: { color: chartTickColor(), stepSize: 1 }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), font: { size: 11 } }, grid: { display: false } }
           }
         }
       });
@@ -5595,7 +5659,7 @@ async function guardarEvaluacionTutor() {
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 11 } } },
+            legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } },
             tooltip: {
               callbacks: {
                 label: (ctx) => {
@@ -5901,10 +5965,10 @@ function cerrarModal() {
           },
           scales: {
             y: { min: 0, max: 100,
-              ticks: { color: '#9090a8', callback: v => v + '%' },
-              grid: { color: 'rgba(255,255,255,0.05)' }
+              ticks: { color: chartTickColor(), callback: v => v + '%' },
+              grid: { color: chartGridColor() }
             },
-            x: { ticks: { color: '#9090a8', maxRotation: 35, font: { size: 11 } }, grid: { display: false } }
+            x: { ticks: { color: chartTickColor(), maxRotation: 35, font: { size: 11 } }, grid: { display: false } }
           }
         }
       });
@@ -5931,7 +5995,7 @@ function cerrarModal() {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#9090a8', padding: 12, font: { size: 11 } } },
+            legend: { position: 'bottom', labels: { color: chartTickColor(), padding: 12, font: { size: 11 } } },
             tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' docente(s)' } }
           },
           cutout: '60%'
@@ -7628,7 +7692,7 @@ async function coordCargarReporte() {
 
 // Colores fijos por dimensión (hasta 8), + gris para "puntos no alcanzados"
 const COORD_COLORES_DIM = ['#e63946', '#f39c12', '#2ecc71', '#8ecae6', '#D4AF37', '#a78bfa', '#ff6b6b', '#4cc9f0'];
-const COORD_COLOR_RESTANTE = 'rgba(255,255,255,0.08)';
+const COORD_COLOR_RESTANTE = chartMutedFill();
 
 // Gráfico de pastel: cuánto aporta cada dimensión al 100% del puntaje final
 // (ej. si Planificación pesa 20% y se logró completo, esa "rebanada" se ve como 20%)
@@ -7657,7 +7721,7 @@ function coordRenderPieDimensiones(canvasId, dimensiones, puntajeFinal) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { color: '#9090a8', font: { size: 10 }, boxWidth: 10, padding: 8 } },
+        legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 10 }, boxWidth: 10, padding: 8 } },
         tooltip: {
           callbacks: {
             label: (ctx) => `${ctx.label}: ${ctx.raw}%`
@@ -7692,7 +7756,7 @@ function coordRenderDonutPuntaje(canvasId, puntaje) {
     type: 'doughnut',
     data: {
       labels: ['Puntaje', 'Restante'],
-      datasets: [{ data: [puntaje, restante], backgroundColor: [color, 'rgba(255,255,255,0.08)'], borderWidth: 0 }]
+      datasets: [{ data: [puntaje, restante], backgroundColor: [color, chartMutedFill()], borderWidth: 0 }]
     },
     options: {
       responsive: true,
