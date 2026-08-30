@@ -36,6 +36,9 @@ app.use('/api/auth', authRouter);
 const fichasRouter = require('./routes/fichas');
 app.use('/api/fichas', fichasRouter);
 
+const mensajesRouter = require('./routes/mensajes');
+app.use('/api/mensajes', mensajesRouter);
+
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });

@@ -62,4 +62,29 @@ pool.query(`CREATE TABLE IF NOT EXISTS fichas_docentes (
   .then(() => console.log('✅ Tabla "fichas_docentes" verificada'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "fichas_docentes":', err.message));
 
+// Migración idempotente: tablas de la mensajería interna (todas las cuentas
+// pueden escribirse entre sí, o mandar un mensaje general a todas a la vez).
+// destinatario_id NULL = mensaje general (a todas las cuentas).
+pool.query(`CREATE TABLE IF NOT EXISTS mensajes (
+  id SERIAL PRIMARY KEY,
+  remitente_id INTEGER NOT NULL REFERENCES usuarios(id),
+  destinatario_id INTEGER REFERENCES usuarios(id),
+  texto TEXT NOT NULL,
+  creado_en TIMESTAMP DEFAULT NOW()
+)`)
+  .then(() => console.log('✅ Tabla "mensajes" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "mensajes":', err.message));
+
+// Registra qué usuario ya leyó qué mensaje — sirve tanto para mensajes
+// directos como generales (un mensaje general se marca leído por cada
+// cuenta que lo abre, de forma independiente).
+pool.query(`CREATE TABLE IF NOT EXISTS mensajes_leidos (
+  mensaje_id INTEGER NOT NULL REFERENCES mensajes(id) ON DELETE CASCADE,
+  usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
+  leido_en TIMESTAMP DEFAULT NOW(),
+  PRIMARY KEY (mensaje_id, usuario_id)
+)`)
+  .then(() => console.log('✅ Tabla "mensajes_leidos" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "mensajes_leidos":', err.message));
+
 module.exports = pool;

@@ -1073,6 +1073,145 @@
       font-size: 14px;
     }
     .chatbot-input-row button:disabled { opacity: 0.5; cursor: default; }
+    /* ══════════════════════════════
+       MENSAJERÍA INTERNA — todas las cuentas
+    ══════════════════════════════ */
+    .msgs-fab {
+      position: fixed;
+      left: 24px;
+      bottom: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      color: white;
+      font-size: 22px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 500;
+      transition: transform 0.15s;
+    }
+    .msgs-fab:hover { transform: scale(1.07); }
+    .msgs-fab-badge {
+      position: absolute;
+      top: -3px; right: -3px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 20px;
+      text-align: center;
+      border: 2px solid var(--bg);
+      display: none;
+    }
+    .msgs-panel {
+      position: fixed;
+      left: 24px;
+      bottom: 90px;
+      width: 350px;
+      max-width: calc(100vw - 48px);
+      height: 480px;
+      max-height: calc(100vh - 140px);
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 18px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      z-index: 501;
+      animation: laura-pop 0.25s ease;
+    }
+    .msgs-panel.show { display: flex; }
+    .msgs-header {
+      padding: 14px 16px;
+      background: linear-gradient(120deg, var(--navy), var(--navy2), var(--accent));
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .msgs-header-title {
+      flex: 1;
+      min-width: 0;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msgs-back {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .msgs-lista { flex: 1; overflow-y: auto; }
+    .msgs-contacto {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .msgs-contacto:hover { background: var(--surface2); }
+    .msgs-contacto-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-glow);
+      color: var(--accent2);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .msgs-contacto-avatar.general { background: var(--navy-glow); color: #8ab4e8; font-size: 17px; }
+    .msgs-contacto-info { flex: 1; min-width: 0; }
+    .msgs-contacto-nombre {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msgs-contacto-rol { font-size: 11.5px; color: var(--text3); }
+    .msgs-contacto-badge {
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .msgs-vacio { text-align: center; padding: 2.5rem 1.5rem; color: var(--text3); font-size: 13px; }
+    .msgs-remitente { font-size: 11px; font-weight: 700; margin-bottom: 3px; opacity: 0.85; color: var(--navy2); }
+    :root[data-theme="light"] .msgs-remitente { color: var(--navy); }
+    .msgs-hora { font-size: 10px; opacity: 0.6; margin-top: 4px; display: block; }
     @keyframes laura-pop {
       from { opacity: 0; transform: scale(0.7); }
       to   { opacity: 1; transform: scale(1); }
@@ -2946,6 +3085,26 @@
     </div>
   </div>
 </div>
+
+<!-- Mensajería interna — disponible para TODAS las cuentas -->
+<button class="msgs-fab" id="msgs-fab" onclick="toggleMensajes()">
+  ✉️<span class="msgs-fab-badge" id="msgs-fab-badge"></span>
+</button>
+<div class="msgs-panel" id="msgs-panel">
+  <div class="msgs-header">
+    <button class="msgs-back" id="msgs-back" onclick="mensajesVolverALista()" style="display:none">←</button>
+    <div class="msgs-header-title" id="msgs-header-title">Mensajes</div>
+    <button class="chatbot-header-close" onclick="toggleMensajes()">✕</button>
+  </div>
+  <div class="msgs-lista" id="msgs-lista"></div>
+  <div class="msgs-conversacion" id="msgs-conversacion" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div class="chatbot-messages" id="msgs-mensajes"></div>
+    <div class="chatbot-input-row">
+      <input type="text" id="msgs-input" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter') enviarMensajeDM()">
+      <button id="msgs-send-btn" onclick="enviarMensajeDM()">➤</button>
+    </div>
+  </div>
+</div>
   <script>
     let usuario = null;
     let token = null;
@@ -2967,6 +3126,227 @@
       const nuevo = temaActual() === 'light' ? 'dark' : 'light';
       try { localStorage.setItem('tema', nuevo); } catch (e) {}
       location.reload();
+    }
+
+    // ══════════════════════════════
+    //  MENSAJERÍA INTERNA — disponible para TODAS las cuentas
+    //  (director/Gerente General, auxiliar, instructor, psicóloga).
+    //  Cualquier cuenta le puede escribir a cualquier otra, uno a uno,
+    //  o mandar un mensaje general que le llega a todas a la vez.
+    // ══════════════════════════════
+    const ROL_ETIQUETAS_MSG = {
+      director: 'Gerente General', directora: 'Director(a)',
+      coordinador_general: 'Coordinador General', coordinador_academico: 'Coordinador Académico',
+      auxiliar: 'Auxiliar', psicologa: 'Psicóloga', supervisor: 'Instructor'
+    };
+    function etiquetaRolMsg(rol) { return ROL_ETIQUETAS_MSG[rol] || rol; }
+
+    function escapeHtmlMsg(str) {
+      const d = document.createElement('div');
+      d.textContent = str == null ? '' : String(str);
+      return d.innerHTML;
+    }
+
+    function inicialesMsg(nombre) {
+      const partes = (nombre || '').trim().split(/\s+/);
+      const a = partes[0] ? partes[0][0] : '';
+      const b = partes[1] ? partes[1][0] : '';
+      return (a + b).toUpperCase() || '?';
+    }
+
+    function horaMsg(fechaISO) {
+      try {
+        return new Date(fechaISO).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) { return ''; }
+    }
+
+    let mensajesContactos = [];
+    let mensajesResumen = { directos: [], generales: 0 };
+    let mensajesConversacionId; // undefined = lista, 'general' = mensaje general, número = contacto
+    let mensajesPollConversacion = null;
+    let mensajesPollResumen = null;
+
+    function totalNoLeidosMsg() {
+      const dir = mensajesResumen.directos.reduce((acc, d) => acc + d.no_leidos, 0);
+      return dir + (mensajesResumen.generales || 0);
+    }
+
+    function actualizarBadgeMensajes() {
+      const badge = document.getElementById('msgs-fab-badge');
+      if (!badge) return;
+      const total = totalNoLeidosMsg();
+      if (total > 0) {
+        badge.textContent = total > 99 ? '99+' : total;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    async function refrescarResumenMensajes() {
+      try {
+        const res = await fetch('/api/mensajes/resumen', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) return;
+        mensajesResumen = await res.json();
+        actualizarBadgeMensajes();
+        if (mensajesConversacionId === undefined) renderListaMensajes();
+      } catch (e) {}
+    }
+
+    function iniciarPollingBadgeMensajes() {
+      refrescarResumenMensajes();
+      if (mensajesPollResumen) clearInterval(mensajesPollResumen);
+      mensajesPollResumen = setInterval(refrescarResumenMensajes, 20000);
+    }
+
+    function detenerPollingMensajes() {
+      if (mensajesPollResumen) clearInterval(mensajesPollResumen);
+      if (mensajesPollConversacion) clearInterval(mensajesPollConversacion);
+      mensajesPollResumen = null;
+      mensajesPollConversacion = null;
+      const fab = document.getElementById('msgs-fab');
+      if (fab) fab.style.display = 'none';
+      const panel = document.getElementById('msgs-panel');
+      if (panel) panel.classList.remove('show');
+    }
+
+    async function toggleMensajes() {
+      const panel = document.getElementById('msgs-panel');
+      if (!panel) return;
+      const abrir = !panel.classList.contains('show');
+      panel.classList.toggle('show', abrir);
+      if (abrir) {
+        await cargarContactosMensajes();
+        mensajesVolverALista();
+      } else if (mensajesPollConversacion) {
+        clearInterval(mensajesPollConversacion);
+        mensajesPollConversacion = null;
+      }
+    }
+
+    async function cargarContactosMensajes() {
+      try {
+        const res = await fetch('/api/mensajes/contactos', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) mensajesContactos = await res.json();
+      } catch (e) {}
+      await refrescarResumenMensajes();
+    }
+
+    function renderListaMensajes() {
+      const lista = document.getElementById('msgs-lista');
+      if (!lista) return;
+      const noLeidosGenerales = mensajesResumen.generales || 0;
+      const mapaNoLeidos = {};
+      (mensajesResumen.directos || []).forEach(d => { mapaNoLeidos[d.contacto_id] = d.no_leidos; });
+
+      let html = `
+        <div class="msgs-contacto" onclick="abrirConversacionMensajes('general', 'Mensaje general')">
+          <div class="msgs-contacto-avatar general">📢</div>
+          <div class="msgs-contacto-info">
+            <div class="msgs-contacto-nombre">Mensaje general</div>
+            <div class="msgs-contacto-rol">A todas las cuentas</div>
+          </div>
+          ${noLeidosGenerales > 0 ? `<div class="msgs-contacto-badge">${noLeidosGenerales}</div>` : ''}
+        </div>`;
+
+      if (!mensajesContactos.length) {
+        html += `<div class="msgs-vacio">No hay más cuentas registradas todavía.</div>`;
+      } else {
+        html += mensajesContactos.map(c => {
+          const noLeidos = mapaNoLeidos[c.id] || 0;
+          const nombreJs = escapeHtmlMsg(c.nombre).replace(/'/g, "\\'");
+          return `
+          <div class="msgs-contacto" onclick="abrirConversacionMensajes(${c.id}, '${nombreJs}')">
+            <div class="msgs-contacto-avatar">${inicialesMsg(c.nombre)}</div>
+            <div class="msgs-contacto-info">
+              <div class="msgs-contacto-nombre">${escapeHtmlMsg(c.nombre)}</div>
+              <div class="msgs-contacto-rol">${escapeHtmlMsg(etiquetaRolMsg(c.rol))}</div>
+            </div>
+            ${noLeidos > 0 ? `<div class="msgs-contacto-badge">${noLeidos}</div>` : ''}
+          </div>`;
+        }).join('');
+      }
+      lista.innerHTML = html;
+    }
+
+    function mensajesVolverALista() {
+      mensajesConversacionId = undefined;
+      if (mensajesPollConversacion) { clearInterval(mensajesPollConversacion); mensajesPollConversacion = null; }
+      document.getElementById('msgs-back').style.display = 'none';
+      document.getElementById('msgs-header-title').textContent = 'Mensajes';
+      document.getElementById('msgs-lista').style.display = 'block';
+      document.getElementById('msgs-conversacion').style.display = 'none';
+      renderListaMensajes();
+      refrescarResumenMensajes();
+    }
+
+    async function abrirConversacionMensajes(id, nombre) {
+      mensajesConversacionId = id;
+      document.getElementById('msgs-back').style.display = 'flex';
+      document.getElementById('msgs-header-title').textContent = nombre;
+      document.getElementById('msgs-lista').style.display = 'none';
+      document.getElementById('msgs-conversacion').style.display = 'flex';
+      await cargarConversacionMensajes();
+      if (mensajesPollConversacion) clearInterval(mensajesPollConversacion);
+      mensajesPollConversacion = setInterval(cargarConversacionMensajes, 3500);
+      const input = document.getElementById('msgs-input');
+      if (input) { input.value = ''; input.focus(); }
+    }
+
+    async function cargarConversacionMensajes() {
+      if (mensajesConversacionId === undefined) return;
+      const url = mensajesConversacionId === 'general'
+        ? '/api/mensajes/generales'
+        : '/api/mensajes/conversacion/' + mensajesConversacionId;
+      try {
+        const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) return;
+        const lista = await res.json();
+        renderConversacionMensajes(lista);
+      } catch (e) {}
+    }
+
+    function renderConversacionMensajes(lista) {
+      const cont = document.getElementById('msgs-mensajes');
+      if (!cont) return;
+      const cercaDelFinal = cont.scrollTop + cont.clientHeight >= cont.scrollHeight - 40;
+      const esGeneral = mensajesConversacionId === 'general';
+      if (!lista.length) {
+        cont.innerHTML = `<div class="msgs-vacio">Todavía no hay mensajes aquí. ¡Escribe el primero!</div>`;
+        return;
+      }
+      cont.innerHTML = lista.map(m => {
+        const esMio = usuario && m.remitente_id === usuario.id;
+        const nombreRemitente = (esGeneral && !esMio) ? `<div class="msgs-remitente">${escapeHtmlMsg(m.remitente_nombre)}</div>` : '';
+        return `<div class="chatbot-msg ${esMio ? 'user' : 'bot'}">${nombreRemitente}${escapeHtmlMsg(m.texto)}<span class="msgs-hora">${horaMsg(m.creado_en)}</span></div>`;
+      }).join('');
+      if (cercaDelFinal) cont.scrollTop = cont.scrollHeight;
+    }
+
+    async function enviarMensajeDM() {
+      const input = document.getElementById('msgs-input');
+      if (!input) return;
+      const texto = input.value.trim();
+      if (!texto || mensajesConversacionId === undefined) return;
+      input.value = '';
+      const btn = document.getElementById('msgs-send-btn');
+      if (btn) btn.disabled = true;
+      try {
+        const body = { texto };
+        if (mensajesConversacionId !== 'general') body.destinatario_id = mensajesConversacionId;
+        const res = await fetch('/api/mensajes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error();
+        await cargarConversacionMensajes();
+      } catch (e) {
+        alert('No se pudo enviar el mensaje. Intenta de nuevo.');
+      } finally {
+        if (btn) btn.disabled = false;
+        input.focus();
+      }
     }
 
     window.onload = async () => {
@@ -3121,6 +3501,9 @@
 
     function mostrarPanel() {
   document.getElementById('login-page').style.display = 'none';
+  const msgsFab = document.getElementById('msgs-fab');
+  if (msgsFab) msgsFab.style.display = 'flex';
+  iniciarPollingBadgeMensajes();
   const rolesDirector = ['director', 'directora', 'coordinador_general'];
   if (usuario.rol === 'auxiliar') {
     document.getElementById('auxiliar-page').style.display = 'flex';
@@ -3177,6 +3560,7 @@
     function logout() {
       if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual);
       if (pollingInterval) clearInterval(pollingInterval);
+      detenerPollingMensajes();
       localStorage.clear();
       location.reload();
     }
