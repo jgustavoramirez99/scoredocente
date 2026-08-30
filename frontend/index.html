@@ -854,6 +854,21 @@
       overflow: visible;
     }
     .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
+    .laura-welcome-photo {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto 1rem;
+      border: 3px solid #ffc2d1;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      animation: laura-photo-pop 0.5s 0.15s both cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes laura-photo-pop {
+      from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
     .laura-welcome-date {
       font-family: 'DM Sans', sans-serif;
       font-size: 12px;
@@ -1098,6 +1113,7 @@
   <div class="laura-welcome-overlay" id="laura-welcome-overlay">
     <div class="laura-welcome-card">
       <div class="laura-welcome-card-inner">
+        <img class="laura-welcome-photo" src="laura-gustavo.jpg" alt="">
         <div class="laura-welcome-date" id="laura-welcome-date"></div>
         <div class="laura-welcome-title" id="laura-welcome-title"></div>
         <div class="laura-welcome-note">Atrápame, así como atrapaste el corazón de Gustavo ❤️</div>
