@@ -1917,6 +1917,19 @@
           </div>
         </div>
 
+        <div class="table-card" style="margin-bottom:1rem">
+          <div class="table-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <h3>Nivel educativo de los docentes registrados</h3>
+            <span id="fichas-nivel-filtro-chip" style="display:none;font-size:12px;color:var(--text2);align-items:center"></span>
+          </div>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;padding:1.2rem 1.5rem;align-items:center">
+            <div style="flex:1 1 220px;min-width:200px;max-width:280px;position:relative;height:220px">
+              <canvas id="chart-fichas-nivel"></canvas>
+            </div>
+            <div style="flex:2 1 320px;min-width:280px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px" id="fichas-kpis"></div>
+          </div>
+        </div>
+
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
           <div class="form-group" style="margin:0;max-width:280px">
             <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase">Buscar por nombre o DNI</label>
@@ -1938,8 +1951,8 @@
             <span id="fichas-contador" style="font-size:12px;color:var(--text2)"></span>
           </div>
           <table>
-            <thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Correo</th><th>Registrado</th><th>Estado</th><th>Acción</th></tr></thead>
-            <tbody id="tabla-fichas"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+            <thead><tr><th>Nombre</th><th>DNI</th><th>Celular</th><th>Correo</th><th>Nivel educativo</th><th>Registrado</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-fichas"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
@@ -3920,7 +3933,7 @@
       if (id === 'auditoria') cargarAuditoria();
       if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
       if (id === 'coordinadores') cargarCoordinadores();
-      if (id === 'fichas') cargarFichasDocentes();
+      if (id === 'fichas') { cargarFichasDocentes(); cargarFichasNivelEducativo(); }
     }
 
     function showSectionSup(id, el) {
@@ -9320,10 +9333,48 @@ function _dibujarBloqueCoordinadorPDF(doc, titulo, r, y, imgPie) {
 let fichasCache = [];
 let fichasDebounceTimer = null;
 let fichaAbiertaId = null;
+let chartFichasNivel = null;
+let fichasNivelesActivos = []; // filtro activo desde la dona/tarjetas de nivel educativo
+let fichasNivelEtiquetaActiva = '';
+
+// Tal cual las 6 opciones que guarda el formulario publico (ficha-docente.html)
+const NIVELES_EDUCATIVOS_ORDEN = [
+  'Secundaria completa', 'Técnico', 'Universitario — Bachiller',
+  'Universitario — Titulado', 'Postgrado — Maestría', 'Postgrado — Doctorado'
+];
+const NIVELES_EDUCATIVOS_COLORES = {
+  'Secundaria completa': 'rgba(144,144,168,0.85)',
+  'Técnico': 'rgba(30,66,114,0.85)',
+  'Universitario — Bachiller': 'rgba(52,152,219,0.85)',
+  'Universitario — Titulado': 'rgba(46,204,113,0.85)',
+  'Postgrado — Maestría': 'rgba(212,175,55,0.85)',
+  'Postgrado — Doctorado': 'rgba(230,57,70,0.85)'
+};
 
 function filtrarFichasDebounce() {
   clearTimeout(fichasDebounceTimer);
   fichasDebounceTimer = setTimeout(cargarFichasDocentes, 350);
+}
+
+// Se llama al hacer clic en una porcion de la dona, en su leyenda, o en una
+// de las tarjetas resumen (Titulados / universitarios / tecnicos / postgrado)
+function filtrarFichasPorNiveles(niveles, etiqueta) {
+  fichasNivelesActivos = niveles;
+  fichasNivelEtiquetaActiva = etiqueta;
+  const chip = document.getElementById('fichas-nivel-filtro-chip');
+  if (chip) {
+    chip.style.display = 'inline-flex';
+    chip.innerHTML = 'Filtrando: <strong style="margin:0 4px">' + etiqueta + '</strong> <span onclick="limpiarFiltroNivelFichas()" style="cursor:pointer;margin-left:4px" title="Quitar filtro">✕</span>';
+  }
+  cargarFichasDocentes();
+}
+
+function limpiarFiltroNivelFichas() {
+  fichasNivelesActivos = [];
+  fichasNivelEtiquetaActiva = '';
+  const chip = document.getElementById('fichas-nivel-filtro-chip');
+  if (chip) { chip.style.display = 'none'; chip.innerHTML = ''; }
+  cargarFichasDocentes();
 }
 
 async function cargarFichasDocentes() {
@@ -9332,16 +9383,17 @@ async function cargarFichasDocentes() {
   const params = new URLSearchParams();
   if (buscar.trim()) params.set('buscar', buscar.trim());
   if (estado) params.set('estado', estado);
+  if (fichasNivelesActivos.length) params.set('niveles', fichasNivelesActivos.join(','));
   const tbody = document.getElementById('tabla-fichas');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
   try {
     const res = await fetch('/api/fichas?' + params.toString(), { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) throw new Error();
     fichasCache = await res.json();
     renderTablaFichas();
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar</p></div></td></tr>';
   }
 }
 
@@ -9350,7 +9402,7 @@ function renderTablaFichas() {
   const contador = document.getElementById('fichas-contador');
   if (contador) contador.textContent = fichasCache.length + ' registrado(s)';
   if (!fichasCache.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🗂️</div><p>Sin resultados</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🗂️</div><p>Sin resultados</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = fichasCache.map(f => `
@@ -9359,11 +9411,87 @@ function renderTablaFichas() {
       <td>${f.dni}</td>
       <td>${f.celular || '—'}</td>
       <td>${f.correo || '—'}</td>
+      <td>${f.nivel_educativo || '—'}</td>
       <td>${new Date(f.creado_en).toLocaleDateString('es-PE')}</td>
       <td><span class="badge ${f.procesado ? 'badge-green' : 'badge-amber'}">${f.procesado ? 'Revisado' : 'Pendiente'}</span></td>
       <td><button class="eval-btn" style="padding:6px 14px;font-size:12px" onclick="verFichaDetalle(${f.id})">Ver ficha</button></td>
     </tr>
   `).join('');
+}
+
+// ── Dona + tarjetas de nivel educativo (arriba de la tabla de fichas) ──
+async function cargarFichasNivelEducativo() {
+  try {
+    const res = await fetch('/api/fichas/stats/niveles', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error();
+    const filas = await res.json();
+    renderFichasNivelEducativo(filas);
+  } catch (e) {
+    const cont = document.getElementById('fichas-kpis');
+    if (cont) cont.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><p>No se pudo cargar el resumen</p></div>';
+  }
+}
+
+function renderFichasNivelEducativo(filas) {
+  const conteo = {};
+  NIVELES_EDUCATIVOS_ORDEN.forEach(n => conteo[n] = 0);
+  filas.forEach(f => { if (f.nivel_educativo in conteo) conteo[f.nivel_educativo] += Number(f.total); });
+
+  if (chartFichasNivel) chartFichasNivel.destroy();
+  const ctx = document.getElementById('chart-fichas-nivel');
+  if (ctx) {
+    chartFichasNivel = new Chart(ctx.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: NIVELES_EDUCATIVOS_ORDEN,
+        datasets: [{
+          data: NIVELES_EDUCATIVOS_ORDEN.map(n => conteo[n]),
+          backgroundColor: NIVELES_EDUCATIVOS_ORDEN.map(n => NIVELES_EDUCATIVOS_COLORES[n]),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onClick: (evt, els) => {
+          if (!els.length) return;
+          const nivel = NIVELES_EDUCATIVOS_ORDEN[els[0].index];
+          filtrarFichasPorNiveles([nivel], nivel);
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: chartTickColor(), padding: 10, font: { size: 10.5 }, boxWidth: 12 },
+            onClick: (evt, item) => filtrarFichasPorNiveles([NIVELES_EDUCATIVOS_ORDEN[item.index]], NIVELES_EDUCATIVOS_ORDEN[item.index])
+          },
+          tooltip: { callbacks: { label: ctx2 => ctx2.label + ': ' + ctx2.parsed + ' docente(s)' } }
+        },
+        cutout: '60%'
+      }
+    });
+  }
+
+  const titulados = conteo['Universitario — Titulado'] + conteo['Postgrado — Maestría'] + conteo['Postgrado — Doctorado'];
+  const universitarios = conteo['Universitario — Bachiller'] + conteo['Universitario — Titulado'] + conteo['Postgrado — Maestría'] + conteo['Postgrado — Doctorado'];
+  const tecnicos = conteo['Técnico'];
+  const postgrado = conteo['Postgrado — Maestría'] + conteo['Postgrado — Doctorado'];
+
+  const tarjetas = [
+    { icono: '🎓', etiqueta: 'Titulados', total: titulados, niveles: ['Universitario — Titulado', 'Postgrado — Maestría', 'Postgrado — Doctorado'] },
+    { icono: '📘', etiqueta: 'Estudios universitarios', total: universitarios, niveles: ['Universitario — Bachiller', 'Universitario — Titulado', 'Postgrado — Maestría', 'Postgrado — Doctorado'] },
+    { icono: '🛠️', etiqueta: 'Estudios técnicos', total: tecnicos, niveles: ['Técnico'] },
+    { icono: '📖', etiqueta: 'Postgrado', total: postgrado, niveles: ['Postgrado — Maestría', 'Postgrado — Doctorado'] }
+  ];
+  const cont = document.getElementById('fichas-kpis');
+  if (cont) {
+    cont.innerHTML = tarjetas.map(t => `
+      <div onclick='filtrarFichasPorNiveles(${JSON.stringify(t.niveles)}, ${JSON.stringify(t.etiqueta)})' style="cursor:pointer;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+        <div style="font-size:20px;line-height:1">${t.icono}</div>
+        <div style="font-size:22px;font-weight:700;margin-top:6px">${t.total}</div>
+        <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${t.etiqueta}</div>
+      </div>
+    `).join('');
+  }
 }
 
 async function verFichaDetalle(id) {

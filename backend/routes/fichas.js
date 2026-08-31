@@ -123,10 +123,28 @@ router.get('/export/data', verificarToken, soloGerenteGeneral, async (req, res) 
   }
 });
 
+// GET /api/fichas/stats/niveles — conteo de fichas por nivel educativo,
+// para el grafico de dona y las tarjetas de "Titulados / con estudios
+// universitarios / tecnicos / postgrado" del panel (antes que "/:id" para
+// que no choque la ruta, igual que /export/csv y /export/data).
+router.get('/stats/niveles', verificarToken, soloGerenteGeneral, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT nivel_educativo, COUNT(*)::int AS total
+       FROM fichas_docentes
+       GROUP BY nivel_educativo`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener estadisticas de nivel educativo:', err);
+    res.status(500).json({ error: 'Error al obtener estadisticas' });
+  }
+});
+
 // GET /api/fichas — listado con filtros (solo Gerente General)
 router.get('/', verificarToken, soloGerenteGeneral, async (req, res) => {
   try {
-    const { buscar, estado } = req.query;
+    const { buscar, estado, niveles } = req.query;
     const params = [];
     const where = [];
     if (buscar) {
@@ -135,9 +153,20 @@ router.get('/', verificarToken, soloGerenteGeneral, async (req, res) => {
     }
     if (estado === 'procesado') where.push('procesado = true');
     if (estado === 'pendiente') where.push('procesado = false');
+    // Filtro por nivel educativo: lista separada por comas de valores exactos
+    // de nivel_educativo (viene de las tarjetas/dona de "Fichas de
+    // Docentes"). Puede ser uno solo o varios, por ejemplo "Titulados" junta
+    // Universitario - Titulado + Postgrado - Maestria + Postgrado - Doctorado.
+    if (niveles) {
+      const listaNiveles = niveles.split(',').map(s => s.trim()).filter(Boolean);
+      if (listaNiveles.length) {
+        params.push(listaNiveles);
+        where.push(`nivel_educativo = ANY($${params.length})`);
+      }
+    }
     const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
     const result = await db.query(
-      `SELECT id, nombres, apellidos, dni, celular, correo, procesado, creado_en, actualizado_en,
+      `SELECT id, nombres, apellidos, dni, celular, correo, nivel_educativo, procesado, creado_en, actualizado_en,
         (foto_base64 IS NOT NULL) AS tiene_foto
        FROM fichas_docentes ${whereSql}
        ORDER BY apellidos, nombres`,
