@@ -5,7 +5,7 @@ const { verificarToken } = require('./auth');
 const { registrarAuditoria } = require('../utils/auditoria');
 
 const ROLES_PERMITIDOS = ['auxiliar', 'director']; // pueden ver/registrar asistencia
-const ROLES_REPORTE = ['director', 'auxiliar']; // director ve el reporte completo; auxiliar ve el resumen semanal por salón
+const ROLES_REPORTE = ['director', 'auxiliar', 'psicologa']; // director ve el reporte completo; auxiliar ve el resumen semanal por salón; psicologa ve el reporte para citar apoderados de alumnos con inasistencias frecuentes
 
 function permitirRoles(...rolesPermitidos) {
   return (req, res, next) => {

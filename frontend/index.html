@@ -919,6 +919,78 @@
     .laura-welcome-btn:hover { transform: scale(1.05); }
 
     /* ══════════════════════════════
+       BIENVENIDA PERSONALIZADA (Psicóloga)
+    ══════════════════════════════ */
+    #psico-confetti-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .psico-welcome-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,15,0.75);
+      backdrop-filter: blur(3px);
+    }
+    .psico-welcome-overlay.show { display: flex; }
+    .psico-welcome-card {
+      position: absolute;
+      z-index: 10000;
+      background: linear-gradient(135deg, #4361ee 0%, #4cc9f0 50%, #f9c74f 100%);
+      padding: 3px;
+      border-radius: 20px;
+      max-width: 380px;
+      width: 90%;
+      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-float 26s ease-in-out infinite;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .psico-welcome-card-inner {
+      position: relative;
+      background: #14141c;
+      border-radius: 18px;
+      padding: 2.6rem 2.2rem 2.4rem;
+      text-align: center;
+      overflow: visible;
+    }
+    .psico-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
+    .psico-welcome-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 21px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #4361ee, #4cc9f0, #f9c74f);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+      min-height: 2.8em;
+    }
+    .psico-welcome-title.laura-typing::after {
+      content: '|';
+      -webkit-text-fill-color: #4cc9f0;
+      animation: laura-blink-caret 0.8s step-end infinite;
+    }
+    .psico-welcome-sub { color: var(--text2); font-size: 14px; margin: 0.4rem 0 1.85rem; }
+    .psico-welcome-btn {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #4361ee, #4cc9f0);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: transform 0.15s;
+    }
+    .psico-welcome-btn:hover { transform: scale(1.05); }
+
+    /* ══════════════════════════════
        TEMA ESPECIAL — cuenta de Laura (rosa-lila) 💕
     ══════════════════════════════ */
     body.laura-theme #auxiliar-page {
@@ -1295,6 +1367,19 @@
         <div class="laura-welcome-note">Atrápame, así como atrapaste el corazón de Gustavo ❤️</div>
         <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
         <button class="laura-welcome-btn" onclick="cerrarBienvenidaLaura()">Gracias</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIENVENIDA PERSONALIZADA (solo cuenta de la Psicóloga) -->
+  <canvas id="psico-confetti-canvas"></canvas>
+  <div class="psico-welcome-overlay" id="psico-welcome-overlay">
+    <div class="psico-welcome-card">
+      <div class="psico-welcome-card-inner">
+        <div class="psico-welcome-emoji">🎉</div>
+        <div class="psico-welcome-title" id="psico-welcome-title"></div>
+        <div class="psico-welcome-sub">Panel Psicología — ScoreDocente</div>
+        <button class="psico-welcome-btn" onclick="cerrarBienvenidaPsico()">Gracias</button>
       </div>
     </div>
   </div>
@@ -2313,6 +2398,8 @@
     <div class="nav-item active" onclick="showSectionPsico('psico-tutores', this)">📘 Tutores</div>
     <div class="nav-item" onclick="showSectionPsico('psico-historial', this)">📋 Historial</div>
     <div class="nav-item" onclick="showSectionPsico('psico-resultados', this)">📊 Resultados</div>
+    <div class="nav-section">Asistencia</div>
+    <div class="nav-item" onclick="showSectionPsico('psico-reportes', this)">📄 Reportes</div>
     <div class="sidebar-footer">
       <div class="user-chip">
         <div class="user-avatar">👤</div>
@@ -2369,6 +2456,107 @@
       </div>
     </div>
 
+    <div class="section" id="section-psico-reportes">
+      <div class="page-header">
+        <div class="page-title">Reportes</div>
+        <div class="page-subtitle">Elige un rango de fechas para ver la asistencia de todos los salones en ese periodo, identificar alumnos con inasistencias frecuentes y descargar el reporte en PDF para citar a sus padres.</div>
+      </div>
+
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-end">
+        <div class="form-group" style="max-width:180px;margin-bottom:0">
+          <label>Desde</label>
+          <input type="date" id="rep-psico-desde" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+        </div>
+        <div class="form-group" style="max-width:180px;margin-bottom:0">
+          <label>Hasta</label>
+          <input type="date" id="rep-psico-hasta" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+        </div>
+        <button class="primary" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="filtrarReportePsico()">🔎 Filtrar</button>
+      </div>
+
+      <div id="rep-psico-resultados-wrap" style="display:none">
+        <div class="stats-grid" style="margin-bottom:1rem">
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="rep-psico-stat-presentes" style="color:var(--green)">—</div>
+            <div class="stat-label">Presentes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-number" id="rep-psico-stat-faltas" style="color:var(--accent2)">—</div>
+            <div class="stat-label">Faltas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-number" id="rep-psico-stat-tardanzas" style="color:var(--amber)">—</div>
+            <div class="stat-label">Tardanzas</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header"><h3>Distribución del periodo</h3></div>
+          <div style="position:relative;height:240px;padding:1rem 1.5rem"><canvas id="chart-psico-reportes-torta"></canvas></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:1.5rem;margin-top:1.5rem;align-items:start" class="rep-tablas-grid">
+          <div class="table-card" style="margin-top:0">
+            <div class="table-header">
+              <h3>Detalle de asistencia — todos los salones</h3>
+              <button class="eval-btn" id="rep-psico-descargar-pdf-btn" onclick="descargarPDFReportePsico()">📄 Descargar PDF</button>
+            </div>
+            <div style="max-height:520px;overflow-y:auto">
+              <table>
+                <thead><tr><th>Fecha</th><th>Salón</th><th>Alumno</th><th>Estado</th></tr></thead>
+                <tbody id="tabla-psico-reportes"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-card" style="margin-top:0">
+            <div class="table-header">
+              <h3>⚠️ Alumnos con inasistencias frecuentes</h3>
+              <button class="eval-btn" id="rep-psico-riesgo-pdf-btn" onclick="descargarPDFRiesgoAsistenciaPsico()" style="display:none">📄 Descargar PDF</button>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;padding:0.25rem 1.5rem 1.1rem">
+              <div class="form-group" style="max-width:110px;margin-bottom:0">
+                <label>Más de</label>
+                <input type="number" id="rep-psico-riesgo-umbral" value="2" min="1" oninput="calcularAlumnosRiesgoPsico()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              </div>
+              <div style="font-size:13px;color:var(--text2)">faltas o tardanzas, dentro del rango 👆</div>
+            </div>
+            <div style="max-height:420px;overflow-y:auto">
+              <table>
+                <thead><tr><th>Alumno</th><th>Salón</th><th>F. Injust.</th><th>F. Just.</th><th>Tardanzas</th><th>Total</th><th>Apoderado</th></tr></thead>
+                <tbody id="tabla-psico-riesgo"></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="rep-psico-riesgo-vacio" style="display:none"><div class="empty-icon">✅</div><p>Nadie superó el umbral en este rango de fechas.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-card" id="rep-psico-vacio-wrap">
+        <div class="empty-state"><div class="empty-icon">📄</div><p>Elige un rango de fechas y dale "Filtrar" para ver el reporte.</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Asistente virtual — solo dentro del Panel Psicóloga -->
+  <button class="chatbot-fab" id="chatbot-fab-psico" onclick="toggleChatbotPsico()">
+    💬<span class="chatbot-fab-dot"></span>
+  </button>
+  <div class="chatbot-window" id="chatbot-window-psico">
+    <div class="chatbot-header">
+      <div class="chatbot-header-title">🤖 GusTI</div>
+      <button class="chatbot-header-close" onclick="toggleChatbotPsico()">✕</button>
+    </div>
+    <div class="chatbot-messages" id="chatbot-messages-psico">
+      <div class="chatbot-msg bot">¡Hola! 👋 Soy GusTI, el asistente del Panel Psicología. Puedo ayudarte a usar el sistema, contarte cómo va tu tutoría, o responder preguntas generales. ¿En qué te ayudo?</div>
+    </div>
+    <div class="chatbot-input-row">
+      <input type="text" id="chatbot-input-psico" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') enviarMensajeChatbotPsico()">
+      <button id="chatbot-send-btn-psico" onclick="enviarMensajeChatbotPsico()">➤</button>
+    </div>
   </div>
 </div>
   <!-- MODAL AGREGAR DOCENTE -->
@@ -3580,6 +3768,78 @@
       }
     }
 
+    // ✏️ Gustavo: cambia este mensaje cuando quieras :)
+    const MENSAJE_BIENVENIDA_PSICO = "Bienvenida Psicóloga Nicole, este es tu panel interactivo, que tengas un excelente día 🎉";
+
+    function mostrarBienvenidaPsico() {
+      const overlay = document.getElementById('psico-welcome-overlay');
+      const tituloEl = document.getElementById('psico-welcome-title');
+      if (overlay) overlay.classList.add('show');
+      escribirTextoLaura(tituloEl, MENSAJE_BIENVENIDA_PSICO);
+      iniciarConfettiPsico();
+    }
+
+    function cerrarBienvenidaPsico() {
+      const overlay = document.getElementById('psico-welcome-overlay');
+      if (overlay) overlay.classList.remove('show');
+      detenerConfettiPsico();
+    }
+
+    // Igual al confetti de Laura, pero SOLO papelitos de colores — sin corazones,
+    // a pedido explícito de Gustavo para el panel de la Psicóloga.
+    let confettiPsicoAnimId = null;
+    function iniciarConfettiPsico() {
+      const canvas = document.getElementById('psico-confetti-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const colores = ['#4361ee', '#4cc9f0', '#f9c74f', '#90be6d', '#ffffff'];
+      const piezas = Array.from({ length: 200 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        w: 6 + Math.random() * 6,
+        h: 8 + Math.random() * 8,
+        color: colores[Math.floor(Math.random() * colores.length)],
+        speedY: 2 + Math.random() * 3,
+        speedX: (Math.random() - 0.5) * 2,
+        rot: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 8
+      }));
+      let frames = 0;
+      const maxFrames = 320;
+      function tick() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        piezas.forEach((p) => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.rot += p.rotSpeed;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        frames++;
+        if (frames < maxFrames) {
+          confettiPsicoAnimId = requestAnimationFrame(tick);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      tick();
+    }
+
+    function detenerConfettiPsico() {
+      if (confettiPsicoAnimId) cancelAnimationFrame(confettiPsicoAnimId);
+      const canvas = document.getElementById('psico-confetti-canvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
     function mostrarPanel() {
   document.getElementById('login-page').style.display = 'none';
   const msgsFab = document.getElementById('msgs-fab');
@@ -3632,7 +3892,8 @@
   document.getElementById('psicologa-page').style.display = 'flex';
   document.getElementById('psico-user-info').textContent = usuario.nombre;
   cargarDatosPsicologa();
-  } else {  
+  mostrarBienvenidaPsico();
+  } else {
     document.getElementById('instructor-page').style.display = 'flex';
     document.getElementById('inst-user-info').textContent = usuario.nombre;
     cargarDatosSupervisor();
@@ -3816,6 +4077,7 @@ function showSectionPsico(id, el) {
   document.getElementById('section-' + id).classList.add('active');
   el.classList.add('active');
   if (id === 'psico-resultados') cargarResultadosPsico();
+  if (id === 'psico-reportes') inicializarReportePsico();
 }
 
 // Todas las evaluaciones de tutoría (no solo las propias). Reutiliza el mismo
@@ -4443,6 +4705,315 @@ async function guardarEvaluacionTutor() {
     }
 
     // ══════════════════════════════
+    //  REPORTES POR RANGO DE FECHAS — Panel Psicóloga
+    //  Igual que el de Laura/Auxiliar (misma fuente de datos), pero para que
+    //  la Psicóloga identifique alumnos con inasistencias frecuentes y pueda
+    //  hablar con sus padres o citarlos.
+    // ══════════════════════════════
+    let chartPsicoReportesTorta = null;
+    let repPsicoFilas = [];
+    let repPsicoRangoTexto = '';
+    let repPsicoRiesgoFilas = [];
+
+    function inicializarReportePsico() {
+      const desdeInput = document.getElementById('rep-psico-desde');
+      const hastaInput = document.getElementById('rep-psico-hasta');
+      if (!desdeInput.value || !hastaInput.value) {
+        const hoy = new Date();
+        const hace7 = new Date();
+        hace7.setDate(hoy.getDate() - 6);
+        const aISO = (d) => d.toISOString().slice(0, 10);
+        hastaInput.value = aISO(hoy);
+        desdeInput.value = aISO(hace7);
+        filtrarReportePsico();
+      }
+    }
+
+    async function filtrarReportePsico() {
+      const desde = document.getElementById('rep-psico-desde').value;
+      const hasta = document.getElementById('rep-psico-hasta').value;
+      if (!desde || !hasta) { alert('Elige una fecha de inicio y una fecha final.'); return; }
+      if (desde > hasta) { alert('La fecha "Desde" no puede ser posterior a la fecha "Hasta".'); return; }
+
+      const resultadosWrap = document.getElementById('rep-psico-resultados-wrap');
+      const vacioWrap = document.getElementById('rep-psico-vacio-wrap');
+      const tbody = document.getElementById('tabla-psico-reportes');
+      const pdfBtn = document.getElementById('rep-psico-descargar-pdf-btn');
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/asistencias/reporte?desde=${desde}&hasta=${hasta}`, { headers });
+        if (!res.ok) throw new Error();
+        const filas = await res.json();
+
+        const filasConEstado = filas.filter((f) => f.estado);
+        repPsicoFilas = filasConEstado;
+        const desdeTexto = new Date(desde + 'T00:00:00').toLocaleDateString('es-PE');
+        const hastaTexto = new Date(hasta + 'T00:00:00').toLocaleDateString('es-PE');
+        repPsicoRangoTexto = `${desdeTexto} – ${hastaTexto}`;
+
+        if (!filasConEstado.length) {
+          resultadosWrap.style.display = 'none';
+          vacioWrap.style.display = 'block';
+          vacioWrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><p>No hay asistencia registrada en ese rango de fechas.</p></div>';
+          if (pdfBtn) pdfBtn.style.display = 'none';
+          repPsicoRiesgoFilas = [];
+          const tbodyRiesgo = document.getElementById('tabla-psico-riesgo');
+          if (tbodyRiesgo) tbodyRiesgo.innerHTML = '';
+          return;
+        }
+
+        vacioWrap.style.display = 'none';
+        resultadosWrap.style.display = 'block';
+        if (pdfBtn) pdfBtn.style.display = 'inline-block';
+
+        const presentes = filasConEstado.filter((f) => f.estado === 'P');
+        const faltas = filasConEstado.filter((f) => f.estado === 'FI' || f.estado === 'FJ');
+        const tardanzas = filasConEstado.filter((f) => f.estado === 'TI' || f.estado === 'TJ');
+
+        document.getElementById('rep-psico-stat-presentes').textContent = presentes.length;
+        document.getElementById('rep-psico-stat-faltas').textContent = faltas.length;
+        document.getElementById('rep-psico-stat-tardanzas').textContent = tardanzas.length;
+
+        tbody.innerHTML = filasConEstado.map((f) => `
+          <tr>
+            <td>${_repFechaLegible(f.fecha)}</td>
+            <td>${f.salon || '—'}</td>
+            <td style="color:var(--text);font-weight:500">${f.apellidos_nombres}</td>
+            <td>${_repEstadoTexto(f.estado)}</td>
+          </tr>`).join('');
+
+        if (chartPsicoReportesTorta) chartPsicoReportesTorta.destroy();
+        const ctx = document.getElementById('chart-psico-reportes-torta').getContext('2d');
+        chartPsicoReportesTorta = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Presentes', 'Faltas', 'Tardanzas'],
+            datasets: [{ data: [presentes.length, faltas.length, tardanzas.length], backgroundColor: ['#2ecc71', '#e63946', '#f39c12'] }]
+          },
+          plugins: [ChartDataLabels],
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } },
+              datalabels: {
+                color: '#fff', font: { weight: 'bold', size: 12 },
+                formatter: (value) => value > 0 ? value : ''
+              }
+            }
+          }
+        });
+
+        calcularAlumnosRiesgoPsico();
+      } catch (err) {
+        console.error('Error al filtrar el reporte:', err);
+        alert('No se pudo generar el reporte. Verifica tu conexión e intenta de nuevo.');
+      }
+    }
+
+    function calcularAlumnosRiesgoPsico() {
+      const umbralInput = document.getElementById('rep-psico-riesgo-umbral');
+      const umbral = parseInt(umbralInput && umbralInput.value, 10) || 2;
+      const tbody = document.getElementById('tabla-psico-riesgo');
+      const vacio = document.getElementById('rep-psico-riesgo-vacio');
+      const pdfBtn = document.getElementById('rep-psico-riesgo-pdf-btn');
+      if (!tbody) return;
+
+      const porAlumno = {};
+      repPsicoFilas.forEach((f) => {
+        const key = `${f.salon || '—'}|${f.numero || ''}|${f.apellidos_nombres}`;
+        if (!porAlumno[key]) {
+          porAlumno[key] = {
+            alumno: f.apellidos_nombres,
+            salon: f.salon || '—',
+            celular: f.celular_apoderado || '',
+            fi: 0, fj: 0, ti: 0, tj: 0
+          };
+        }
+        const g = porAlumno[key];
+        if (f.estado === 'FI') g.fi++;
+        else if (f.estado === 'FJ') g.fj++;
+        else if (f.estado === 'TI') g.ti++;
+        else if (f.estado === 'TJ') g.tj++;
+      });
+
+      const lista = Object.values(porAlumno).map((g) => {
+        const faltas = g.fi + g.fj;
+        const tardanzas = g.ti + g.tj;
+        return { ...g, faltas, tardanzas, total: faltas + tardanzas };
+      })
+        .filter((g) => g.faltas > umbral || g.tardanzas > umbral)
+        .sort((a, b) => b.total - a.total);
+
+      repPsicoRiesgoFilas = lista;
+
+      if (!lista.length) {
+        tbody.innerHTML = '';
+        if (vacio) vacio.style.display = 'block';
+        if (pdfBtn) pdfBtn.style.display = 'none';
+        return;
+      }
+
+      if (vacio) vacio.style.display = 'none';
+      if (pdfBtn) pdfBtn.style.display = 'inline-block';
+
+      tbody.innerHTML = lista.map((g) => `
+        <tr>
+          <td style="color:var(--text);font-weight:500">${g.alumno}</td>
+          <td>${g.salon}</td>
+          <td>${g.fi}</td>
+          <td>${g.fj}</td>
+          <td>${g.tardanzas}</td>
+          <td style="font-weight:700;color:var(--accent2)">${g.total}</td>
+          <td>${g.celular || '—'}</td>
+        </tr>`).join('');
+    }
+
+    async function descargarPDFRiesgoAsistenciaPsico() {
+      if (!repPsicoRiesgoFilas.length) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = logoImg.width; c.height = logoImg.height;
+        c.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarPDFRiesgoPsicoConLogo(doc, c.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarPDFRiesgoPsicoConLogo(doc, null);
+    }
+
+    function _generarPDFRiesgoPsicoConLogo(doc, logoData) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 10;
+      const umbralInput = document.getElementById('rep-psico-riesgo-umbral');
+      const umbral = parseInt(umbralInput && umbralInput.value, 10) || 2;
+
+      const dibujarEncabezado = () => {
+        doc.setFillColor(180, 0, 30);
+        doc.rect(0, 0, pageW, 2, 'F');
+        if (logoData) doc.addImage(logoData, 'PNG', margin, 3, 26, 18);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 80);
+        doc.text('ALUMNOS CON INASISTENCIAS FRECUENTES', pageW / 2 + 8, 10, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(`I.E.P. Cervantes School  —  Periodo: ${repPsicoRangoTexto}  —  Más de ${umbral} faltas o tardanzas`, pageW / 2 + 8, 16, { align: 'center' });
+        doc.setDrawColor(180, 0, 30);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 24, pageW - margin, 24);
+      };
+      dibujarEncabezado();
+
+      const head = [['Alumno', 'Salón', 'F. Injust.', 'F. Just.', 'Tardanzas', 'Total', 'Apoderado']];
+      const body = repPsicoRiesgoFilas.map((g) => [
+        g.alumno, g.salon, String(g.fi), String(g.fj), String(g.tardanzas), String(g.total), g.celular || '—'
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: 30,
+        margin: { left: margin, right: margin },
+        styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, lineColor: [220, 220, 230], lineWidth: 0.1 },
+        headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        alternateRowStyles: { fillColor: [246, 246, 250] },
+        didDrawPage: () => { dibujarEncabezado(); }
+      });
+
+      doc.save(`riesgo-asistencia_${document.getElementById('rep-psico-desde').value}_a_${document.getElementById('rep-psico-hasta').value}.pdf`);
+    }
+
+    async function descargarPDFReportePsico() {
+      if (!repPsicoFilas.length) return;
+
+      const imgTorta = _canvasCensalConFondo('chart-psico-reportes-torta');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = logoImg.width; c.height = logoImg.height;
+        c.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarPDFReportePsicoConLogo(doc, imgTorta, c.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarPDFReportePsicoConLogo(doc, imgTorta, null);
+    }
+
+    function _generarPDFReportePsicoConLogo(doc, imgTorta, logoData) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 10;
+
+      const dibujarEncabezado = () => {
+        doc.setFillColor(180, 0, 30);
+        doc.rect(0, 0, pageW, 2, 'F');
+        if (logoData) doc.addImage(logoData, 'PNG', margin, 3, 26, 18);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 80);
+        doc.text('REPORTE DE ASISTENCIA', pageW / 2 + 8, 10, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('I.E.P. Cervantes School  —  Periodo: ' + repPsicoRangoTexto, pageW / 2 + 8, 16, { align: 'center' });
+        doc.setDrawColor(180, 0, 30);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 24, pageW - margin, 24);
+      };
+      dibujarEncabezado();
+
+      const presentes = repPsicoFilas.filter((f) => f.estado === 'P').length;
+      const faltas = repPsicoFilas.filter((f) => f.estado === 'FI' || f.estado === 'FJ').length;
+      const tardanzas = repPsicoFilas.filter((f) => f.estado === 'TI' || f.estado === 'TJ').length;
+
+      const stats = [
+        { label: 'Presentes', valor: presentes, color: [46, 204, 113] },
+        { label: 'Faltas', valor: faltas, color: [230, 57, 70] },
+        { label: 'Tardanzas', valor: tardanzas, color: [243, 156, 18] }
+      ];
+      let y = 30;
+      stats.forEach((s, i) => {
+        const x = margin + i * 62;
+        doc.setFillColor(...s.color);
+        doc.roundedRect(x, y, 58, 18, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(String(s.valor), x + 29, y + 8, { align: 'center' });
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(s.label, x + 29, y + 14, { align: 'center' });
+      });
+      y += 24;
+
+      if (imgTorta) {
+        const alto = _addImagenAjustada(doc, imgTorta, margin, y, 70, 55);
+        y += alto + 8;
+      }
+
+      const head = [['Fecha', 'Salón', 'Alumno', 'Estado']];
+      const body = repPsicoFilas.map((f) => [
+        _repFechaLegible(f.fecha),
+        f.salon || '—',
+        f.apellidos_nombres,
+        _repEstadoTexto(f.estado)
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: y,
+        margin: { left: margin, right: margin },
+        styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, lineColor: [220, 220, 230], lineWidth: 0.1 },
+        headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        alternateRowStyles: { fillColor: [246, 246, 250] },
+        didDrawPage: () => { dibujarEncabezado(); }
+      });
+
+      doc.save(`reporte-asistencia_${document.getElementById('rep-psico-desde').value}_a_${document.getElementById('rep-psico-hasta').value}.pdf`);
+    }
+
+    // ══════════════════════════════
     //  ASISTENTE VIRTUAL (chatbot) — Panel Auxiliar
     // ══════════════════════════════
     let chatbotEnviando = false;
@@ -4619,6 +5190,147 @@ async function guardarEvaluacionTutor() {
       chatbotAgregarMensaje(respuestaIA, 'bot');
       chatbotEnviando = false;
       document.getElementById('chatbot-send-btn').disabled = false;
+      input.focus();
+    }
+
+    // ══════════════════════════════
+    //  ASISTENTE VIRTUAL (chatbot) — Panel Psicóloga
+    // ══════════════════════════════
+    let chatbotEnviandoPsico = false;
+    let chatbotHistorialIAPsico = [];
+
+    const CHATBOT_FAQ_PSICO = [
+      { keywords: ['evaluar tutor', 'como evaluo', 'cómo evalúo', 'evaluar a un tutor', 'evaluar docente'], respuesta: 'Para evaluar a un tutor: entra a "📘 Tutores", busca su nombre en la lista y dale clic a "📘 Evaluar" — ahí completas el formulario de evaluación de tutoría.' },
+      { keywords: ['tutores pendientes', 'quien falta', 'quién falta', 'quienes faltan', 'quiénes faltan'], respuesta: 'En "📘 Tutores" ves solo a los docentes tutores que todavía te faltan por evaluar. Cuando ya evaluaste a todos, la lista te lo indica.' },
+      { keywords: ['historial'], respuesta: '"📋 Historial" te muestra todas las evaluaciones de tutoría que TÚ has hecho, con el puntaje y la fecha de cada una. Ahí también puedes eliminar una si te equivocaste.' },
+      { keywords: ['resultados'], respuesta: '"📊 Resultados" te muestra las evaluaciones de tutoría de TODO el colegio (no solo las tuyas), para que puedas comparar el desempeño de los distintos tutores.' },
+      { keywords: ['puntaje'], respuesta: 'El puntaje de cada evaluación de tutoría es un porcentaje (0% a 100%) que se calcula solo, según las respuestas que marques en el formulario de evaluación.' },
+      { keywords: ['reporte', 'reportes', 'informe', 'historial de asistencia', 'inasistencia', 'inasistencias', 'faltan mucho', 'faltas frecuentes'], respuesta: '"📄 Reportes" (en el menú de la izquierda) te deja ver la asistencia de todos los salones en un rango de fechas, y te arma automáticamente la tabla "⚠️ Alumnos con inasistencias frecuentes" para que sepas a quién contactar o citar con sus padres.' },
+      { keywords: ['citar', 'hablar con sus padres', 'contactar apoderado', 'llamar al apoderado'], respuesta: 'En "📄 Reportes", la tabla "⚠️ Alumnos con inasistencias frecuentes" incluye la columna "Apoderado" con su celular — de ahí puedes tomar el contacto para citarlo o llamarlo.' },
+      { keywords: ['descargar pdf', 'descargar el pdf', 'donde descargo', 'descargar reporte', 'exportar pdf'], respuesta: 'En "📄 Reportes", después de filtrar un rango de fechas, aparece el botón "📄 Descargar PDF" tanto para el reporte completo como para la tabla de alumnos con inasistencias frecuentes.' },
+      { keywords: ['filtrar por fecha', 'rango de fechas', 'filtrar reporte', 'buscar por fecha'], respuesta: 'En "📄 Reportes" eliges una fecha "Desde" y una "Hasta" y le das clic a "🔎 Filtrar" — te muestra la asistencia de todos los salones juntos, solo en ese rango de fechas.' },
+      { keywords: ['umbral', 'mas de', 'más de'], respuesta: 'El campo "Más de" (en la tabla de inasistencias frecuentes) es el número mínimo de faltas o tardanzas que debe tener un alumno para aparecer ahí — puedes subirlo o bajarlo cuando quieras.' },
+      { keywords: ['quien es gustavo', 'quién es gustavo', 'gustavo'], respuesta: 'Gustavo Ramírez es de Soporte TI del colegio — él arma y cuida este sistema (ScoreDocente), incluyéndome a mí 🤖. Si tienes algo que este panel no resuelve, puedes escribirle directo al WhatsApp 943706872 📱.' },
+      { keywords: ['como le escribo', 'cómo le escribo', 'como se le escribe', 'por donde le escribo', 'por donde escribo', 'numero de gustavo', 'número de gustavo', 'celular de gustavo', 'contacto de gustavo', 'whatsapp de gustavo', 'como contacto a gustavo', 'como lo contacto'], respuesta: 'Puedes escribirle a Gustavo directo por WhatsApp al 943706872 📱.' }
+    ];
+    const CHATBOT_PALABRAS_DATOS_PSICO = ['cuantos', 'cuántos', 'tutores me faltan', 'me faltan', 'pendientes', 'avance'];
+
+    function responderChatbotLocalPsico(pregunta) {
+      const q = chatbotNormalizar(pregunta);
+
+      if (['ok', 'oka', 'okay', 'okey', 'listo', 'ya'].includes(q)) {
+        return '¡Listo! 🙂 Si necesitas algo más que no esté aquí, escríbele a Gustavo por WhatsApp al 943706872 📱.';
+      }
+
+      if (CHATBOT_PALABRAS_DATOS_PSICO.some((p) => q.includes(chatbotNormalizar(p)))) {
+        const tbody = document.getElementById('tabla-psico-tutores');
+        const filas = tbody ? Array.from(tbody.querySelectorAll('tr')).filter((tr) => !tr.querySelector('.empty-state')) : [];
+        return filas.length
+          ? `Te faltan ${filas.length} tutor(es) por evaluar — puedes verlos en "📘 Tutores".`
+          : 'Ya evaluaste a todos los tutores pendientes 🎉 — no te falta ninguno por ahora.';
+      }
+
+      for (const item of CHATBOT_FAQ_PSICO) {
+        if (item.keywords.some((k) => q.includes(chatbotNormalizar(k)))) return item.respuesta;
+      }
+
+      if (CHATBOT_SALUDOS.some((s) => q.includes(s))) return '¡Hola! 👋 Soy GusTI. Puedo explicarte cómo usar el panel, contarte cómo va tu tutoría, o responder preguntas generales.';
+      if (CHATBOT_AGRADECIMIENTOS.some((s) => q.includes(s))) return '¡De nada! 💙 Aquí ando si necesitas algo más.';
+      if (CHATBOT_COMO_ESTAS.some((s) => q.includes(s))) return '¡Todo bien por aquí, gracias por preguntar! ¿En qué te ayudo con el panel?';
+
+      return null;
+    }
+
+    async function preguntarGustiaIAPsico(pregunta) {
+      try {
+        const res = await fetch('/api/gustia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ pregunta, historial: chatbotHistorialIAPsico })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return data.error || 'No pude conectarme con la IA en este momento 🙈';
+        }
+        const respuesta = data.respuesta || 'No tengo una respuesta para eso ahora mismo.';
+        chatbotHistorialIAPsico.push({ role: 'user', texto: pregunta });
+        chatbotHistorialIAPsico.push({ role: 'model', texto: respuesta });
+        if (chatbotHistorialIAPsico.length > 20) chatbotHistorialIAPsico = chatbotHistorialIAPsico.slice(-20);
+        return respuesta;
+      } catch (err) {
+        return 'No pude conectarme con la IA en este momento — revisa tu conexión e intenta de nuevo 🙈';
+      }
+    }
+
+    function toggleChatbotPsico() {
+      const win = document.getElementById('chatbot-window-psico');
+      if (!win) return;
+      win.classList.toggle('show');
+      if (win.classList.contains('show')) {
+        const input = document.getElementById('chatbot-input-psico');
+        if (input) input.focus();
+        const msgs = document.getElementById('chatbot-messages-psico');
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+      }
+    }
+
+    function chatbotAgregarMensajePsico(texto, tipo) {
+      const msgs = document.getElementById('chatbot-messages-psico');
+      if (!msgs) return;
+      const div = document.createElement('div');
+      div.className = 'chatbot-msg ' + tipo;
+      div.textContent = texto;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function chatbotMostrarEscribiendoPsico(mostrar) {
+      const msgs = document.getElementById('chatbot-messages-psico');
+      if (!msgs) return;
+      let indicador = document.getElementById('chatbot-typing-psico');
+      if (mostrar) {
+        if (indicador) return;
+        indicador = document.createElement('div');
+        indicador.className = 'chatbot-typing';
+        indicador.id = 'chatbot-typing-psico';
+        indicador.innerHTML = '<span></span><span></span><span></span>';
+        msgs.appendChild(indicador);
+        msgs.scrollTop = msgs.scrollHeight;
+      } else if (indicador) {
+        indicador.remove();
+      }
+    }
+
+    async function enviarMensajeChatbotPsico() {
+      if (chatbotEnviandoPsico) return;
+      const input = document.getElementById('chatbot-input-psico');
+      const texto = input.value.trim();
+      if (!texto) return;
+      input.value = '';
+      chatbotAgregarMensajePsico(texto, 'user');
+
+      chatbotEnviandoPsico = true;
+      document.getElementById('chatbot-send-btn-psico').disabled = true;
+      chatbotMostrarEscribiendoPsico(true);
+
+      const respuestaLocal = responderChatbotLocalPsico(texto);
+
+      if (respuestaLocal !== null) {
+        setTimeout(() => {
+          chatbotMostrarEscribiendoPsico(false);
+          chatbotAgregarMensajePsico(respuestaLocal, 'bot');
+          chatbotEnviandoPsico = false;
+          document.getElementById('chatbot-send-btn-psico').disabled = false;
+          input.focus();
+        }, 450);
+        return;
+      }
+
+      const respuestaIA = await preguntarGustiaIAPsico(texto);
+      chatbotMostrarEscribiendoPsico(false);
+      chatbotAgregarMensajePsico(respuestaIA, 'bot');
+      chatbotEnviandoPsico = false;
+      document.getElementById('chatbot-send-btn-psico').disabled = false;
       input.focus();
     }
 
