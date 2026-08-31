@@ -917,6 +917,43 @@
       transition: transform 0.15s;
     }
     .laura-welcome-btn:hover { transform: scale(1.05); }
+
+    /* ══════════════════════════════
+       TEMA ESPECIAL — cuenta de Laura (rosa-lila) 💕
+    ══════════════════════════════ */
+    body.laura-theme #auxiliar-page {
+      --accent: #ec6ea5;
+      --accent2: #b980f0;
+      --accent-glow: rgba(236,110,165,0.18);
+      --navy: #7c4fb0;
+      --navy2: #a35fd1;
+    }
+    body.laura-theme #auxiliar-page .eval-btn {
+      border-color: rgba(236,110,165,0.3);
+    }
+    body.laura-theme #auxiliar-page .page-header {
+      background:
+        linear-gradient(120deg, rgba(40,20,55,0.90), rgba(124,79,176,0.6), rgba(236,110,165,0.35)),
+        url('cervantes-fachada.jpg');
+      background-size: cover;
+      background-position: center 35%;
+    }
+    body.laura-theme #auxiliar-page .sidebar-logo .role-tag::after {
+      content: ' 💗';
+    }
+    body.laura-theme #auxiliar-page .nav-section::before {
+      content: '✨ ';
+    }
+    body.laura-theme .msgs-fab {
+      background: linear-gradient(135deg, #7c4fb0, #ec6ea5);
+    }
+    body.laura-theme #chatbot-fab {
+      background: linear-gradient(135deg, #a35fd1, #ec6ea5);
+    }
+    body.laura-theme .msgs-header,
+    body.laura-theme #chatbot-window .chatbot-header {
+      background: linear-gradient(120deg, #7c4fb0, #a35fd1, #ec6ea5);
+    }
     /* ══════════════════════════════
        ASISTENTE VIRTUAL (chatbot) — Panel Auxiliar
     ══════════════════════════════ */
@@ -3460,7 +3497,7 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       const colores = ['#cdb4db', '#ffc2d1', '#ffddd2', '#f4b78f', '#ffffff'];
-      const piezas = Array.from({ length: 140 }, () => ({
+      const piezas = Array.from({ length: 200 }, () => ({
         x: Math.random() * canvas.width,
         y: -20 - Math.random() * canvas.height * 0.5,
         w: 6 + Math.random() * 6,
@@ -3471,8 +3508,19 @@
         rot: Math.random() * 360,
         rotSpeed: (Math.random() - 0.5) * 8
       }));
+      const corazonesEmoji = ['💗', '💕', '💖'];
+      const corazones = Array.from({ length: 22 }, () => ({
+        x: Math.random() * canvas.width,
+        y: canvas.height + 20 + Math.random() * canvas.height * 0.4,
+        size: 16 + Math.random() * 16,
+        emoji: corazonesEmoji[Math.floor(Math.random() * corazonesEmoji.length)],
+        speedY: 0.8 + Math.random() * 1.4,
+        sway: Math.random() * Math.PI * 2,
+        swaySpeed: 0.02 + Math.random() * 0.02,
+        opacity: 0.55 + Math.random() * 0.35
+      }));
       let frames = 0;
-      const maxFrames = 260;
+      const maxFrames = 320;
       function tick() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         piezas.forEach((p) => {
@@ -3484,6 +3532,16 @@
           ctx.rotate((p.rot * Math.PI) / 180);
           ctx.fillStyle = p.color;
           ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        corazones.forEach((c) => {
+          c.y -= c.speedY;
+          c.sway += c.swaySpeed;
+          const x = c.x + Math.sin(c.sway) * 18;
+          ctx.save();
+          ctx.globalAlpha = c.opacity;
+          ctx.font = c.size + 'px sans-serif';
+          ctx.fillText(c.emoji, x, c.y);
           ctx.restore();
         });
         frames++;
@@ -3516,6 +3574,7 @@
     document.getElementById('aux-user-info').textContent = usuario.nombre;
     cargarDatosAuxiliar();
     const esLaura = (usuario.email || '').trim().toLowerCase() === EMAIL_LAURA_BIENVENIDA;
+    document.body.classList.toggle('laura-theme', esLaura);
     if (esLaura) {
       mostrarBienvenidaLaura();
     }
