@@ -1273,6 +1273,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -1821,9 +1822,14 @@
             <div class="page-title">Fichas de Docentes</div>
             <div class="page-subtitle">Datos personales registrados por cada docente en el formulario público — visible solo para el Gerente General</div>
           </div>
-          <button onclick="exportarFichasCSV()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
-            📄 Exportar CSV
-          </button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button onclick="exportarFichasExcel()" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              📊 Exportar Excel
+            </button>
+            <button onclick="exportarFichasPDF()" style="padding:10px 20px;background:var(--navy2);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              📄 Exportar PDF
+            </button>
+          </div>
         </div>
 
         <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
@@ -3081,12 +3087,19 @@
     background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 28px);
     padding:24px 28px; display:flex; align-items:center; gap:16px;
   }
+  #modal-ficha-detalle .mfd-photo-wrap-outer{ position:relative; flex-shrink:0; }
   #modal-ficha-detalle .mfd-photo-wrap{
     width:68px; height:68px; border-radius:14px; background:#fff; flex-shrink:0; overflow:hidden;
     display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(0,0,0,.25);
   }
   #modal-ficha-detalle .mfd-photo-wrap img{width:100%; height:100%; object-fit:cover}
   #modal-ficha-detalle .mfd-photo-wrap .mfd-noph{color:#16325c; font-size:22px; font-weight:800; font-family:'Lora',serif}
+  #modal-ficha-detalle .mfd-foto-upload-btn{
+    position:absolute; right:-6px; bottom:-6px; width:26px; height:26px; border-radius:50%;
+    background:#e63946; color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.35); border:2px solid #16325c;
+  }
+  #modal-ficha-detalle .mfd-foto-upload-btn:hover{ background:#ff6b6b; }
   #modal-ficha-detalle .mfd-header-text{flex:1; min-width:0}
   #modal-ficha-detalle .mfd-eyebrow{color:#ff6b6b; font-size:10.5px; font-weight:700; letter-spacing:1.3px; text-transform:uppercase; margin-bottom:6px}
   #modal-ficha-detalle .modal-title#mfd-nombre{font-family:'Lora',serif; color:#fff; font-size:1.25rem; font-weight:700; margin:0}
@@ -3111,7 +3124,11 @@
 <div class="modal" id="modal-ficha-detalle">
   <div class="modal-card mfd-card">
     <div class="mfd-header">
-      <div class="mfd-photo-wrap" id="mfd-foto-wrap"></div>
+      <div class="mfd-photo-wrap-outer">
+        <div class="mfd-photo-wrap" id="mfd-foto-wrap"></div>
+        <label class="mfd-foto-upload-btn" for="mfd-foto-input" title="Subir/cambiar foto">📷</label>
+        <input type="file" id="mfd-foto-input" accept="image/png,image/jpeg" style="display:none" onchange="subirFotoFichaAdmin(event)">
+      </div>
       <div class="mfd-header-text">
         <div class="mfd-eyebrow">Cervantes School &middot; Ficha del docente</div>
         <div class="modal-title" id="mfd-nombre">Ficha del docente</div>
@@ -8725,6 +8742,143 @@ function exportarFichasCSV() {
       URL.revokeObjectURL(url);
     })
     .catch(() => alert('No se pudo exportar'));
+}
+
+// Sube o reemplaza la foto de la ficha que está abierta en el modal — para
+// cuando el docente no pudo subirla ella misma (ej. link vencido) y el
+// Gerente General la agrega directamente desde acá.
+async function subirFotoFichaAdmin(ev) {
+  const file = ev.target.files[0];
+  if (!file || !fichaAbiertaId) return;
+  if (file.size > 4 * 1024 * 1024) {
+    alert('La foto no debe superar 4 MB');
+    ev.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const fotoBase64 = reader.result;
+    const wrap = document.getElementById('mfd-foto-wrap');
+    const anterior = wrap.innerHTML;
+    wrap.innerHTML = `<img src="${fotoBase64}">`;
+    try {
+      const res = await fetch('/api/fichas/' + fichaAbiertaId + '/foto', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ foto_base64: fotoBase64 })
+      });
+      if (!res.ok) throw new Error();
+      cargarFichasDocentes();
+    } catch (e) {
+      wrap.innerHTML = anterior;
+      alert('No se pudo subir la foto. Intenta de nuevo.');
+    }
+  };
+  reader.readAsDataURL(file);
+  ev.target.value = '';
+}
+
+// ── Exportación masiva de fichas (Excel completo / PDF resumen) ──
+const FICHAS_EXPORT_COLUMNAS = [
+  { key: 'nombres', label: 'Nombres' },
+  { key: 'apellidos', label: 'Apellidos' },
+  { key: 'dni', label: 'DNI' },
+  { key: 'fecha_nacimiento', label: 'F. Nacimiento' },
+  { key: 'genero', label: 'Género' },
+  { key: 'estado_civil', label: 'Estado civil' },
+  { key: 'celular', label: 'Celular' },
+  { key: 'correo', label: 'Correo' },
+  { key: 'direccion', label: 'Dirección' },
+  { key: 'nivel_educativo', label: 'Nivel educativo' },
+  { key: 'ingles', label: 'Inglés' },
+  { key: 'educacion_secundaria', label: 'Educ. secundaria' },
+  { key: 'educacion_tecnica', label: 'Educ. técnica' },
+  { key: 'educacion_universitaria', label: 'Educ. universitaria' },
+  { key: 'educacion_postgrado', label: 'Postgrado' },
+  { key: 'conyuge_nombre', label: 'Cónyuge' },
+  { key: 'conyuge_dni', label: 'DNI cónyuge' },
+  { key: 'hijos_texto', label: 'Hijos' },
+  { key: 'sistema_pension', label: 'Sistema de pensión' },
+  { key: 'entidad_pension', label: 'AFP' },
+  { key: 'cuspp', label: 'CUSPP' },
+  { key: 'cuenta_bcp', label: 'Cuenta BCP' },
+  { key: 'estado_texto', label: 'Estado' },
+  { key: 'creado_texto', label: 'Registrado' }
+];
+
+async function obtenerDatosCompletosFichas() {
+  const res = await fetch('/api/fichas/export/data', { headers: { 'Authorization': 'Bearer ' + token } });
+  if (!res.ok) throw new Error();
+  return res.json();
+}
+
+function prepararFilasFichasExport(fichas) {
+  return fichas.map(f => ({
+    ...f,
+    fecha_nacimiento: f.fecha_nacimiento ? new Date(f.fecha_nacimiento).toLocaleDateString('es-PE') : '',
+    hijos_texto: Array.isArray(f.hijos) ? f.hijos.map(h => h.nombre).filter(Boolean).join(', ') : '',
+    estado_texto: f.procesado ? 'Revisado' : 'Pendiente',
+    creado_texto: f.creado_en ? new Date(f.creado_en).toLocaleDateString('es-PE') : ''
+  }));
+}
+
+async function exportarFichasExcel() {
+  try {
+    const datos = prepararFilasFichasExport(await obtenerDatosCompletosFichas());
+    if (!datos.length) { alert('No hay fichas para exportar'); return; }
+    const filas = datos.map(f => {
+      const fila = {};
+      FICHAS_EXPORT_COLUMNAS.forEach(c => { fila[c.label] = f[c.key] || ''; });
+      return fila;
+    });
+    const hoja = XLSX.utils.json_to_sheet(filas);
+    hoja['!cols'] = FICHAS_EXPORT_COLUMNAS.map(() => ({ wch: 20 }));
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Fichas Docentes');
+    XLSX.writeFile(libro, 'fichas_docentes_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  } catch (e) {
+    alert('No se pudo exportar a Excel');
+  }
+}
+
+async function exportarFichasPDF() {
+  try {
+    const datos = prepararFilasFichasExport(await obtenerDatosCompletosFichas());
+    if (!datos.length) { alert('No hay fichas para exportar'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 10;
+    const dibujarEncabezado = () => {
+      doc.setFillColor(180, 0, 30);
+      doc.rect(0, 0, pageW, 2, 'F');
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+      doc.text('FICHAS DE DOCENTES — I.E.P. CERVANTES SCHOOL', pageW / 2, 12, { align: 'center' });
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 100, 100);
+      doc.text('Generado el ' + new Date().toLocaleDateString('es-PE') + '  ·  ' + datos.length + ' docente(s)', pageW / 2, 18, { align: 'center' });
+    };
+    dibujarEncabezado();
+
+    const head = [['Docente', 'DNI', 'Celular', 'Correo', 'Nivel educativo', 'AFP', 'Estado', 'Registrado']];
+    const body = datos.map(f => [
+      `${f.apellidos}, ${f.nombres}`, f.dni, f.celular || '—', f.correo || '—',
+      f.nivel_educativo || '—', f.entidad_pension || '—', f.estado_texto, f.creado_texto
+    ]);
+
+    doc.autoTable({
+      head, body,
+      startY: 24,
+      margin: { left: margin, right: margin },
+      styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, lineColor: [220, 220, 230], lineWidth: 0.1 },
+      headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+      alternateRowStyles: { fillColor: [246, 246, 250] },
+      didDrawPage: () => { dibujarEncabezado(); }
+    });
+
+    doc.save('fichas_docentes_' + new Date().toISOString().slice(0, 10) + '.pdf');
+  } catch (e) {
+    alert('No se pudo exportar a PDF');
+  }
 }
 </script>
 </body>

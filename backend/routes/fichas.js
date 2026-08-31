@@ -104,6 +104,25 @@ router.get('/export/csv', verificarToken, soloGerenteGeneral, async (req, res) =
   }
 });
 
+// GET /api/fichas/export/data — todas las fichas en JSON, sin la foto (pesa
+// mucho y no hace falta para el reporte), para armar el Excel/PDF masivo
+// desde el navegador (antes que "/:id" para que no choque la ruta).
+router.get('/export/data', verificarToken, soloGerenteGeneral, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT nombres, apellidos, dni, fecha_nacimiento, genero, estado_civil, celular, correo, direccion,
+        nivel_educativo, ingles, educacion_secundaria, educacion_tecnica, educacion_universitaria, educacion_postgrado,
+        conyuge_nombre, conyuge_dni, hijos, sistema_pension, entidad_pension, cuspp, cuenta_bcp,
+        procesado, creado_en
+       FROM fichas_docentes ORDER BY apellidos, nombres`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al exportar datos de fichas:', err);
+    res.status(500).json({ error: 'Error al exportar' });
+  }
+});
+
 // GET /api/fichas — listado con filtros (solo Gerente General)
 router.get('/', verificarToken, soloGerenteGeneral, async (req, res) => {
   try {
@@ -167,6 +186,41 @@ router.patch('/:id/procesado', verificarToken, soloGerenteGeneral, async (req, r
   } catch (err) {
     console.error('Error al actualizar ficha:', err);
     res.status(500).json({ error: 'Error al actualizar' });
+  }
+});
+
+// PATCH /api/fichas/:id/foto — el Gerente General sube o reemplaza la foto
+// de una ficha ya existente (por ejemplo cuando el docente no pudo subirla
+// ella misma porque su link había vencido).
+router.patch('/:id/foto', verificarToken, soloGerenteGeneral, async (req, res) => {
+  const { foto_base64 } = req.body;
+  if (!foto_base64 || typeof foto_base64 !== 'string' || !foto_base64.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Debes enviar una imagen válida' });
+  }
+  if (foto_base64.length > 6 * 1024 * 1024) {
+    return res.status(400).json({ error: 'La imagen es demasiado grande' });
+  }
+  try {
+    const result = await db.query(
+      'UPDATE fichas_docentes SET foto_base64 = $1, actualizado_en = NOW() WHERE id = $2 RETURNING id, nombres, apellidos',
+      [foto_base64, req.params.id]
+    );
+    const fila = result.rows[0];
+    if (!fila) return res.status(404).json({ error: 'Ficha no encontrada' });
+
+    registrarAuditoria({
+      tabla: 'fichas_docentes',
+      registro_id: fila.id,
+      accion: 'editar',
+      usuario: req.usuario,
+      descripcion: `Foto de ${fila.nombres} ${fila.apellidos} subida manualmente por el Gerente General`,
+      datos: {}
+    });
+
+    res.json({ mensaje: 'Foto actualizada correctamente' });
+  } catch (err) {
+    console.error('Error al actualizar foto de ficha:', err);
+    res.status(500).json({ error: 'Error al actualizar la foto' });
   }
 });
 
