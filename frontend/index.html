@@ -834,14 +834,14 @@
     }
     .laura-welcome-overlay.show { display: flex; }
     .laura-welcome-card {
-      position: absolute;
+      position: relative;
       z-index: 10000;
       background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
       padding: 3px;
       border-radius: 20px;
       max-width: 380px;
       width: 90%;
-      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-float 26s ease-in-out infinite;
+      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .laura-welcome-card-inner {
