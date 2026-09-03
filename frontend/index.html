@@ -838,24 +838,31 @@
       z-index: 10000;
       background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
       padding: 3px;
-      border-radius: 44px;
-      max-width: 380px;
-      width: 90%;
+      border-radius: 50%;
+      width: min(92vw, 480px);
+      aspect-ratio: 1 / 1;
       animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .laura-welcome-card-inner {
       position: relative;
       background: #14141c;
-      border-radius: 42px;
-      padding: 2.8rem 2.6rem 2.6rem;
+      border-radius: 50%;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
       text-align: center;
       overflow: visible;
     }
+    .laura-welcome-card-inner > * { max-width: 250px; }
     .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
     .laura-welcome-photo {
-      width: 84px;
-      height: 84px;
+      width: 66px;
+      height: 66px;
       border-radius: 50%;
       object-fit: cover;
       display: block;
@@ -887,15 +894,15 @@
     }
     .laura-welcome-title {
       font-family: 'Syne', sans-serif;
-      font-size: 21px;
+      font-size: 15px;
       font-weight: 800;
       background: linear-gradient(90deg, #cdb4db, #ffc2d1, #ffddd2);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      margin-bottom: 0.6rem;
-      line-height: 1.4;
-      min-height: 2.8em;
+      margin-bottom: 0.5rem;
+      line-height: 1.35;
+      min-height: 2.7em;
     }
     .laura-welcome-title.laura-typing::after {
       content: '|';
