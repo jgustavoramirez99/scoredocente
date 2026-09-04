@@ -838,31 +838,24 @@
       z-index: 10000;
       background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
       padding: 3px;
-      border-radius: 50%;
-      width: min(92vw, 480px);
-      aspect-ratio: 1 / 1;
+      border-radius: 20px;
+      max-width: 380px;
+      width: 90%;
       animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .laura-welcome-card-inner {
       position: relative;
       background: #14141c;
-      border-radius: 50%;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      border-radius: 18px;
+      padding: 2.6rem 2.2rem 2.4rem;
       text-align: center;
       overflow: visible;
     }
-    .laura-welcome-card-inner > * { max-width: 250px; }
     .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
     .laura-welcome-photo {
-      width: 66px;
-      height: 66px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
       object-fit: cover;
       display: block;
@@ -894,15 +887,15 @@
     }
     .laura-welcome-title {
       font-family: 'Syne', sans-serif;
-      font-size: 15px;
+      font-size: 21px;
       font-weight: 800;
       background: linear-gradient(90deg, #cdb4db, #ffc2d1, #ffddd2);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      margin-bottom: 0.5rem;
-      line-height: 1.35;
-      min-height: 2.7em;
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+      min-height: 2.8em;
     }
     .laura-welcome-title.laura-typing::after {
       content: '|';
@@ -1399,9 +1392,9 @@
         <img class="laura-welcome-photo" src="laura-gustavo.jpg" alt="">
         <div class="laura-welcome-date" id="laura-welcome-date"></div>
         <div class="laura-welcome-title" id="laura-welcome-title"></div>
-        <div class="laura-welcome-note">Va despacio, como tú pediste, pero no se rinde ❤️.</div>
+        <div class="laura-welcome-note" id="laura-welcome-note">Va despacio, como tú pediste, pero no se rinde ❤️.</div>
         <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
-        <button class="laura-welcome-btn" onclick="explotarCorazonesBoton(this); setTimeout(cerrarBienvenidaLaura, 380)">Gracias</button>
+        <button class="laura-welcome-btn" id="laura-welcome-btn" onclick="avanzarPanelLaura(this)">Cuéntame más 👀</button>
       </div>
     </div>
   </div>
@@ -3696,8 +3689,40 @@
 
     const EMAIL_LAURA_BIENVENIDA = 'laurachavez@cervantesschool.edu.pe';
 
-    // ✏️ Gustavo: cambia este mensaje cada día para sorprender a Laura :)
-    const MENSAJE_BIENVENIDA_LAURA = "Hola señorita Laura, aquí sigue alguien alegrándose de verte entrar ❤️";
+    // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
+    const LAURA_PANELES = [
+      {
+        titulo: "Alerta meteorológica: 100% de probabilidad de que alguien piense en ti todo el día, la pista de su nombre es que empieza con \"G\"❤️",
+        nota: "Va despacio, como tú pediste, pero no se rinde ❤️.",
+        boton: "Cuéntame más 👀"
+      },
+      {
+        titulo: "Señorita Laura, ahora llegó el momento de la verdad, su mini interrogatorio llegó jaja",
+        nota: "",
+        boton: "Aquí vamos"
+      },
+      {
+        titulo: "¿Porque eres tan berrinchuda? jajaja Dimeee",
+        nota: "",
+        boton: "Otra más"
+      },
+      {
+        titulo: "¿Cómo es que aguantas los mini celos de ese chico llamado Gustavo? 🌸",
+        nota: "",
+        boton: "Dimeee"
+      },
+      {
+        titulo: "¿Cuál es tu recuerdo favorito de GusGus y tu hasta ahora? 💭",
+        nota: "",
+        boton: "Siguiente pregunta"
+      },
+      {
+        titulo: "¿Sabías esto de Gustavo? Te lo diré pero no le digas, le gustas mucho ❤️",
+        nota: "",
+        boton: "Gracias"
+      }
+    ];
+    let laura_panelIndex = 0;
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -3727,20 +3752,44 @@
       paso();
     }
 
-    function mostrarBienvenidaLaura() {
-      const overlay = document.getElementById('laura-welcome-overlay');
-      const fechaEl = document.getElementById('laura-welcome-date');
+    function renderPanelLaura(i) {
       const tituloEl = document.getElementById('laura-welcome-title');
-      if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
-      if (overlay) overlay.classList.add('show');
+      const notaEl = document.getElementById('laura-welcome-note');
+      const btnEl = document.getElementById('laura-welcome-btn');
+      const panel = LAURA_PANELES[i];
+      if (!panel) return;
       if (tituloEl) tituloEl.classList.remove('laura-shine');
-      escribirTextoLaura(tituloEl, MENSAJE_BIENVENIDA_LAURA, 30, () => {
+      escribirTextoLaura(tituloEl, panel.titulo, 30, () => {
         if (tituloEl) {
           tituloEl.classList.remove('laura-shine');
           void tituloEl.offsetWidth; // reinicia la animación
           tituloEl.classList.add('laura-shine');
         }
       });
+      if (notaEl) {
+        notaEl.textContent = panel.nota || '';
+        notaEl.style.display = panel.nota ? '' : 'none';
+      }
+      if (btnEl) btnEl.textContent = panel.boton;
+    }
+
+    function avanzarPanelLaura(btn) {
+      explotarCorazonesBoton(btn);
+      if (laura_panelIndex < LAURA_PANELES.length - 1) {
+        laura_panelIndex++;
+        setTimeout(() => renderPanelLaura(laura_panelIndex), 380);
+      } else {
+        setTimeout(cerrarBienvenidaLaura, 380);
+      }
+    }
+
+    function mostrarBienvenidaLaura() {
+      const overlay = document.getElementById('laura-welcome-overlay');
+      const fechaEl = document.getElementById('laura-welcome-date');
+      if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
+      if (overlay) overlay.classList.add('show');
+      laura_panelIndex = 0;
+      renderPanelLaura(0);
       iniciarConfettiLaura();
     }
 
