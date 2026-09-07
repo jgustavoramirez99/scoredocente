@@ -2441,6 +2441,8 @@
     <div class="nav-item" onclick="showSectionPsico('psico-resultados', this)">📊 Resultados</div>
     <div class="nav-section">Asistencia</div>
     <div class="nav-item" onclick="showSectionPsico('psico-reportes', this)">📄 Reportes</div>
+    <div class="nav-section">Seguimiento</div>
+    <div class="nav-item" onclick="showSectionPsico('psico-lista', this)">🧑‍🎓 Lista de Alumnos</div>
     <div class="sidebar-footer">
       <div class="user-chip">
         <div class="user-avatar">👤</div>
@@ -2577,6 +2579,38 @@
       </div>
       <div class="table-card" id="rep-psico-vacio-wrap">
         <div class="empty-state"><div class="empty-icon">📄</div><p>Elige un rango de fechas y dale "Filtrar" para ver el reporte.</p></div>
+      </div>
+    </div>
+
+    <div class="section" id="section-psico-lista">
+      <div class="page-header">
+        <div class="page-title">Lista de Alumnos</div>
+        <div class="page-subtitle">Alumnos en seguimiento por psicología. Edita, agrega o quita alumnos; usa la fecha para filtrar a quiénes revisaste un día en particular.</div>
+      </div>
+
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-end">
+        <div class="form-group" style="max-width:180px;margin-bottom:0">
+          <label>Filtrar por fecha</label>
+          <input type="date" id="psico-lista-filtro-fecha" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+        </div>
+        <button class="primary" style="padding:10px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="filtrarListaPsico()">🔎 Filtrar</button>
+        <button class="eval-btn" onclick="limpiarFiltroListaPsico()">Ver todos</button>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Alumnos en seguimiento</h3>
+          <div style="display:flex;gap:0.6rem">
+            <button class="eval-btn" onclick="agregarFilaPsicoLista()">➕ Agregar alumno</button>
+            <button class="eval-btn" style="background:var(--accent);color:white;border-color:var(--accent)" onclick="guardarListaPsico()">💾 Guardar cambios</button>
+          </div>
+        </div>
+        <div style="max-height:600px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Nombre y Apellidos</th><th>Grado</th><th>Competencias</th><th>Observación</th><th>Responsable</th><th>Fecha</th><th></th></tr></thead>
+            <tbody id="tabla-psico-lista"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -4213,7 +4247,108 @@ function showSectionPsico(id, el) {
   el.classList.add('active');
   if (id === 'psico-resultados') cargarResultadosPsico();
   if (id === 'psico-reportes') inicializarReportePsico();
+  if (id === 'psico-lista') cargarListaPsico();
 }
+
+// ===== Lista de Alumnos (Psicología) =====
+let psicoListaData = [];
+let psicoListaFiltroFecha = '';
+
+function escHtmlPsico(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function cargarListaPsico() {
+  const tbody = document.getElementById('tabla-psico-lista');
+  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+  try {
+    const res = await fetch('/api/psico-alumnos', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    psicoListaData = Array.isArray(data) ? data.map(a => ({
+      id: a.id, nombre: a.nombre || '', grado: a.grado || '', competencias: a.competencias || '',
+      observacion: a.observacion || '', responsable: a.responsable || '',
+      fecha: a.fecha ? String(a.fecha).slice(0, 10) : ''
+    })) : [];
+    renderTablaPsicoLista();
+  } catch (err) {
+    console.error('Error cargando lista de alumnos de psicología:', err);
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><p>Error al cargar la lista</p></div></td></tr>';
+  }
+}
+
+function renderTablaPsicoLista() {
+  const tbody = document.getElementById('tabla-psico-lista');
+  const pares = psicoListaData.map((item, idx) => ({ item, idx }))
+    .filter(({ item }) => !psicoListaFiltroFecha || item.fecha === psicoListaFiltroFecha);
+
+  if (!pares.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧑‍🎓</div><p>${psicoListaFiltroFecha ? 'Nadie revisado en esa fecha' : 'Sin alumnos en la lista todavía'}</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = pares.map(({ item, idx }) => `
+    <tr>
+      <td><input type="text" value="${escHtmlPsico(item.nombre)}" oninput="psicoListaData[${idx}].nombre=this.value"
+          style="width:220px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+      <td><input type="text" value="${escHtmlPsico(item.grado)}" oninput="psicoListaData[${idx}].grado=this.value"
+          style="width:80px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+      <td><input type="text" value="${escHtmlPsico(item.competencias)}" oninput="psicoListaData[${idx}].competencias=this.value"
+          style="width:130px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+      <td><input type="text" value="${escHtmlPsico(item.observacion)}" placeholder="—" oninput="psicoListaData[${idx}].observacion=this.value"
+          style="width:170px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+      <td><input type="text" value="${escHtmlPsico(item.responsable)}" placeholder="—" oninput="psicoListaData[${idx}].responsable=this.value"
+          style="width:130px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+      <td><input type="date" value="${escHtmlPsico(item.fecha)}" oninput="psicoListaData[${idx}].fecha=this.value"
+          style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px"></td>
+      <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarFilaPsicoLista(${idx})">🗑</button></td>
+    </tr>`).join('');
+}
+
+function agregarFilaPsicoLista() {
+  psicoListaData.push({ id: null, nombre: '', grado: '', competencias: '', observacion: '', responsable: '', fecha: '' });
+  renderTablaPsicoLista();
+}
+
+function eliminarFilaPsicoLista(idx) {
+  const item = psicoListaData[idx];
+  if (!confirm(`¿Quitar a "${item.nombre || 'este alumno'}" de la lista?`)) return;
+  psicoListaData.splice(idx, 1);
+  renderTablaPsicoLista();
+}
+
+function filtrarListaPsico() {
+  psicoListaFiltroFecha = document.getElementById('psico-lista-filtro-fecha').value;
+  renderTablaPsicoLista();
+}
+
+function limpiarFiltroListaPsico() {
+  document.getElementById('psico-lista-filtro-fecha').value = '';
+  psicoListaFiltroFecha = '';
+  renderTablaPsicoLista();
+}
+
+async function guardarListaPsico() {
+  try {
+    const res = await fetch('/api/psico-alumnos/guardar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ alumnos: psicoListaData })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert('Error: ' + (data.error || 'no se pudo guardar')); return; }
+    alert('✅ Lista guardada correctamente');
+    psicoListaData = (data.alumnos || []).map(a => ({
+      id: a.id, nombre: a.nombre || '', grado: a.grado || '', competencias: a.competencias || '',
+      observacion: a.observacion || '', responsable: a.responsable || '',
+      fecha: a.fecha ? String(a.fecha).slice(0, 10) : ''
+    }));
+    renderTablaPsicoLista();
+  } catch (err) {
+    alert('Error de conexión');
+  }
+}
+
 
 // Todas las evaluaciones de tutoría (no solo las propias). Reutiliza el mismo
 // modal de detalle y el mismo botón de PDF que usa el director, ya que ambos

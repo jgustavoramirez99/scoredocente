@@ -87,4 +87,109 @@ pool.query(`CREATE TABLE IF NOT EXISTS mensajes_leidos (
   .then(() => console.log('✅ Tabla "mensajes_leidos" verificada'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "mensajes_leidos":', err.message));
 
+
+// Migración idempotente: crea la tabla "psico_alumnos_seguimiento" (lista de
+// alumnos derivados a psicología) y la siembra UNA sola vez con la lista que
+// Gustavo subió. Es una lista viva, no un historial por fecha: se edita, se
+// agregan o quitan alumnos, y la columna "fecha" es solo para filtrar qué
+// alumnos se revisaron en un día puntual (no crea una copia nueva por fecha).
+pool.query(`CREATE TABLE IF NOT EXISTS psico_alumnos_seguimiento (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(200) NOT NULL,
+  grado VARCHAR(30),
+  competencias VARCHAR(255),
+  observacion TEXT,
+  responsable VARCHAR(150),
+  fecha DATE,
+  orden INTEGER DEFAULT 0,
+  creado_en TIMESTAMP DEFAULT NOW(),
+  actualizado_en TIMESTAMP DEFAULT NOW()
+)`)
+  .then(async () => {
+    console.log('✅ Tabla "psico_alumnos_seguimiento" verificada');
+    try {
+      const { rows } = await pool.query('SELECT COUNT(*)::int AS total FROM psico_alumnos_seguimiento');
+      if (rows[0].total === 0) {
+        const SEED_ALUMNOS_PSICO = [
+          { nombre: 'FERNANDEZ HURTADO DALIA', grado: 'P 4A', competencias: 'MATEMATICA' },
+          { nombre: 'JORGE FLORES IBET CRISEL', grado: 'P 4B', competencias: 'MATEMATICA' },
+          { nombre: 'CCANTO PINEDO EMIR EYDAN', grado: 'P 5 A', competencias: '4 CURSOS' },
+          { nombre: 'MOLINA TRUJILLO JASMIN ALONDRA', grado: 'p 5 a', competencias: 'varios' },
+          { nombre: 'HOYOS HUAMAN PIERO YAIR', grado: 'P 5 A', competencias: '4 CURSOS' },
+          { nombre: 'VIERA ZEGARRA CEDRIC ARGEN', grado: 'p 5 a', competencias: '2 cursos' },
+          { nombre: 'ALBORNOZ BAILETTY ALEXANDER RANDU', grado: 'p 5 B', competencias: 'varios' },
+          { nombre: 'ANGELES RAMIRES ALIS SHAMILA', grado: 'p 6', competencias: '2 cursos' },
+          { nombre: 'ANTEZANA HUARANCCA KEREN XIMENA', grado: 'p 6', competencias: '2 cursos' },
+          { nombre: 'ANTEZANA HUARANCCA JOSUE', grado: 's 1', competencias: 'varios' },
+          { nombre: 'CHIROQUE FLORES MATHIAS SAUL', grado: 's 1', competencias: 'varios' },
+          { nombre: 'HERNANDEZ BALCAZAR THIAGO GIANPIER', grado: 's 1', competencias: 'varios' },
+          { nombre: 'HUAMAN ESTELA STIVEN ENAU', grado: 's 1', competencias: 'varios' },
+          { nombre: 'MACHUCA JAUREGUI ELBER EDUARDO', grado: 's 1', competencias: 'varios' },
+          { nombre: 'MEJIA QUIROZ JOSE ALFREDO', grado: 's 1', competencias: 'varios' },
+          { nombre: 'PELAEZ SUSANIBAR CIELO ARACELY', grado: 's1', competencias: 'matematicas' },
+          { nombre: 'RUIZ MONDRAGON CRISTHIAN OMAR', grado: 's 1', competencias: 'varios' },
+          { nombre: 'SILVA GUEVARA MILS JOARI', grado: 's 1', competencias: 'varios' },
+          { nombre: 'VASQUEZ ESPINOZA MARIA FERNANDA', grado: 's1', competencias: 'varios' },
+          { nombre: 'VASQUEZ SANCHEZ GUIANFRANCO', grado: 's1', competencias: 'varios' },
+          { nombre: 'VEGA CAYETANO JOSE MARIO', grado: 's1', competencias: 'varios' },
+          { nombre: 'ZAMORA DIAZ MICHAEL JORS', grado: 's 1', competencias: 'varios' },
+          { nombre: 'ABARCA SOLANO FERNANDA STEFANIA', grado: 's2', competencias: 'varios' },
+          { nombre: 'ROJAS ROJAS KATERINE VIVIANA', grado: 's 2', competencias: 'varios' },
+          { nombre: 'SALAZAR GOYA MATIAS ISRAEL', grado: 's 2', competencias: 'varios' },
+          { nombre: 'ARMAS LEZAMETA BIANCA FLOR', grado: 's3', competencias: 'varios' },
+          { nombre: 'CONTRERAS TARAZONA JADE VIANCA', grado: 's3', competencias: 'varios' },
+          { nombre: 'DIAZ LLERENA JOSEPH DAMIAN', grado: 's3', competencias: 'varios' },
+          { nombre: 'GUILLENA OEREZ JENNIFER MILAGROS', grado: 's3', competencias: 'varios' },
+          { nombre: 'JARA ADRIANZEN ANGEL RAUL', grado: 's3', competencias: 'varios' },
+          { nombre: 'NIETO PANDAL KERLY VALENTINA', grado: 's3', competencias: 'varios' },
+          { nombre: 'PILCO ZEVALLOS PATRICK ARTURO GUILLERMO', grado: 's3', competencias: 'varios' },
+          { nombre: 'QUISPE MAYO NATALY MIA', grado: 's3', competencias: 'varios' },
+          { nombre: 'ROMAN SILVA BRANDON PIERO', grado: 's3', competencias: 'varios' },
+          { nombre: 'SIFUENTES ESPINOZA RAFAELA DAYANA', grado: 's3', competencias: 'varios' },
+          { nombre: 'SILVA SANCHEZ LUCAS ERLIN', grado: 's3', competencias: 'varios' },
+          { nombre: 'VEGA CAYETANO DULCE CELENE', grado: 's3', competencias: 'varios' },
+          { nombre: 'ANCHIRAICO AVENDAÑO FRANKLIN YERI', grado: 's4', competencias: 'varios' },
+          { nombre: 'CAYO NAVIO HECTOR MATIAS', grado: 's4', competencias: 'varios' },
+          { nombre: 'CHAVEZ LIVAQUE JESUS RICHARD', grado: 's4', competencias: 'varios' },
+          { nombre: 'CONDORI YAURI BRENDA LIZET', grado: 's4', competencias: 'varios' },
+          { nombre: 'CUMPA CRUZADO LUIS FABIANO', grado: 's4', competencias: 'varios' },
+          { nombre: 'DE LA CRUZ ZEGARRA MASHIEL PERSEVERANDA', grado: 's4', competencias: 'varios' },
+          { nombre: 'FALCON PINTADO ARIEL EZEQUIEL', grado: 's4', competencias: 'varios' },
+          { nombre: 'FARFAN PANTOJA ZAID HOSUMI', grado: 's4', competencias: 'varios' },
+          { nombre: 'HIDALGO RAMOS DALTON JOEL', grado: 's4', competencias: 'varios' },
+          { nombre: 'PAREJA LAZO JULIAN FABRIZIO', grado: 's4', competencias: 'varios' },
+          { nombre: 'QUEZADA DIEGO MAYCOL ZEILER', grado: 's4', competencias: 'varios' },
+          { nombre: 'RAMIREZ CASIMIRO EMILY MILAGROS', grado: 's4', competencias: 'varios' },
+          { nombre: 'ROSALES SANCHEZ DAYVE ADRIAN', grado: 's4', competencias: 'varios' },
+          { nombre: 'VASQUEZ ESPINOZA CARLOS DANIEL', grado: 's4', competencias: 'varios' },
+          { nombre: 'VEGA JARA JULIANCITO RAUL', grado: 's4', competencias: 'varios' },
+          { nombre: 'ZEGARRA MORALES YOSHIRA MAYTE', grado: 's4', competencias: '3 cursos' },
+          { nombre: 'ABRIGO CUENCA PIERO RONALDO', grado: 's5', competencias: 'varios' },
+          { nombre: 'ALEGRE BUSTAMANTE ERICK ANTONY', grado: 's5', competencias: 'varios' },
+          { nombre: 'GONZALES DIAZ YEFERSON YAMPIER', grado: 's5', competencias: 'varios' },
+          { nombre: 'PEREZ VEGA ANGEL ALBERTO', grado: 's5', competencias: 'varios' },
+          { nombre: 'TOLENTINO PILLACA ELIAS AARON', grado: 's5', competencias: '3 cursos' },
+          { nombre: 'TREJO SOTO ADRIANO DAVID', grado: 's5', competencias: '3 crursos' },
+          { nombre: 'VEGA CAYETANO HANS WAYRA', grado: 's5', competencias: 'varios' },
+          { nombre: 'VELASQUEZ LOPES LEXS FRANCO', grado: 's5', competencias: 'varios' }
+        ];
+        const values = [];
+        const params = [];
+        SEED_ALUMNOS_PSICO.forEach((a, i) => {
+          const base = i * 4;
+          values.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`);
+          params.push(a.nombre, a.grado, a.competencias, i);
+        });
+        await pool.query(
+          `INSERT INTO psico_alumnos_seguimiento (nombre, grado, competencias, orden) VALUES ${values.join(', ')}`,
+          params
+        );
+        console.log(`✅ Sembrados ${SEED_ALUMNOS_PSICO.length} alumnos iniciales en "psico_alumnos_seguimiento"`);
+      }
+    } catch (e) {
+      console.error('⚠️  No se pudo sembrar "psico_alumnos_seguimiento":', e.message);
+    }
+  })
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "psico_alumnos_seguimiento":', err.message));
+
 module.exports = pool;
