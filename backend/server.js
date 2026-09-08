@@ -47,6 +47,8 @@ const mensajesRouter = require('./routes/mensajes');
 app.use('/api/mensajes', mensajesRouter);
 const psicoAlumnosRouter = require('./routes/psico_alumnos');
 app.use('/api/psico-alumnos', psicoAlumnosRouter);
+const examenesRouter = require('./routes/examenes');
+app.use('/api/examenes', examenesRouter);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));

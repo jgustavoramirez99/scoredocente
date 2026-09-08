@@ -1456,6 +1456,7 @@
       <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
+      <div class="nav-item" onclick="showSection('examenes-clave', this)">🗝️ Clave de Exámenes</div>
       <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
       <div class="nav-item" id="nav-coordinadores" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
       <div class="nav-item" id="nav-fichas" onclick="showSection('fichas', this)">🗂️ Fichas de Docentes</div>
@@ -1809,6 +1810,42 @@
         </div>
       </div>
 
+      <div class="section" id="section-examenes-clave">
+        <div class="page-header">
+          <div class="page-title">Clave de Exámenes Diagnósticos</div>
+          <div class="page-subtitle">Configura la respuesta correcta de cada pregunta por salón y curso. La auxiliar nunca ve esta clave — solo compara automáticamente lo que digita contra ella.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Salón</label>
+            <select id="clave-salon-select" onchange="cargarClaveDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Curso</label>
+            <select id="clave-curso-select" onchange="cargarClaveDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un curso...</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:12px;padding-bottom:0">
+            <span id="clave-guardar-status" style="font-size:12px;font-weight:600;opacity:0;transition:opacity 0.3s"></span>
+            <button class="eval-btn" onclick="guardarClaveLote()">💾 Guardar clave</button>
+          </div>
+        </div>
+
+        <div id="clave-estado-banner" style="display:none;padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
+
+        <div class="table-card" style="overflow-x:auto;max-width:560px">
+          <div class="table-header"><h3>25 preguntas</h3></div>
+          <table>
+            <thead><tr><th>N° Pregunta</th><th>Nivel</th><th>Respuesta correcta</th></tr></thead>
+            <tbody id="tabla-clave"><tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🗝️</div><p>Selecciona un salón y un curso</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="section" id="section-eval-estudiantes">
         <div class="page-header">
           <div class="page-title">Evaluación de Docentes por Estudiantes</div>
@@ -2147,6 +2184,7 @@
       <div class="nav-item" id="nav-aux-reportes" style="display:none" onclick="showSectionAux('aux-reportes', this)">📄 Reportes</div>
       <div class="nav-section">Evaluaciones</div>
       <div class="nav-item" onclick="showSectionAux('aux-censal', this)">📝 Evaluación Censal</div>
+      <div class="nav-item" onclick="showSectionAux('aux-examenes', this)">🧮 Exámenes Diagnósticos</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -2402,6 +2440,54 @@
           <div class="table-card">
             <div class="table-header"><h3>Competencia Crítico<br><span id="censal-prom-critico" style="color:var(--text2);font-size:12px;font-weight:500">—</span></h3></div>
             <div style="position:relative;height:230px;padding:1rem 1.2rem"><canvas id="chart-censal-critico"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-aux-examenes">
+        <div class="page-header">
+          <div class="page-title">Exámenes Diagnósticos</div>
+          <div class="page-subtitle">Digita lo que marcó cada alumno en su examen físico. El sistema lo compara automáticamente contra la clave y arma los gráficos de aprobados por nivel.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Salón</label>
+            <select id="examenes-salon-select" onchange="cargarGridExamenes()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Curso</label>
+            <select id="examenes-curso-select" onchange="cargarGridExamenes()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un curso...</option>
+            </select>
+          </div>
+          <div style="color:var(--text2);font-size:13px;padding-bottom:9px" id="examenes-n-evaluados"></div>
+        </div>
+
+        <div id="examenes-clave-banner" style="display:none;background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
+
+        <div class="table-card" style="overflow-x:auto">
+          <div class="table-header"><h3>Registro de respuestas</h3></div>
+          <table id="tabla-examenes-wrap" style="min-width:1100px">
+            <thead><tr id="examenes-thead-row"><th>N°</th><th>Apellidos y Nombres</th></tr></thead>
+            <tbody id="tabla-examenes-alumnos"><tr><td colspan="2"><div class="empty-state"><div class="empty-icon">🧮</div><p>Selecciona un salón y un curso</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-top:1.5rem" id="examenes-charts-grid">
+          <div class="table-card">
+            <div class="table-header"><h3>Nivel Básico<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con ≥ 80%</span></h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-examenes-basico"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Nivel Intermedio<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con ≥ 50%</span></h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-examenes-intermedio"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Nivel Avanzado<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con 1 de 5 (20%)</span></h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-examenes-avanzado"></canvas></div>
           </div>
         </div>
       </div>
@@ -4086,6 +4172,7 @@
       if (id === 'asistencia') cargarSalonesAsistenciaDirector();
       if (id === 'tutoria') cargarTutoriaDirector();
       if (id === 'censal') cargarSalonesCensalDirector();
+      if (id === 'examenes-clave') cargarSelectsClaveDirector();
       if (id === 'auditoria') cargarAuditoria();
       if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
       if (id === 'coordinadores') cargarCoordinadores();
@@ -4112,6 +4199,7 @@
       el.classList.add('active');
       if (id === 'aux-resumen') cargarResumenSemanalAuxiliar();
       if (id === 'aux-censal') cargarSalonesCensalAuxiliar();
+      if (id === 'aux-examenes') cargarSelectsExamenes();
       if (id === 'aux-reportes') inicializarReporteAuxiliar();
     }
 
@@ -6640,6 +6728,391 @@ async function guardarEvaluacionTutor() {
       renderChartCompetenciaCensal('chart-censal-literal', 'censal-prom-literal', alumnos, censalItemsActuales, 'L', '#8ecae6');
       renderChartCompetenciaCensal('chart-censal-inferencial', 'censal-prom-inferencial', alumnos, censalItemsActuales, 'I', '#f39c12');
       renderChartCompetenciaCensal('chart-censal-critico', 'censal-prom-critico', alumnos, censalItemsActuales, 'C', '#e63946');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  EXÁMENES DIAGNÓSTICOS (Auxiliar: digitar respuestas + gráficos)
+    // ══════════════════════════════════════════════════════════════════
+    const EXAMENES_CLAVE_SUGERIDA = {
+      'Trigonometría': {1:'C',2:'B',3:'A',4:'B',5:'C',6:'C',7:'C',8:'C',9:'B',10:'A',11:'C',12:'B',13:'A',14:'C',15:'C',16:'B',17:'B',18:'C',19:'B',20:'C',21:'A',22:'C',23:'C',24:'A',25:'B'},
+      'Aritmética': {1:'E',2:'D',3:'D',4:'C',5:'C',6:'C',7:'C',8:'D',9:'C',10:'B',11:'C',12:'C',13:'D',14:'B',15:'C',16:'A',17:'A',18:'C',19:'D',20:'A',21:'A',22:'A',23:'B',24:'B',25:'C'},
+      'Álgebra': {1:'A',2:'B',3:'D',4:'C',5:'B',6:'D',7:'A',8:'A',9:'C',10:'C',11:'D',12:'A',13:'B',14:'E',15:'E',16:'B',17:'A',18:'C',19:'C',20:'A',21:'C',22:'C',23:'C',24:'E',25:'B'},
+      'Geometría': {1:'B',2:'C',3:'C',4:'C',5:'B',6:'A',7:'C',8:'D',9:'C',10:'C',11:'C',12:'B',13:'D',14:'D',15:'D',16:'A',17:'D',18:'C',19:'C',20:'C',21:'D',22:'D',23:'A',24:'D',25:'B'},
+      'Razonamiento Matemático': {1:'C',2:'D',3:'E',4:'D',5:'C',6:'C',7:'A',8:'C',9:'E',10:'E',11:'C',12:'B',13:'C',14:'C',15:'A',16:'B',17:'E',18:'B',19:'B',20:'D',21:'C',22:'D',23:'D',24:'B',25:'B'}
+    };
+    const EXAMENES_CLAVE_DUDAS = {
+      'Aritmética': { 11: 'La respuesta marcada en la hoja parece ser C) 6, pero el cálculo de A∩B da 5 elementos (opción B). Confirma cuál está realmente encerrada en el papel físico.' }
+    };
+
+    async function cargarSelectsExamenes() {
+      const salonSelect = document.getElementById('examenes-salon-select');
+      if (!salonSelect.dataset.cargado) {
+        try {
+          const headers = { 'Authorization': 'Bearer ' + token };
+          const res = await fetch('/api/alumnos/salones', { headers });
+          const salones = await res.json();
+          salonSelect.innerHTML = '<option value="">Selecciona un salón...</option>' +
+            salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+          salonSelect.dataset.cargado = '1';
+        } catch (err) { console.error('Error cargando salones (exámenes):', err); }
+      }
+      const cursoSelect = document.getElementById('examenes-curso-select');
+      if (!cursoSelect.dataset.cargado) {
+        try {
+          const headers = { 'Authorization': 'Bearer ' + token };
+          const res = await fetch('/api/examenes/cursos', { headers });
+          const cursos = await res.json();
+          cursoSelect.innerHTML = '<option value="">Selecciona un curso...</option>' +
+            cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+          cursoSelect.dataset.cargado = '1';
+        } catch (err) { console.error('Error cargando cursos (exámenes):', err); }
+      }
+    }
+
+    let chartExamenesBasico = null, chartExamenesIntermedio = null, chartExamenesAvanzado = null;
+    let examenesAlumnosActuales = [];
+
+    async function cargarGridExamenes() {
+      const salonId = document.getElementById('examenes-salon-select').value;
+      const curso = document.getElementById('examenes-curso-select').value;
+      const thead = document.getElementById('examenes-thead-row');
+      const tbody = document.getElementById('tabla-examenes-alumnos');
+      const banner = document.getElementById('examenes-clave-banner');
+      banner.style.display = 'none';
+      document.getElementById('examenes-n-evaluados').textContent = '';
+
+      if (!salonId || !curso) {
+        thead.innerHTML = '<th>N°</th><th>Apellidos y Nombres</th>';
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">🧮</div><p>Selecciona un salón y un curso</p></div></td></tr>';
+        destruirChartsExamenes();
+        examenesAlumnosActuales = [];
+        return;
+      }
+
+      tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/examenes/grid?salon_id=${salonId}&curso=${encodeURIComponent(curso)}`, { headers });
+        const grid = await res.json();
+        examenesAlumnosActuales = grid.alumnos || [];
+
+        if (!grid.clave_completa) {
+          banner.textContent = '⚠️ La clave de respuestas de este curso todavía no está completa. Avísale al director para que la configure en "Clave de Exámenes" — mientras tanto puedes ir digitando las respuestas, pero no se calculará el aprobado/desaprobado.';
+          banner.style.display = 'block';
+        }
+
+        renderTablaExamenes(examenesAlumnosActuales);
+        renderChartsExamenes(examenesAlumnosActuales);
+      } catch (err) {
+        console.error('Error cargando examen:', err);
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar el examen</p></div></td></tr>';
+      }
+    }
+
+    function opcionesExamen(seleccionada) {
+      const opciones = [{ v: '', t: '—' }, { v: 'A', t: 'A' }, { v: 'B', t: 'B' }, { v: 'C', t: 'C' }, { v: 'D', t: 'D' }, { v: 'E', t: 'E' }];
+      return opciones.map(o => `<option value="${o.v}" ${o.v === (seleccionada || '') ? 'selected' : ''}>${o.t}</option>`).join('');
+    }
+
+    function colorNivelExamen(nivel) {
+      return nivel === 'BASICO' ? 'rgba(46,204,113,0.10)' : nivel === 'INTERMEDIO' ? 'rgba(243,156,18,0.10)' : 'rgba(230,57,70,0.10)';
+    }
+
+    function badgeAprobadoNivel(nivel) {
+      if (!nivel || nivel.respondidas === 0 || nivel.aprobado === null) return '<span style="color:var(--text3)">—</span>';
+      return nivel.aprobado
+        ? `<span class="badge badge-green">✓ ${nivel.correctas}/${nivel.total}</span>`
+        : `<span class="badge badge-red">✗ ${nivel.correctas}/${nivel.total}</span>`;
+    }
+
+    function renderTablaExamenes(alumnos) {
+      const thead = document.getElementById('examenes-thead-row');
+      const tbody = document.getElementById('tabla-examenes-alumnos');
+      const totalCols = 2 + 25 + 3;
+
+      let headHtml = '<th>N°</th><th>Apellidos y Nombres</th>';
+      for (let p = 1; p <= 25; p++) {
+        const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
+        headHtml += `<th style="background:${colorNivelExamen(nivel)}">${p}</th>`;
+      }
+      headHtml += '<th>Básico</th><th>Intermedio</th><th>Avanzado</th>';
+      thead.innerHTML = headHtml;
+
+      document.getElementById('examenes-n-evaluados').textContent =
+        alumnos.length ? (alumnos.filter(a => Object.keys(a.respuestas || {}).length > 0).length + ' de ' + alumnos.length + ' con respuestas') : '';
+
+      tbody.innerHTML = alumnos.length ? alumnos.map(a => {
+        let fila = `<tr><td>${a.numero ?? '—'}</td><td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>`;
+        for (let p = 1; p <= 25; p++) {
+          const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
+          fila += `<td style="background:${colorNivelExamen(nivel)}">
+            <select id="examen-${a.alumno_id}-${p}" onchange="guardarRespuestaExamen(${a.alumno_id}, ${p})"
+              style="padding:5px 4px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;width:48px">
+              ${opcionesExamen((a.respuestas || {})[p])}
+            </select></td>`;
+        }
+        fila += `<td id="examen-basico-${a.alumno_id}">${badgeAprobadoNivel(a.niveles.BASICO)}</td>`;
+        fila += `<td id="examen-intermedio-${a.alumno_id}">${badgeAprobadoNivel(a.niveles.INTERMEDIO)}</td>`;
+        fila += `<td id="examen-avanzado-${a.alumno_id}">${badgeAprobadoNivel(a.niveles.AVANZADO)}</td>`;
+        fila += '</tr>';
+        return fila;
+      }).join('') : `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>`;
+    }
+
+    async function guardarRespuestaExamen(alumnoId, pregunta) {
+      const curso = document.getElementById('examenes-curso-select').value;
+      const select = document.getElementById(`examen-${alumnoId}-${pregunta}`);
+      const respuesta = select.value || null;
+      try {
+        await fetch('/api/examenes/respuesta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ alumno_id: alumnoId, curso, pregunta, respuesta })
+        });
+        select.style.borderColor = 'var(--green)';
+        setTimeout(() => select.style.borderColor = 'var(--border2)', 900);
+        await refrescarFilaYChartsExamenes(alumnoId);
+      } catch (err) {
+        alert('No se pudo guardar la respuesta. Intenta de nuevo.');
+      }
+    }
+
+    async function refrescarFilaYChartsExamenes(alumnoIdEditado) {
+      const salonId = document.getElementById('examenes-salon-select').value;
+      const curso = document.getElementById('examenes-curso-select').value;
+      if (!salonId || !curso) return;
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/examenes/grid?salon_id=${salonId}&curso=${encodeURIComponent(curso)}`, { headers });
+        const grid = await res.json();
+        examenesAlumnosActuales = grid.alumnos || [];
+        const actualizado = examenesAlumnosActuales.find(a => a.alumno_id === alumnoIdEditado);
+        if (actualizado) {
+          const b = document.getElementById(`examen-basico-${alumnoIdEditado}`);
+          const i = document.getElementById(`examen-intermedio-${alumnoIdEditado}`);
+          const av = document.getElementById(`examen-avanzado-${alumnoIdEditado}`);
+          if (b) b.innerHTML = badgeAprobadoNivel(actualizado.niveles.BASICO);
+          if (i) i.innerHTML = badgeAprobadoNivel(actualizado.niveles.INTERMEDIO);
+          if (av) av.innerHTML = badgeAprobadoNivel(actualizado.niveles.AVANZADO);
+        }
+        document.getElementById('examenes-n-evaluados').textContent =
+          examenesAlumnosActuales.filter(a => Object.keys(a.respuestas || {}).length > 0).length + ' de ' + examenesAlumnosActuales.length + ' con respuestas';
+        renderChartsExamenes(examenesAlumnosActuales);
+      } catch (err) {
+        console.error('Error refrescando fila/gráficos de exámenes:', err);
+      }
+    }
+
+    function destruirChartsExamenes() {
+      [chartExamenesBasico, chartExamenesIntermedio, chartExamenesAvanzado].forEach(c => { if (c) c.destroy(); });
+      chartExamenesBasico = chartExamenesIntermedio = chartExamenesAvanzado = null;
+    }
+
+    function renderChartDonutNivel(canvasId, alumnos, nivelKey) {
+      const total = alumnos.length;
+      let aprobados = 0, desaprobados = 0, pendientes = 0;
+      alumnos.forEach(a => {
+        const n = a.niveles[nivelKey];
+        if (!n || n.respondidas === 0 || n.aprobado === null) pendientes++;
+        else if (n.aprobado) aprobados++;
+        else desaprobados++;
+      });
+
+      const canvasEl = document.getElementById(canvasId);
+      if (!canvasEl) return null;
+      const ctx = canvasEl.getContext('2d');
+      const data = [aprobados, desaprobados, pendientes];
+      const labels = ['Aprobó', 'No aprobó', 'Pendiente'];
+      const colores = ['#2ecc71', '#e63946', '#c9c9d4'];
+
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colores }] },
+        plugins: [ChartDataLabels],
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: chartTickColor(), font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const val = ctx.raw;
+                  const pct = total ? Math.round((val / total) * 100) : 0;
+                  return `${ctx.label}: ${val} (${pct}%)`;
+                }
+              }
+            },
+            datalabels: {
+              color: '#fff', font: { weight: 'bold', size: 12 },
+              formatter: (value) => {
+                const pct = total ? Math.round((value / total) * 100) : 0;
+                return value > 0 ? value + ' (' + pct + '%)' : '';
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderChartsExamenes(alumnos) {
+      destruirChartsExamenes();
+      chartExamenesBasico = renderChartDonutNivel('chart-examenes-basico', alumnos, 'BASICO');
+      chartExamenesIntermedio = renderChartDonutNivel('chart-examenes-intermedio', alumnos, 'INTERMEDIO');
+      chartExamenesAvanzado = renderChartDonutNivel('chart-examenes-avanzado', alumnos, 'AVANZADO');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  CLAVE DE EXÁMENES (Director: configurar la respuesta correcta)
+    // ══════════════════════════════════════════════════════════════════
+    async function cargarSelectsClaveDirector() {
+      const salonSelect = document.getElementById('clave-salon-select');
+      if (!salonSelect.dataset.cargado) {
+        try {
+          const headers = { 'Authorization': 'Bearer ' + token };
+          const res = await fetch('/api/alumnos/salones', { headers });
+          const salones = await res.json();
+          salonSelect.innerHTML = '<option value="">Selecciona un salón...</option>' +
+            salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+          salonSelect.dataset.cargado = '1';
+        } catch (err) { console.error('Error cargando salones (clave):', err); }
+      }
+      const cursoSelect = document.getElementById('clave-curso-select');
+      if (!cursoSelect.dataset.cargado) {
+        try {
+          const headers = { 'Authorization': 'Bearer ' + token };
+          const res = await fetch('/api/examenes/cursos', { headers });
+          const cursos = await res.json();
+          cursoSelect.innerHTML = '<option value="">Selecciona un curso...</option>' +
+            cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+          cursoSelect.dataset.cargado = '1';
+        } catch (err) { console.error('Error cargando cursos (clave):', err); }
+      }
+    }
+
+    let claveActualPreguntas = []; // [{pregunta, nivel, respuesta_correcta}]
+
+    function nivelDePreguntaFront(p) {
+      return p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
+    }
+    function nombreNivel(n) {
+      return n === 'BASICO' ? 'Básico' : n === 'INTERMEDIO' ? 'Intermedio' : 'Avanzado';
+    }
+
+    async function cargarClaveDirector() {
+      const salonId = document.getElementById('clave-salon-select').value;
+      const curso = document.getElementById('clave-curso-select').value;
+      const tbody = document.getElementById('tabla-clave');
+      const banner = document.getElementById('clave-estado-banner');
+      banner.style.display = 'none';
+
+      if (!salonId || !curso) {
+        tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🗝️</div><p>Selecciona un salón y un curso</p></div></td></tr>';
+        claveActualPreguntas = [];
+        return;
+      }
+
+      tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/examenes/clave?salon_id=${salonId}&curso=${encodeURIComponent(curso)}`, { headers });
+        const data = await res.json();
+        const guardadas = {}; // { pregunta: letra }
+        (data.preguntas || []).forEach(p => { guardadas[p.pregunta] = p.respuesta_correcta; });
+
+        const hayGuardada = Object.keys(guardadas).length > 0;
+        const sugeridas = (EXAMENES_CLAVE_SUGERIDA[curso] || {});
+
+        claveActualPreguntas = [];
+        for (let p = 1; p <= 25; p++) {
+          claveActualPreguntas.push({
+            pregunta: p,
+            nivel: nivelDePreguntaFront(p),
+            respuesta_correcta: guardadas[p] || (hayGuardada ? '' : (sugeridas[p] || ''))
+          });
+        }
+
+        if (data.completa) {
+          banner.style.display = 'block';
+          banner.style.background = 'rgba(46,204,113,0.12)';
+          banner.style.border = '1px solid rgba(46,204,113,0.35)';
+          banner.style.color = 'var(--green)';
+          banner.textContent = '✅ Clave completa y guardada para este salón y curso.';
+        } else if (!hayGuardada && Object.keys(sugeridas).length) {
+          banner.style.display = 'block';
+          banner.style.background = 'var(--amber-bg)';
+          banner.style.border = '1px solid rgba(243,156,18,0.35)';
+          banner.style.color = 'var(--amber)';
+          banner.textContent = '⚠️ Esto es una SUGERENCIA leída de la foto de tu examen, todavía no está guardada. Revisa cada respuesta contra tu papel físico y dale "Guardar clave".';
+        } else {
+          banner.style.display = 'block';
+          banner.style.background = 'var(--amber-bg)';
+          banner.style.border = '1px solid rgba(243,156,18,0.35)';
+          banner.style.color = 'var(--amber)';
+          banner.textContent = '⚠️ Todavía faltan preguntas por configurar en esta clave.';
+        }
+
+        renderTablaClave();
+      } catch (err) {
+        console.error('Error cargando clave:', err);
+        tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la clave</p></div></td></tr>';
+      }
+    }
+
+    function opcionesClave(seleccionada) {
+      const opciones = [{ v: '', t: '—' }, { v: 'A', t: 'A' }, { v: 'B', t: 'B' }, { v: 'C', t: 'C' }, { v: 'D', t: 'D' }, { v: 'E', t: 'E' }];
+      return opciones.map(o => `<option value="${o.v}" ${o.v === (seleccionada || '') ? 'selected' : ''}>${o.t}</option>`).join('');
+    }
+
+    function renderTablaClave() {
+      const tbody = document.getElementById('tabla-clave');
+      const curso = document.getElementById('clave-curso-select').value;
+      const dudas = (EXAMENES_CLAVE_DUDAS[curso] || {});
+
+      tbody.innerHTML = claveActualPreguntas.map(p => {
+        const duda = dudas[p.pregunta];
+        const filaEstilo = duda ? 'background:rgba(230,57,70,0.12)' : '';
+        return `<tr style="${filaEstilo}">
+          <td>${p.pregunta}${duda ? ' ⚠️' : ''}</td>
+          <td>${nombreNivel(p.nivel)}</td>
+          <td>
+            <select onchange="claveActualPreguntas[${p.pregunta - 1}].respuesta_correcta = this.value"
+              style="padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;width:70px">
+              ${opcionesClave(p.respuesta_correcta)}
+            </select>
+            ${duda ? `<div style="font-size:11px;color:var(--accent2);margin-top:4px;max-width:380px">${duda}</div>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function guardarClaveLote() {
+      const salonId = document.getElementById('clave-salon-select').value;
+      const curso = document.getElementById('clave-curso-select').value;
+      const status = document.getElementById('clave-guardar-status');
+      if (!salonId || !curso) {
+        alert('Selecciona un salón y un curso antes de guardar.');
+        return;
+      }
+      const respuestas = claveActualPreguntas.map(p => ({ pregunta: p.pregunta, respuesta_correcta: p.respuesta_correcta || null }));
+      try {
+        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/examenes/clave/lote', {
+          method: 'PUT', headers,
+          body: JSON.stringify({ salon_id: salonId, curso, respuestas })
+        });
+        if (!res.ok) throw new Error('save failed');
+        status.textContent = '✅ Clave guardada correctamente';
+        status.style.color = 'var(--green)';
+        status.style.opacity = '1';
+        setTimeout(() => { status.style.opacity = '0'; }, 3000);
+        await cargarClaveDirector();
+      } catch (err) {
+        status.textContent = '⚠️ No se pudo guardar, intenta de nuevo';
+        status.style.color = 'var(--accent2)';
+        status.style.opacity = '1';
+      }
     }
 
     // ══════════════════════════════

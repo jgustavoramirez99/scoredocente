@@ -191,5 +191,40 @@ pool.query(`CREATE TABLE IF NOT EXISTS psico_alumnos_seguimiento (
     }
   })
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "psico_alumnos_seguimiento":', err.message));
+// ══════════════════════════════════════════════════════════════════════
+// Exámenes diagnósticos (clave de respuestas + respuestas de alumnos)
+// ══════════════════════════════════════════════════════════════════════
+// Un examen = 25 preguntas fijas por curso, agrupadas en 3 niveles:
+//  BÁSICO (1-10, aprueba con ≥80%), INTERMEDIO (11-20, ≥50%),
+//  AVANZADO (21-25, literal 1/5 = 20%). Se escala por salón (no por fecha):
+//  cada salón tiene su propia clave por curso, y cada alumno sus propias
+//  respuestas marcadas. El sistema compara automáticamente contra la clave
+//  (la auxiliar nunca ve la clave, solo digita lo que marcó el alumno).
+pool.query(`CREATE TABLE IF NOT EXISTS examenes_clave (
+  id SERIAL PRIMARY KEY,
+  salon_id INTEGER NOT NULL,
+  curso VARCHAR(60) NOT NULL,
+  pregunta INTEGER NOT NULL CHECK (pregunta BETWEEN 1 AND 25),
+  nivel VARCHAR(20) NOT NULL,
+  respuesta_correcta CHAR(1),
+  actualizado_por INTEGER,
+  actualizado_en TIMESTAMP DEFAULT NOW(),
+  UNIQUE (salon_id, curso, pregunta)
+)`)
+  .then(() => console.log('✅ Tabla "examenes_clave" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "examenes_clave":', err.message));
+
+pool.query(`CREATE TABLE IF NOT EXISTS examenes_respuestas (
+  id SERIAL PRIMARY KEY,
+  alumno_id INTEGER NOT NULL,
+  curso VARCHAR(60) NOT NULL,
+  pregunta INTEGER NOT NULL CHECK (pregunta BETWEEN 1 AND 25),
+  respuesta_marcada CHAR(1),
+  actualizado_por INTEGER,
+  actualizado_en TIMESTAMP DEFAULT NOW(),
+  UNIQUE (alumno_id, curso, pregunta)
+)`)
+  .then(() => console.log('✅ Tabla "examenes_respuestas" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "examenes_respuestas":', err.message));
 
 module.exports = pool;
