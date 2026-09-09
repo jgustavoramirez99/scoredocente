@@ -275,7 +275,7 @@ router.post('/respuesta/lote', verificarToken, permitirRoles(...ROLES_RESPUESTAS
 //  (el guardado real sigue pasando por POST /respuesta/lote de arriba)
 // ══════════════════════════════
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 const PROMPT_ANALISIS_FOTO = `Estás viendo la foto de un examen de opción múltiple ya resuelto por un estudiante de secundaria en Perú. El examen tiene exactamente 25 preguntas numeradas del 1 al 25, organizadas en tres bloques impresos en la hoja: preguntas 1-10 (nivel Básico), 11-20 (nivel Intermedio) y 21-25 (nivel Avanzado). Cada pregunta tiene varias opciones marcadas con letras (A, B, C, D, E — no todas las preguntas tienen 5 opciones).
 
