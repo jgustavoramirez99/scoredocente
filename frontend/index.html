@@ -836,12 +836,13 @@
     .laura-welcome-card {
       position: relative;
       z-index: 10000;
-      background: linear-gradient(135deg, #cdb4db 0%, #ffc2d1 50%, #ffddd2 100%);
+      background: linear-gradient(135deg, #cdb4db, #ffc2d1, #ffddd2, #ffc2d1, #cdb4db);
+      background-size: 300% 300%;
       padding: 3px;
       border-radius: 20px;
       max-width: 380px;
       width: 90%;
-      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite;
+      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite, laura-gradient-shift 8s ease-in-out infinite;
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .laura-welcome-card-inner {
@@ -862,8 +863,13 @@
       margin: 0 auto 1rem;
       border: 3px solid #ffc2d1;
       box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      cursor: pointer;
+      transition: rotate 0.3s ease;
       animation: laura-photo-pop 0.5s 0.15s both cubic-bezier(.34,1.56,.64,1),
                  laura-heartbeat 1.8s ease-in-out 0.7s infinite;
+    }
+    .laura-welcome-photo:hover {
+      rotate: -8deg;
     }
     @keyframes laura-photo-pop {
       from { opacity: 0; transform: scale(0.6); }
@@ -1360,6 +1366,23 @@
       0%, 100% { translate: 0 0; }
       25% { translate: -10px 0; }
       75% { translate: 10px 0; }
+    }
+    @keyframes laura-gradient-shift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .laura-float-heart {
+      position: fixed;
+      bottom: -20px;
+      z-index: 10001;
+      pointer-events: none;
+      animation: laura-float-up 4.5s linear forwards;
+    }
+    @keyframes laura-float-up {
+      0%   { transform: translateY(0) scale(0.7); opacity: 0; }
+      15%  { opacity: 0.9; }
+      100% { transform: translateY(-70vh) scale(1.15); opacity: 0; }
     }
     @keyframes laura-float {
       0%   { top: 12%; left: 8%; }
@@ -3907,12 +3930,53 @@
       laura_panelIndex = 0;
       renderPanelLaura(0);
       iniciarConfettiLaura();
+      iniciarCorazonesFlotantesLaura();
+      iniciarBrilloPeriodicoLaura();
     }
 
     function cerrarBienvenidaLaura() {
       const overlay = document.getElementById('laura-welcome-overlay');
       if (overlay) overlay.classList.remove('show');
       detenerConfettiLaura();
+      detenerCorazonesFlotantesLaura();
+      detenerBrilloPeriodicoLaura();
+    }
+
+    let laura_floatHeartsTimer = null;
+    function iniciarCorazonesFlotantesLaura() {
+      const emojis = ['💗', '💕', '💖', '✨'];
+      function spawn() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const h = document.createElement('span');
+        h.className = 'laura-float-heart';
+        h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        h.style.left = (Math.random() * 92 + 4) + 'vw';
+        h.style.fontSize = (14 + Math.random() * 10) + 'px';
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 4600);
+      }
+      spawn();
+      laura_floatHeartsTimer = setInterval(spawn, 700);
+    }
+    function detenerCorazonesFlotantesLaura() {
+      if (laura_floatHeartsTimer) { clearInterval(laura_floatHeartsTimer); laura_floatHeartsTimer = null; }
+      document.querySelectorAll('.laura-float-heart').forEach(el => el.remove());
+    }
+
+    let laura_shineTimer = null;
+    function iniciarBrilloPeriodicoLaura() {
+      if (laura_shineTimer) clearInterval(laura_shineTimer);
+      laura_shineTimer = setInterval(() => {
+        const tituloEl = document.getElementById('laura-welcome-title');
+        if (!tituloEl || tituloEl.classList.contains('laura-typing')) return;
+        tituloEl.classList.remove('laura-shine');
+        void tituloEl.offsetWidth;
+        tituloEl.classList.add('laura-shine');
+      }, 4000);
+    }
+    function detenerBrilloPeriodicoLaura() {
+      if (laura_shineTimer) { clearInterval(laura_shineTimer); laura_shineTimer = null; }
     }
 
     function explotarCorazonesBoton(btn) {
