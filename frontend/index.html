@@ -3180,9 +3180,10 @@
       <!-- MODAL EVALUACIÓN TUTOR -->
 <div class="modal" id="modal-evaluacion-tutor">
   <div class="modal-card" style="max-width:680px;max-height:90vh;overflow-y:auto">
-    <div class="modal-title">Evaluar tutoría</div>
+    <div class="modal-title" id="modal-tutor-titulo">Evaluar tutoría</div>
     <div class="modal-subtitle" id="modal-tutor-nombre-sub">Completa los puntajes</div>
     <input type="hidden" id="modal-tutor-docente-id">
+    <input type="hidden" id="modal-tutor-eval-id">
 
     <div class="eval-grid" style="margin-bottom:0.75rem">
       <div class="form-group"><label>Fecha</label><input type="date" id="tutor-eval-fecha"></div>
@@ -4386,14 +4387,24 @@
     const resEval = await fetch('/api/evaluaciones-tutor/mias', { headers });
     const evaluaciones = await resEval.json();
     document.getElementById('tabla-psico-historial').innerHTML = evaluaciones.length
-  ? evaluaciones.map(e => `
+  ? evaluaciones.map(e => {
+      const camposIndTutor = ['planif','sesion','acomp','padres','present'].flatMap(p => [1,2,3,4,5].map(i => p + '_ind' + i));
+      const faltantes = camposIndTutor.filter(c => e[c] === null || e[c] === undefined).length;
+      const badgePuntaje = faltantes > 0
+        ? `<span class="badge badge-amber">⚠️ Incompleta (${25 - faltantes}/25)</span>`
+        : `<span class="badge ${parseFloat(e.puntaje_total) >= 90 ? 'badge-gold' : parseFloat(e.puntaje_total) >= 80 ? 'badge-green' : parseFloat(e.puntaje_total) >= 70 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span>`;
+      return `
     <tr>
       <td style="color:var(--text);font-weight:500">${e.docente_nombre}</td>
       <td style="color:var(--text3)">${e.grado_seccion || '—'}</td>
-      <td><span class="badge ${parseFloat(e.puntaje_total) >= 90 ? 'badge-gold' : parseFloat(e.puntaje_total) >= 80 ? 'badge-green' : parseFloat(e.puntaje_total) >= 70 ? 'badge-amber' : 'badge-red'}">${parseFloat(e.puntaje_total).toFixed(1)}%</span></td>
+      <td>${badgePuntaje}</td>
       <td style="color:var(--text3)">${new Date(e.creado_en).toLocaleDateString('es-PE')}</td>
-      <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacionTutor(${e.id})">🗑 Eliminar</button></td>
-    </tr>`).join('')
+      <td>
+        <button class="eval-btn" onclick="editarEvaluacionTutor(${e.id})">✏️ Editar</button>
+        <button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="eliminarEvaluacionTutor(${e.id})">🗑 Eliminar</button>
+      </td>
+    </tr>`;
+    }).join('')
   : '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>';
   } catch (err) {
     console.error('Error cargando datos:', err);
@@ -4552,6 +4563,8 @@ async function cargarResultadosPsico() {
 }
 
 function evaluarTutor(id, nombre) {
+  document.getElementById('modal-tutor-titulo').textContent = 'Evaluar tutoría';
+  document.getElementById('modal-tutor-eval-id').value = '';
   document.getElementById('modal-tutor-nombre-sub').textContent = nombre;
   document.getElementById('modal-tutor-docente-id').value = id;
   document.querySelectorAll('#modal-evaluacion-tutor input[type="radio"]').forEach(r => r.checked = false);
@@ -4567,6 +4580,50 @@ function evaluarTutor(id, nombre) {
   document.getElementById('tutor-eval-hora').value = ahora.toTimeString().slice(0,5);
 
   document.getElementById('modal-evaluacion-tutor').style.display = 'flex';
+}
+
+// Abre el mismo formulario pero precargado con una evaluación ya guardada,
+// para poder corregirla o completar lo que faltó (PUT en vez de POST al guardar).
+async function editarEvaluacionTutor(evalId) {
+  try {
+    const headers = { 'Authorization': 'Bearer ' + token };
+    const res = await fetch('/api/evaluaciones-tutor/' + evalId, { headers });
+    if (!res.ok) { alert('No se pudo cargar la evaluación'); return; }
+    const e = await res.json();
+
+    document.getElementById('modal-tutor-titulo').textContent = 'Editar evaluación de tutoría';
+    document.getElementById('modal-tutor-eval-id').value = e.id;
+    document.getElementById('modal-tutor-docente-id').value = e.docente_id;
+    document.getElementById('modal-tutor-nombre-sub').textContent = e.docente_nombre + ' — editando';
+    document.getElementById('tutor-grado-seccion').value = e.grado_seccion || '';
+    document.getElementById('tutor-eval-fecha').value = e.fecha_eval || '';
+    document.getElementById('tutor-eval-hora').value = e.hora_eval || '';
+
+    ['planif','sesion','acomp','padres','present'].forEach(prefijo => {
+      for (let i = 1; i <= 5; i++) {
+        const valor = e[prefijo + '_ind' + i];
+        document.querySelectorAll(`#modal-evaluacion-tutor input[name="${prefijo}${i}"]`).forEach(r => {
+          r.checked = valor !== null && valor !== undefined && String(valor) === r.value;
+        });
+      }
+    });
+
+    document.getElementById('tutor-observacion').value = e.observacion || '';
+    document.getElementById('tutor-fortaleza1').value = e.fortaleza1 || '';
+    document.getElementById('tutor-fortaleza2').value = e.fortaleza2 || '';
+    document.getElementById('tutor-fortaleza3').value = e.fortaleza3 || '';
+    document.getElementById('tutor-mejora1').value = e.mejora1 || '';
+    document.getElementById('tutor-mejora2').value = e.mejora2 || '';
+    document.getElementById('tutor-mejora3').value = e.mejora3 || '';
+    document.getElementById('tutor-compromisos').value = e.compromisos || '';
+    document.getElementById('tutor-recomendaciones').value = e.recomendaciones || '';
+
+    calcSubtotalTutor();
+    document.getElementById('modal-evaluacion-tutor').style.display = 'flex';
+  } catch (err) {
+    console.error('Error cargando evaluación para editar:', err);
+    alert('Error de conexión al cargar la evaluación');
+  }
 }
 
 function cerrarModalTutor() {
@@ -4588,6 +4645,7 @@ function calcSubtotalTutor() {
 }
 
 async function guardarEvaluacionTutor() {
+  const evalId       = document.getElementById('modal-tutor-eval-id').value;
   const docente_id  = document.getElementById('modal-tutor-docente-id').value;
   const fecha_eval   = document.getElementById('tutor-eval-fecha').value;
   const hora_eval    = document.getElementById('tutor-eval-hora').value;
@@ -4609,14 +4667,13 @@ async function guardarEvaluacionTutor() {
     for (let i = 1; i <= 5; i++) campos[prefijo + '_ind' + i] = getRadio(prefijo + i);
   });
 
-  if (Object.values(campos).some(v => v === null)) {
-    alert('⚠️ Debes marcar todos los indicadores antes de guardar');
-    return;
-  }
+  // Ya no es obligatorio marcar todos los indicadores — se puede guardar con
+  // lo que haya hasta el momento y completarlo después con "Editar".
+  const faltan = Object.values(campos).filter(v => v === null).length;
 
   try {
-    const res = await fetch('/api/evaluaciones-tutor', {
-      method: 'POST',
+    const res = await fetch('/api/evaluaciones-tutor' + (evalId ? '/' + evalId : ''), {
+      method: evalId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({
         docente_id, fecha_eval, hora_eval, observacion, grado_seccion,
@@ -4633,7 +4690,8 @@ async function guardarEvaluacionTutor() {
     });
     const data = await res.json();
     if (!res.ok) { alert('Error: ' + data.error); return; }
-    alert('✅ Evaluación de tutoría guardada! Puntaje: ' + data.promedio + '%');
+    const avisoFaltan = faltan > 0 ? ` (quedan ${faltan} indicador(es) sin marcar — puedes completarlos después con "Editar")` : '';
+    alert((evalId ? '✅ Evaluación actualizada! ' : '✅ Evaluación de tutoría guardada! ') + 'Puntaje: ' + data.promedio + '%' + avisoFaltan);
     cerrarModalTutor();
     cargarDatosPsicologa();
   } catch (err) {

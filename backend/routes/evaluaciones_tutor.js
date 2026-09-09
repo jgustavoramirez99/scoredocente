@@ -105,11 +105,9 @@ router.post('/', verificarToken, async (req, res) => {
   }
   const b = req.body;
 
-  // Validar que todos los indicadores lleguen marcados
-  const faltantes = CAMPOS_IND.filter(c => b[c] === undefined || b[c] === null);
-  if (faltantes.length) {
-    return res.status(400).json({ error: 'Faltan indicadores: ' + faltantes.join(', ') });
-  }
+  // Ya no se exige que todos los indicadores lleguen marcados: la psicóloga
+  // puede guardar lo que tenga hasta el momento y completar/corregir después
+  // con PUT /api/evaluaciones-tutor/:id (botón "Editar").
 
   if (!b.grado_seccion) {
     return res.status(400).json({ error: 'Falta el grado/sección de tutoría' });
@@ -132,7 +130,7 @@ router.post('/', verificarToken, async (req, res) => {
 
     const valores = [
       b.docente_id, req.usuario.id, b.fecha_eval || null, b.hora_eval || null, b.grado_seccion,
-      ...CAMPOS_IND.map(c => b[c]),
+      ...CAMPOS_IND.map(c => (b[c] === undefined ? null : b[c])),
       b.observacion || null, b.fortaleza1 || null, b.fortaleza2 || null, b.fortaleza3 || null,
       b.mejora1 || null, b.mejora2 || null, b.mejora3 || null,
       b.compromisos || null, b.recomendaciones || null,
@@ -164,6 +162,74 @@ router.post('/', verificarToken, async (req, res) => {
   } catch (err) {
     console.error('Error al guardar evaluación de tutoría:', err);
     res.status(500).json({ error: 'Error al guardar evaluación de tutoría' });
+  }
+});
+
+// PUT /api/evaluaciones-tutor/:id — editar/completar una evaluación ya guardada
+// (solo la psicóloga que la registró puede editarla)
+router.put('/:id', verificarToken, async (req, res) => {
+  if (req.usuario.rol !== ROL_EVALUADOR) {
+    return res.status(403).json({ error: 'Solo la psicóloga puede editar esta evaluación' });
+  }
+  const b = req.body;
+
+  if (!b.grado_seccion) {
+    return res.status(400).json({ error: 'Falta el grado/sección de tutoría' });
+  }
+
+  const suma = c => CAMPOS_IND
+    .filter(k => k.startsWith(c))
+    .reduce((acc, k) => acc + (parseInt(b[k]) || 0), 0);
+
+  const puntaje_total =
+    suma('planif') + suma('sesion') + suma('acomp') + suma('padres') + suma('present');
+
+  try {
+    const cols = ['fecha_eval', 'hora_eval', 'grado_seccion',
+      ...CAMPOS_IND,
+      'observacion', 'fortaleza1', 'fortaleza2', 'fortaleza3',
+      'mejora1', 'mejora2', 'mejora3', 'compromisos', 'recomendaciones',
+      'puntaje_total'];
+
+    const valores = [
+      b.fecha_eval || null, b.hora_eval || null, b.grado_seccion,
+      ...CAMPOS_IND.map(c => (b[c] === undefined ? null : b[c])),
+      b.observacion || null, b.fortaleza1 || null, b.fortaleza2 || null, b.fortaleza3 || null,
+      b.mejora1 || null, b.mejora2 || null, b.mejora3 || null,
+      b.compromisos || null, b.recomendaciones || null,
+      puntaje_total
+    ];
+
+    const setClause = cols.map((c, i) => `${c} = $${i + 1}`).join(', ');
+    // $(n+1) = id de la evaluación, $(n+2) = supervisor_id (solo puede editar la suya)
+    const result = await db.query(
+      `UPDATE evaluaciones_tutor SET ${setClause}
+       WHERE id = $${valores.length + 1} AND supervisor_id = $${valores.length + 2}
+       RETURNING *`,
+      [...valores, req.params.id, req.usuario.id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'No se encontró la evaluación (o no te pertenece)' });
+    }
+
+    const fila = result.rows[0];
+    const docRes = await db.query('SELECT nombre, apellido FROM docentes WHERE id = $1', [fila.docente_id]);
+    const nombreDocente = docRes.rows[0] ? `${docRes.rows[0].nombre} ${docRes.rows[0].apellido}` : `docente_id ${fila.docente_id}`;
+
+    registrarAuditoria({
+      tabla: 'evaluaciones_tutor',
+      registro_id: fila.id,
+      accion: 'editar',
+      usuario: req.usuario,
+      descripcion: `Evaluación de tutoría editada — ${nombreDocente} — grado/sección ${fila.grado_seccion || '—'}`,
+      datos: fila
+    });
+
+    res.json({ ...fila, promedio: puntaje_total.toFixed(1) });
+  } catch (err) {
+    console.error('Error al editar evaluación de tutoría:', err);
+    res.status(500).json({ error: 'Error al editar evaluación de tutoría' });
   }
 });
 
