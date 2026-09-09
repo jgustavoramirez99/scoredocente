@@ -841,7 +841,7 @@
       border-radius: 20px;
       max-width: 380px;
       width: 90%;
-      animation: laura-pop 0.5s cubic-bezier(.34,1.56,.64,1);
+      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite;
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
     .laura-welcome-card-inner {
@@ -1351,6 +1351,15 @@
     @keyframes laura-pop {
       from { opacity: 0; transform: scale(0.7); }
       to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes laura-card-pop {
+      from { opacity: 0; scale: 0.7; }
+      to   { opacity: 1; scale: 1; }
+    }
+    @keyframes laura-sway {
+      0%, 100% { translate: 0 0; }
+      25% { translate: -10px 0; }
+      75% { translate: 10px 0; }
     }
     @keyframes laura-float {
       0%   { top: 12%; left: 8%; }
@@ -3813,7 +3822,7 @@
     const LAURA_PANELES = [
       {
         titulo: "Sistema ScoreDocente certifica: eres la mejor auxiliar del colegio (y mi favorita en general) 😏❤️",
-        nota: "Enamorado ando por ti señorita ❤️",
+        nota: "Pensando en ti más de lo que debería jaja ❤️",
         boton: "Gracias ❤️",
         foto: "laura-gustavo-hoy.jpg"
       }
