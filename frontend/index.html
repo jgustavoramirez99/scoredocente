@@ -386,6 +386,7 @@
       margin-left: var(--sidebar-w);
       padding: 2rem 2.5rem;
       min-height: 100vh;
+      min-width: 0;
     }
 
     .page-header {
@@ -611,6 +612,26 @@
     .whatsapp-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
+    }
+
+    /* ══════════════════════════════
+       EXÁMENES: columnas fijas al hacer scroll horizontal
+    ══════════════════════════════ */
+    #tabla-examenes-wrap th:nth-child(1), #tabla-examenes-wrap td:nth-child(1) {
+      position: sticky; left: 0; z-index: 2; min-width: 44px; width: 44px;
+      background: var(--surface);
+    }
+    #tabla-examenes-wrap th:nth-child(2), #tabla-examenes-wrap td:nth-child(2) {
+      position: sticky; left: 44px; z-index: 2;
+      min-width: 150px; width: 150px;
+      background: var(--surface);
+      box-shadow: 2px 0 5px rgba(0,0,0,0.18);
+    }
+    #tabla-examenes-wrap thead th:nth-child(1), #tabla-examenes-wrap thead th:nth-child(2) {
+      z-index: 3; background: var(--surface2);
+    }
+    #examenes-filtros-rapidos .eval-btn.activo {
+      background: var(--accent); color: #fff; border-color: var(--accent);
     }
 
     /* ══════════════════════════════
@@ -2499,6 +2520,18 @@
         </div>
 
         <div id="examenes-clave-banner" style="display:none;background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
+
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;margin-bottom:0.9rem">
+          <input type="text" id="examenes-buscador" placeholder="🔍 Buscar alumno por nombre..." oninput="aplicarFiltrosExamenes()"
+            style="flex:1;min-width:200px;max-width:300px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap" id="examenes-filtros-rapidos">
+            <button type="button" class="eval-btn" data-filtro="todos" onclick="setFiltroRapidoExamenes('todos')">Todos</button>
+            <button type="button" class="eval-btn" data-filtro="sin-empezar" onclick="setFiltroRapidoExamenes('sin-empezar')">Sin empezar</button>
+            <button type="button" class="eval-btn" data-filtro="incompleto" onclick="setFiltroRapidoExamenes('incompleto')">Incompletos</button>
+            <button type="button" class="eval-btn" data-filtro="completo" onclick="setFiltroRapidoExamenes('completo')">Completos</button>
+          </div>
+          <button type="button" class="eval-btn" id="examenes-btn-orden" onclick="toggleOrdenAvanceExamenes()">↕️ Ordenar: primero los que faltan</button>
+        </div>
 
         <div class="table-card" style="overflow-x:auto">
           <div class="table-header"><h3>Registro de respuestas</h3></div>
@@ -6970,6 +7003,52 @@ async function guardarEvaluacionTutor() {
         : `<span class="badge badge-red">✗ ${nivel.correctas}/${nivel.total}</span>`;
     }
 
+    function normalizarTextoExamen(s) {
+      return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    }
+
+    function contarRespondidasExamen(a) {
+      return Object.keys(a.respuestas || {}).filter(k => (a.respuestas || {})[k]).length;
+    }
+
+    let examenesFiltroActivo = 'todos';
+    let examenesOrdenAvance = false;
+
+    function alumnosFiltradosExamenes(alumnos) {
+      const q = normalizarTextoExamen(document.getElementById('examenes-buscador') ? document.getElementById('examenes-buscador').value : '');
+      let lista = alumnos.filter(a => {
+        if (q && !normalizarTextoExamen(a.apellidos_nombres).includes(q)) return false;
+        const n = contarRespondidasExamen(a);
+        if (examenesFiltroActivo === 'sin-empezar') return n === 0;
+        if (examenesFiltroActivo === 'incompleto') return n > 0 && n < 25;
+        if (examenesFiltroActivo === 'completo') return n === 25;
+        return true;
+      });
+      if (examenesOrdenAvance) {
+        lista = lista.slice().sort((a, b) => contarRespondidasExamen(a) - contarRespondidasExamen(b));
+      }
+      return lista;
+    }
+
+    function aplicarFiltrosExamenes() {
+      renderTablaExamenes(examenesAlumnosActuales);
+    }
+
+    function setFiltroRapidoExamenes(filtro) {
+      examenesFiltroActivo = filtro;
+      document.querySelectorAll('#examenes-filtros-rapidos .eval-btn').forEach(btn => {
+        btn.classList.toggle('activo', btn.getAttribute('data-filtro') === filtro);
+      });
+      renderTablaExamenes(examenesAlumnosActuales);
+    }
+
+    function toggleOrdenAvanceExamenes() {
+      examenesOrdenAvance = !examenesOrdenAvance;
+      const btn = document.getElementById('examenes-btn-orden');
+      if (btn) btn.classList.toggle('activo', examenesOrdenAvance);
+      renderTablaExamenes(examenesAlumnosActuales);
+    }
+
     function renderTablaExamenes(alumnos) {
       const thead = document.getElementById('examenes-thead-row');
       const tbody = document.getElementById('tabla-examenes-alumnos');
@@ -6986,8 +7065,23 @@ async function guardarEvaluacionTutor() {
       document.getElementById('examenes-n-evaluados').textContent =
         alumnos.length ? (alumnos.filter(a => Object.keys(a.respuestas || {}).length > 0).length + ' de ' + alumnos.length + ' con respuestas') : '';
 
-      tbody.innerHTML = alumnos.length ? alumnos.map(a => {
-        let fila = `<tr><td>${a.numero ?? '—'}</td><td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>` +
+      const visibles = alumnosFiltradosExamenes(alumnos);
+
+      if (!alumnos.length) {
+        tbody.innerHTML = `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>`;
+        return;
+      }
+
+      if (!visibles.length) {
+        tbody.innerHTML = `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🔍</div><p>Ningún alumno coincide con la búsqueda/filtro</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = visibles.map(a => {
+        const completo = contarRespondidasExamen(a) === 25;
+        const bgFila = completo ? 'background:rgba(46,204,113,0.12)' : '';
+        const bgSticky = completo ? 'background-image:linear-gradient(rgba(46,204,113,.18),rgba(46,204,113,.18))' : '';
+        let fila = `<tr style="${bgFila}"><td style="${bgSticky}">${a.numero ?? '—'}</td><td style="color:var(--text);font-weight:500;${bgSticky}">${a.apellidos_nombres}${completo ? ' ✅' : ''}</td>` +
           `<td style="text-align:center"><button type="button" onclick="abrirSelectorFotoExamen(${a.alumno_id})" title="Subir foto del examen para que la IA sugiera las respuestas" style="padding:6px 9px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:14px">📷</button></td>`;
         for (let p = 1; p <= 25; p++) {
           const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
@@ -7002,7 +7096,7 @@ async function guardarEvaluacionTutor() {
         fila += `<td id="examen-avanzado-${a.alumno_id}">${badgeAprobadoNivel(a.niveles.AVANZADO)}</td>`;
         fila += '</tr>';
         return fila;
-      }).join('') : `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>`;
+      }).join('');
     }
 
     async function guardarRespuestaExamen(alumnoId, pregunta) {
