@@ -3527,6 +3527,25 @@
   </div>
 </div>
 
+<!-- MODAL: analizar foto de examen con IA -->
+<input type="file" id="examen-foto-input" accept="image/*" capture="environment" style="display:none" onchange="manejarFotoExamenSeleccionada(event)">
+<div class="modal" id="modal-foto-examen">
+  <div class="modal-card" style="max-width:640px;max-height:90vh;overflow-y:auto">
+    <div class="modal-title">📷 Revisar respuestas detectadas</div>
+    <div class="modal-subtitle" id="foto-examen-nombre">—</div>
+    <img id="foto-examen-preview" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);margin-bottom:1rem" alt="Foto del examen">
+    <div id="foto-examen-cargando" style="text-align:center;padding:2rem 0;color:var(--text2)">
+      <div style="font-size:32px;margin-bottom:0.5rem">🔎</div>
+      Analizando la foto con IA, un momento...
+    </div>
+    <div id="foto-examen-resultado" style="display:none"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalFotoExamen()">Cancelar</button>
+      <button class="btn-save" id="foto-examen-btn-aprobar" onclick="aprobarYGuardarFotoExamen()">✅ Aprobar y guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Mensajería interna — disponible para TODAS las cuentas -->
 <button class="msgs-fab" id="msgs-fab" onclick="toggleMensajes()">
   ✉️<span class="msgs-fab-badge" id="msgs-fab-badge"></span>
@@ -6896,9 +6915,9 @@ async function guardarEvaluacionTutor() {
     function renderTablaExamenes(alumnos) {
       const thead = document.getElementById('examenes-thead-row');
       const tbody = document.getElementById('tabla-examenes-alumnos');
-      const totalCols = 2 + 25 + 3;
+      const totalCols = 2 + 1 + 25 + 3;
 
-      let headHtml = '<th>N°</th><th>Apellidos y Nombres</th>';
+      let headHtml = '<th>N°</th><th>Apellidos y Nombres</th><th>Foto</th>';
       for (let p = 1; p <= 25; p++) {
         const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
         headHtml += `<th style="background:${colorNivelExamen(nivel)}">${p}</th>`;
@@ -6910,7 +6929,8 @@ async function guardarEvaluacionTutor() {
         alumnos.length ? (alumnos.filter(a => Object.keys(a.respuestas || {}).length > 0).length + ' de ' + alumnos.length + ' con respuestas') : '';
 
       tbody.innerHTML = alumnos.length ? alumnos.map(a => {
-        let fila = `<tr><td>${a.numero ?? '—'}</td><td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>`;
+        let fila = `<tr><td>${a.numero ?? '—'}</td><td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>` +
+          `<td style="text-align:center"><button type="button" onclick="abrirSelectorFotoExamen(${a.alumno_id})" title="Subir foto del examen para que la IA sugiera las respuestas" style="padding:6px 9px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:14px">📷</button></td>`;
         for (let p = 1; p <= 25; p++) {
           const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
           fila += `<td style="background:${colorNivelExamen(nivel)}">
@@ -6968,6 +6988,141 @@ async function guardarEvaluacionTutor() {
         renderChartsExamenes(examenesAlumnosActuales);
       } catch (err) {
         console.error('Error refrescando fila/gráficos de exámenes:', err);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Analizar foto del examen con IA — sugiere respuestas, la
+    //  auxiliar las revisa/corrige y recién ahí aprueba y guarda
+    //  (el guardado real usa el mismo endpoint /respuesta/lote)
+    // ══════════════════════════════════════════════════════════════
+    let examenFotoAlumnoActual = null;
+    let examenFotoRespuestasActuales = [];
+
+    function abrirSelectorFotoExamen(alumnoId) {
+      if (!document.getElementById('examenes-curso-select').value) {
+        alert('Primero selecciona el curso.');
+        return;
+      }
+      examenFotoAlumnoActual = alumnoId;
+      document.getElementById('examen-foto-input').click();
+    }
+
+    function partesDataUrlExamen(dataUrl) {
+      const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl);
+      return m ? { mime: m[1], base64: m[2] } : { mime: 'image/jpeg', base64: dataUrl };
+    }
+
+    function manejarFotoExamenSeleccionada(ev) {
+      const file = ev.target.files[0];
+      const alumnoId = examenFotoAlumnoActual;
+      ev.target.value = '';
+      if (!file || !alumnoId) return;
+      if (file.size > 8 * 1024 * 1024) {
+        alert('La foto no debe superar 8 MB');
+        return;
+      }
+      const alumno = examenesAlumnosActuales.find(a => a.alumno_id === alumnoId);
+      const curso = document.getElementById('examenes-curso-select').value;
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result;
+        const { mime, base64 } = partesDataUrlExamen(dataUrl);
+        abrirModalFotoExamenCargando(alumno, dataUrl);
+        try {
+          const res = await fetch('/api/examenes/analizar-foto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ imagen_base64: base64, mime_type: mime, curso })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al analizar la foto');
+          examenFotoRespuestasActuales = data.respuestas || [];
+          renderResultadoFotoExamen();
+        } catch (err) {
+          console.error('Error analizando foto de examen:', err);
+          cerrarModalFotoExamen();
+          alert('No se pudo analizar la foto: ' + (err.message || 'intenta de nuevo'));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function abrirModalFotoExamenCargando(alumno, dataUrl) {
+      document.getElementById('foto-examen-nombre').textContent = alumno ? alumno.apellidos_nombres : '';
+      document.getElementById('foto-examen-preview').src = dataUrl;
+      document.getElementById('foto-examen-cargando').style.display = 'block';
+      document.getElementById('foto-examen-resultado').style.display = 'none';
+      document.getElementById('foto-examen-btn-aprobar').style.display = 'none';
+      document.getElementById('modal-foto-examen').style.display = 'flex';
+    }
+
+    function renderResultadoFotoExamen() {
+      document.getElementById('foto-examen-cargando').style.display = 'none';
+      document.getElementById('foto-examen-btn-aprobar').style.display = '';
+      const cont = document.getElementById('foto-examen-resultado');
+      cont.style.display = 'block';
+
+      const mapa = {};
+      examenFotoRespuestasActuales.forEach(r => { mapa[r.pregunta] = r; });
+
+      let dudosas = 0;
+      let grid = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1rem">';
+      for (let p = 1; p <= 25; p++) {
+        const r = mapa[p] || {};
+        const esDudosa = r.confianza === 'dudosa';
+        if (esDudosa) dudosas++;
+        const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
+        grid += `<div style="background:${esDudosa ? 'var(--amber-bg)' : colorNivelExamen(nivel)};border:1px solid ${esDudosa ? 'rgba(243,156,18,0.5)' : 'var(--border2)'};border-radius:8px;padding:6px;text-align:center">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:3px">P${p}${esDudosa ? ' ⚠️' : ''}</div>
+          <select id="foto-examen-p-${p}" style="width:100%;padding:4px 2px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px">
+            ${opcionesExamen(r.respuesta || '')}
+          </select>
+        </div>`;
+      }
+      grid += '</div>';
+
+      let banner = '';
+      if (dudosas > 0) {
+        banner = `<div style="background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:1rem">⚠️ ${dudosas} respuesta(s) resaltada(s) en amarillo — la IA no está segura, compáralas con el papel físico antes de aprobar.</div>`;
+      }
+      cont.innerHTML = banner + grid;
+    }
+
+    function cerrarModalFotoExamen() {
+      document.getElementById('modal-foto-examen').style.display = 'none';
+      examenFotoAlumnoActual = null;
+      examenFotoRespuestasActuales = [];
+    }
+
+    async function aprobarYGuardarFotoExamen() {
+      const alumnoId = examenFotoAlumnoActual;
+      const curso = document.getElementById('examenes-curso-select').value;
+      if (!alumnoId || !curso) return;
+      const respuestas = [];
+      for (let p = 1; p <= 25; p++) {
+        const sel = document.getElementById(`foto-examen-p-${p}`);
+        if (sel) respuestas.push({ pregunta: p, respuesta: sel.value || null });
+      }
+      const btn = document.getElementById('foto-examen-btn-aprobar');
+      const textoOriginal = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+      try {
+        const res = await fetch('/api/examenes/respuesta/lote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ alumno_id: alumnoId, curso, respuestas })
+        });
+        if (!res.ok) throw new Error();
+        cerrarModalFotoExamen();
+        await cargarGridExamenes();
+      } catch (err) {
+        alert('No se pudieron guardar las respuestas. Intenta de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
       }
     }
 

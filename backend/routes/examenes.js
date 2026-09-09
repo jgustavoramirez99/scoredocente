@@ -269,4 +269,135 @@ router.post('/respuesta/lote', verificarToken, permitirRoles(...ROLES_RESPUESTAS
   }
 });
 
+// ══════════════════════════════
+//  ANALIZAR FOTO DEL EXAMEN CON IA (Gemini) — sugiere respuestas,
+//  la auxiliar las revisa/corrige y recién ahí las aprueba y guarda
+//  (el guardado real sigue pasando por POST /respuesta/lote de arriba)
+// ══════════════════════════════
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+const PROMPT_ANALISIS_FOTO = `Estás viendo la foto de un examen de opción múltiple ya resuelto por un estudiante de secundaria en Perú. El examen tiene exactamente 25 preguntas numeradas del 1 al 25, organizadas en tres bloques impresos en la hoja: preguntas 1-10 (nivel Básico), 11-20 (nivel Intermedio) y 21-25 (nivel Avanzado). Cada pregunta tiene varias opciones marcadas con letras (A, B, C, D, E — no todas las preguntas tienen 5 opciones).
+
+El estudiante marca la opción que eligió de distintas formas: puede encerrarla en un círculo, subrayarla, marcarla con una X, o tacharla. Tu trabajo es identificar, para cada una de las 25 preguntas, qué letra marcó el estudiante como su respuesta final.
+
+Reglas importantes:
+- Si una pregunta quedó sin marcar (en blanco), usa respuesta "" (vacío) y confianza "alta".
+- Si el estudiante tachó una opción para descartarla y encerró/marcó claramente otra como su respuesta final, esa marcada es la respuesta — ignora las tachadas.
+- Si hay una marca ambigua (dos opciones marcadas, no se distingue bien cuál quedó seleccionada, el estudiante escribió una opción a mano que no corresponde a ninguna letra impresa, o la marca no se lee con claridad), da tu mejor estimación en "respuesta" pero marca "confianza": "dudosa" para que una persona lo revise contra el papel físico. No dejes de dar una estimación — usa tu mejor intento y confianza "dudosa" en vez de omitir la pregunta.
+- Usa "confianza": "alta" solo cuando la marca es clara e inequívoca.
+
+Devuelve exactamente 25 entradas, una por cada pregunta del 1 al 25, en orden.`;
+
+const ESQUEMA_ANALISIS_FOTO = {
+  type: 'object',
+  properties: {
+    respuestas: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          pregunta: { type: 'integer' },
+          respuesta: { type: 'string', enum: ['A', 'B', 'C', 'D', 'E', ''] },
+          confianza: { type: 'string', enum: ['alta', 'dudosa'] }
+        },
+        required: ['pregunta', 'respuesta', 'confianza']
+      }
+    }
+  },
+  required: ['respuestas']
+};
+
+// Busca el texto generado dentro de la respuesta de la Interactions API,
+// que puede venir en distintas formas según el tipo de contenido.
+function extraerTextoGemini(data) {
+  if (!data) return null;
+  if (typeof data.output_text === 'string') return data.output_text;
+  const steps = Array.isArray(data.steps) ? data.steps : [];
+  for (const step of steps) {
+    const contenidos = Array.isArray(step.content) ? step.content : [];
+    for (const c of contenidos) {
+      if (typeof c.text === 'string' && c.text.trim()) return c.text;
+      if (c.json) return JSON.stringify(c.json);
+    }
+  }
+  return null;
+}
+
+// POST /api/examenes/analizar-foto  { imagen_base64, mime_type, curso }
+// Devuelve { respuestas: [{pregunta, respuesta, confianza}, ...] } — NO guarda nada,
+// solo sugiere. El guardado real lo hace la auxiliar al aprobar (POST /respuesta/lote).
+router.post('/analizar-foto', verificarToken, permitirRoles(...ROLES_RESPUESTAS), async (req, res) => {
+  try {
+    const { imagen_base64, mime_type, curso } = req.body;
+    if (!imagen_base64) {
+      return res.status(400).json({ error: 'imagen_base64 es requerida' });
+    }
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'Falta configurar GEMINI_API_KEY en el servidor' });
+    }
+
+    const body = {
+      model: GEMINI_MODEL,
+      input: [
+        { type: 'text', text: PROMPT_ANALISIS_FOTO },
+        { type: 'image', data: imagen_base64, mime_type: mime_type || 'image/jpeg' }
+      ],
+      response_format: {
+        type: 'text',
+        mime_type: 'application/json',
+        schema: ESQUEMA_ANALISIS_FOTO
+      }
+    };
+
+    const respuestaGemini = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: {
+        'x-goog-api-key': process.env.GEMINI_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await respuestaGemini.json().catch(() => null);
+
+    if (!respuestaGemini.ok) {
+      console.error('Error de Gemini analizando foto:', respuestaGemini.status, JSON.stringify(data));
+      return res.status(502).json({ error: 'La IA no pudo procesar la foto. Intenta de nuevo en un momento.' });
+    }
+
+    const texto = extraerTextoGemini(data);
+    if (!texto) {
+      console.error('Respuesta inesperada de Gemini:', JSON.stringify(data));
+      return res.status(502).json({ error: 'La IA respondió en un formato inesperado' });
+    }
+
+    let resultado;
+    try {
+      resultado = JSON.parse(texto);
+    } catch (e) {
+      console.error('No se pudo parsear el JSON de Gemini:', texto);
+      return res.status(502).json({ error: 'La IA no devolvió un resultado válido, intenta con otra foto' });
+    }
+
+    if (!Array.isArray(resultado.respuestas)) {
+      return res.status(502).json({ error: 'La IA no devolvió las respuestas en el formato esperado' });
+    }
+
+    registrarAuditoria({
+      tabla: 'examenes_respuestas',
+      registro_id: 'analisis-foto',
+      accion: 'analizar_foto_ia',
+      usuario: req.usuario,
+      descripcion: `Análisis de foto de examen con IA — curso ${curso || '(sin especificar)'}`,
+      datos: { curso: curso || null, total_respuestas: resultado.respuestas.length }
+    });
+
+    res.json({ respuestas: resultado.respuestas });
+  } catch (err) {
+    console.error('Error analizando foto de examen:', err);
+    res.status(500).json({ error: 'Error al analizar la foto del examen' });
+  }
+});
+
 module.exports = router;
