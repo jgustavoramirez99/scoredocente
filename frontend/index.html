@@ -892,8 +892,31 @@
     .laura-welcome-photo:hover {
       rotate: -8deg;
     }
+    .laura-welcome-photo.laura-welcome-photo-grande {
+      width: 184px;
+      height: 184px;
+      border-width: 4px;
+    }
     @keyframes laura-photo-pop {
       from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .laura-welcome-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, #ffd166, #ffc2d1);
+      color: #14141c;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 0.7rem;
+      box-shadow: 0 4px 14px rgba(255,193,7,0.35);
+      animation: laura-badge-pop 0.4s 0.1s both cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes laura-badge-pop {
+      from { opacity: 0; transform: scale(0.5); }
       to   { opacity: 1; transform: scale(1); }
     }
     @keyframes laura-heartbeat {
@@ -1444,6 +1467,7 @@
       <div class="laura-welcome-card-inner">
         <img class="laura-welcome-photo" id="laura-welcome-photo" src="laura-gustavo.jpg" alt="">
         <div class="laura-welcome-date" id="laura-welcome-date"></div>
+        <div class="laura-welcome-badge" id="laura-welcome-badge" style="display:none"></div>
         <div class="laura-welcome-title" id="laura-welcome-title"></div>
         <div class="laura-welcome-note" id="laura-welcome-note">Enamorado ando por ti señorita ❤️</div>
         <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
@@ -3897,10 +3921,16 @@
     // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
     const LAURA_PANELES = [
       {
-        titulo: "Sistema ScoreDocente certifica: eres la mejor auxiliar del colegio (y mi favorita en general) 😏❤️",
+        badge: "⭐ Auxiliar destacada",
+        titulo: "Alerta del sistema: Muy buenos días señorita Laura, hoy también vas a hacer que todo funcione mejor, como siempre. Que tengas un excelente día....",
         nota: "Pensando en ti más de lo que debería jaja ❤️",
-        boton: "Gracias ❤️",
-        foto: "laura-gustavo-hoy.jpg"
+        boton: "Gracias ❤️"
+      },
+      {
+        titulo: "Día 47 pensando que eres lo mejor que me pasó este año",
+        boton: "Te quiero ❤️",
+        foto: "laura-gustavo-hoy.jpg",
+        fotoGrande: true
       }
     ];
     let laura_panelIndex = 0;
@@ -3938,6 +3968,7 @@
       const notaEl = document.getElementById('laura-welcome-note');
       const btnEl = document.getElementById('laura-welcome-btn');
       const fotoEl = document.getElementById('laura-welcome-photo');
+      const badgeEl = document.getElementById('laura-welcome-badge');
       const panel = LAURA_PANELES[i];
       if (!panel) return;
       if (tituloEl) tituloEl.classList.remove('laura-shine');
@@ -3953,9 +3984,20 @@
         notaEl.style.display = panel.nota ? '' : 'none';
       }
       if (btnEl) btnEl.textContent = panel.boton;
+      if (badgeEl) {
+        if (panel.badge) {
+          badgeEl.textContent = panel.badge;
+          badgeEl.style.display = 'none';
+          void badgeEl.offsetWidth; // reinicia la animación
+          badgeEl.style.display = 'inline-block';
+        } else {
+          badgeEl.style.display = 'none';
+        }
+      }
       if (fotoEl) {
         if (panel.foto) {
           fotoEl.src = panel.foto;
+          fotoEl.classList.toggle('laura-welcome-photo-grande', !!panel.fotoGrande);
           fotoEl.style.display = 'none';
           void fotoEl.offsetWidth; // reinicia la animación de aparición
           fotoEl.style.display = '';
