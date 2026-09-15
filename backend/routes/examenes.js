@@ -11,6 +11,9 @@ const ROLES_LECTURA = ['auxiliar', 'director', 'directora', 'coordinador_general
 // Quién puede ver/editar la CLAVE de respuestas correctas (nunca la auxiliar,
 // para no influenciar cómo digita lo que marcó el alumno)
 const ROLES_CLAVE = ['director', 'directora', 'coordinador_general'];
+// Quién puede APROBAR una clave ya completa antes de que la auxiliar pueda usarla
+// (más estricto que ROLES_CLAVE: solo el Gerente General, como pidió Gustavo)
+const ROLES_APROBAR_CLAVE = ['director'];
 
 function permitirRoles(...rolesPermitidos) {
   return (req, res, next) => {
@@ -40,6 +43,29 @@ function nivelVacio() {
   return { correctas: 0, respondidas: 0, total: 0, aprobado: null };
 }
 
+// Resuelve si la clave de un salón+curso está completa y, si lo está, si ya fue
+// aprobada por el Gerente General. Se usa tanto para mostrar el estado en pantalla
+// como para bloquear el guardado de respuestas de alumnos mientras no esté aprobada.
+async function obtenerEstadoClave(salon_id, curso) {
+  const claveRes = await db.query(
+    'SELECT respuesta_correcta FROM examenes_clave WHERE salon_id = $1 AND curso = $2',
+    [salon_id, curso]
+  );
+  const completa = claveRes.rows.length === 25 && claveRes.rows.every(f => f.respuesta_correcta);
+  const estadoRes = await db.query(
+    'SELECT aprobada, aprobada_por, aprobada_en FROM examenes_clave_estado WHERE salon_id = $1 AND curso = $2',
+    [salon_id, curso]
+  );
+  const estado = estadoRes.rows[0];
+  const aprobada = completa && !!(estado && estado.aprobada);
+  return {
+    completa,
+    aprobada,
+    aprobada_por: aprobada ? estado.aprobada_por : null,
+    aprobada_en: aprobada ? estado.aprobada_en : null
+  };
+}
+
 // ══════════════════════════════
 //  CURSOS DISPONIBLES
 // ══════════════════════════════
@@ -61,8 +87,14 @@ router.get('/clave', verificarToken, permitirRoles(...ROLES_CLAVE), async (req, 
       [salon_id, curso]
     );
     const filas = result.rows;
-    const completa = filas.length === 25 && filas.every(f => f.respuesta_correcta);
-    res.json({ preguntas: filas, completa });
+    const estado = await obtenerEstadoClave(salon_id, curso);
+    res.json({
+      preguntas: filas,
+      completa: estado.completa,
+      aprobada: estado.aprobada,
+      aprobada_por: estado.aprobada_por,
+      aprobada_en: estado.aprobada_en
+    });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener la clave de respuestas' });
   }
@@ -100,6 +132,15 @@ router.put('/clave/lote', verificarToken, permitirRoles(...ROLES_CLAVE), async (
         [salon_id, curso, pregunta, nivel, letra, req.usuario.id]
       );
     }
+    // Cualquier edición de la clave quita la aprobación previa (si la había):
+    // el Gerente General debe revisar y aprobar de nuevo antes de que la
+    // auxiliar pueda seguir registrando respuestas con esta clave.
+    await client.query(
+      `INSERT INTO examenes_clave_estado (salon_id, curso, aprobada, aprobada_por, aprobada_en)
+       VALUES ($1, $2, false, NULL, NULL)
+       ON CONFLICT (salon_id, curso) DO UPDATE SET aprobada = false, aprobada_por = NULL, aprobada_en = NULL`,
+      [salon_id, curso]
+    );
     await client.query('COMMIT');
 
     const result = await client.query(
@@ -118,12 +159,61 @@ router.put('/clave/lote', verificarToken, permitirRoles(...ROLES_CLAVE), async (
       datos: { salon_id, curso, total: filas.length }
     });
 
-    res.json({ preguntas: filas, completa });
+    res.json({ preguntas: filas, completa, aprobada: false, aprobada_por: null, aprobada_en: null });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: 'Error al guardar la clave de respuestas' });
   } finally {
     client.release();
+  }
+});
+
+// PUT /api/examenes/clave/aprobar  { salon_id, curso, aprobar }
+// Solo el Gerente General (ROLES_APROBAR_CLAVE) puede aprobar — o revocar la
+// aprobación de — una clave ya completa. Mientras no esté aprobada, la auxiliar
+// no puede registrar respuestas de alumnos con esta clave (ver POST /respuesta
+// y /respuesta/lote más abajo).
+router.put('/clave/aprobar', verificarToken, permitirRoles(...ROLES_APROBAR_CLAVE), async (req, res) => {
+  try {
+    const { salon_id, curso } = req.body;
+    const aprobar = req.body.aprobar !== false; // default true
+    if (!salon_id || !curso) {
+      return res.status(400).json({ error: 'salon_id y curso son requeridos' });
+    }
+
+    if (aprobar) {
+      const estadoPrevio = await obtenerEstadoClave(salon_id, curso);
+      if (!estadoPrevio.completa) {
+        return res.status(400).json({ error: 'La clave todavía no tiene las 25 preguntas completas — no se puede aprobar' });
+      }
+      await db.query(
+        `INSERT INTO examenes_clave_estado (salon_id, curso, aprobada, aprobada_por, aprobada_en)
+         VALUES ($1, $2, true, $3, now())
+         ON CONFLICT (salon_id, curso) DO UPDATE SET aprobada = true, aprobada_por = $3, aprobada_en = now()`,
+        [salon_id, curso, req.usuario.id]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO examenes_clave_estado (salon_id, curso, aprobada, aprobada_por, aprobada_en)
+         VALUES ($1, $2, false, NULL, NULL)
+         ON CONFLICT (salon_id, curso) DO UPDATE SET aprobada = false, aprobada_por = NULL, aprobada_en = NULL`,
+        [salon_id, curso]
+      );
+    }
+
+    registrarAuditoria({
+      tabla: 'examenes_clave_estado',
+      registro_id: `${salon_id}-${curso}`,
+      accion: aprobar ? 'aprobar_clave' : 'revocar_aprobacion_clave',
+      usuario: req.usuario,
+      descripcion: `${aprobar ? 'Clave de exámenes aprobada' : 'Aprobación de clave revocada'} — salón ${salon_id}, curso ${curso}`,
+      datos: { salon_id, curso }
+    });
+
+    const estado = await obtenerEstadoClave(salon_id, curso);
+    res.json(estado);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar la aprobación de la clave' });
   }
 });
 
@@ -143,6 +233,7 @@ router.get('/grid', verificarToken, permitirRoles(...ROLES_LECTURA), async (req,
     const clave = {}; // { pregunta: 'A' }
     claveRes.rows.forEach(f => { if (f.respuesta_correcta) clave[f.pregunta] = f.respuesta_correcta; });
     const claveCompleta = Object.keys(clave).length === 25;
+    const estadoClave = await obtenerEstadoClave(salon_id, curso);
 
     const alumnosRes = await db.query(
       'SELECT id, numero, apellidos_nombres FROM alumnos WHERE salon_id = $1 AND activo = true ORDER BY numero',
@@ -193,7 +284,7 @@ router.get('/grid', verificarToken, permitirRoles(...ROLES_LECTURA), async (req,
       };
     });
 
-    res.json({ clave_completa: claveCompleta, alumnos: data });
+    res.json({ clave_completa: claveCompleta, clave_aprobada: estadoClave.aprobada, alumnos: data });
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener la cuadrícula del examen' });
   }
@@ -213,6 +304,16 @@ router.post('/respuesta', verificarToken, permitirRoles(...ROLES_RESPUESTAS), as
     if (respuesta && !LETRAS_VALIDAS.includes(respuesta)) {
       return res.status(400).json({ error: 'La respuesta debe ser A, B, C, D o E' });
     }
+
+    const alumnoRes = await db.query('SELECT salon_id FROM alumnos WHERE id = $1', [alumno_id]);
+    if (!alumnoRes.rows.length) {
+      return res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+    const estado = await obtenerEstadoClave(alumnoRes.rows[0].salon_id, curso);
+    if (!estado.aprobada) {
+      return res.status(403).json({ error: 'La clave de este curso todavía no fue aprobada por el Gerente General. No se pueden registrar respuestas todavía.' });
+    }
+
     const result = await db.query(
       `INSERT INTO examenes_respuestas (alumno_id, curso, pregunta, respuesta_marcada, actualizado_por)
        VALUES ($1, $2, $3, $4, $5)
@@ -246,6 +347,20 @@ router.post('/respuesta/lote', verificarToken, permitirRoles(...ROLES_RESPUESTAS
       return res.status(400).json({ error: `Respuesta inválida en la pregunta ${pregunta}: ${r.respuesta}` });
     }
   }
+
+  try {
+    const alumnoRes = await db.query('SELECT salon_id FROM alumnos WHERE id = $1', [alumno_id]);
+    if (!alumnoRes.rows.length) {
+      return res.status(404).json({ error: 'Alumno no encontrado' });
+    }
+    const estado = await obtenerEstadoClave(alumnoRes.rows[0].salon_id, curso);
+    if (!estado.aprobada) {
+      return res.status(403).json({ error: 'La clave de este curso todavía no fue aprobada por el Gerente General. No se pueden registrar respuestas todavía.' });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: 'Error al verificar el estado de la clave' });
+  }
+
   const client = await db.connect();
   try {
     await client.query('BEGIN');

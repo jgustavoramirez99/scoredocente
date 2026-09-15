@@ -227,4 +227,28 @@ pool.query(`CREATE TABLE IF NOT EXISTS examenes_respuestas (
   .then(() => console.log('✅ Tabla "examenes_respuestas" verificada'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "examenes_respuestas":', err.message));
 
+// Aprobación de claves por el Gerente General: mientras la clave de un salón+curso
+// esté completa pero no aprobada aquí, la auxiliar no puede registrar respuestas de
+// alumnos con ella (lo bloquean POST /respuesta y /respuesta/lote en examenes.js).
+pool.query(`CREATE TABLE IF NOT EXISTS examenes_clave_estado (
+  salon_id INTEGER NOT NULL,
+  curso VARCHAR(60) NOT NULL,
+  aprobada BOOLEAN NOT NULL DEFAULT false,
+  aprobada_por INTEGER,
+  aprobada_en TIMESTAMP,
+  PRIMARY KEY (salon_id, curso)
+)`)
+  .then(() => console.log('✅ Tabla "examenes_clave_estado" verificada'))
+  .then(() => pool.query(`
+    INSERT INTO examenes_clave_estado (salon_id, curso, aprobada, aprobada_en)
+    SELECT salon_id, curso, true, NOW()
+    FROM examenes_clave
+    WHERE respuesta_correcta IS NOT NULL
+    GROUP BY salon_id, curso
+    HAVING COUNT(*) = 25
+    ON CONFLICT (salon_id, curso) DO NOTHING
+  `))
+  .then(r => { if (r && r.rowCount) console.log(`✅ ${r.rowCount} clave(s) que ya estaban completas se aprobaron automáticamente (para no romper lo que ya funcionaba)`); })
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "examenes_clave_estado":', err.message));
+
 module.exports = pool;
