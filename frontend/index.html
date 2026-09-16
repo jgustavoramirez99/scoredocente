@@ -2778,6 +2778,7 @@
           <h3>Alumnos en seguimiento</h3>
           <div style="display:flex;gap:0.6rem">
             <button class="eval-btn" onclick="agregarFilaPsicoLista()">➕ Agregar alumno</button>
+            <button class="eval-btn" style="background:#4CAF7D;color:white;border-color:#4CAF7D" onclick="exportarExcelPsicoLista()">📊 Exportar a Excel</button>
             <button class="eval-btn" style="background:var(--accent);color:white;border-color:var(--accent)" onclick="guardarListaPsico()">💾 Guardar cambios</button>
           </div>
         </div>
@@ -4610,7 +4611,35 @@ async function guardarListaPsico() {
   }
 }
 
+async function exportarExcelPsicoLista() {
+  try {
+    let url = '/api/psico-alumnos/exportar-excel';
+    if (psicoListaFiltroFecha) {
+      url += '?fecha=' + encodeURIComponent(psicoListaFiltroFecha);
+    }
+    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert('Error: ' + (data.error || 'no se pudo generar el Excel'));
+      return;
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const fileName = match ? match[1] : `alumnos_seguimiento_psicologia_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+  } catch (err) {
+    console.error('Error exportando Excel:', err);
+    alert('Error de conexión al exportar');
+  }
+}
 // Todas las evaluaciones de tutoría (no solo las propias). Reutiliza el mismo
 // modal de detalle y el mismo botón de PDF que usa el director, ya que ambos
 // son genéricos y no dependen del rol — solo llaman a los mismos endpoints.
