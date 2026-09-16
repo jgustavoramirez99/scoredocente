@@ -1534,6 +1534,7 @@
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
       <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
       <div class="nav-item" onclick="showSection('examenes-clave', this)">🗝️ Clave de Exámenes</div>
+      <div class="nav-item" id="nav-resultados-examenes" onclick="showSection('resultados-examenes', this)">📊 Resultados de Exámenes</div>
       <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
       <div class="nav-item" id="nav-coordinadores" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
       <div class="nav-item" id="nav-fichas" onclick="showSection('fichas', this)">🗂️ Fichas de Docentes</div>
@@ -1921,6 +1922,65 @@
             <thead><tr><th>N° Pregunta</th><th>Nivel</th><th>Respuesta correcta</th></tr></thead>
             <tbody id="tabla-clave"><tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🗝️</div><p>Selecciona un salón y un curso</p></div></td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-resultados-examenes">
+        <div class="page-header">
+          <div class="page-title">Resultados de Exámenes Diagnósticos</div>
+          <div class="page-subtitle">Vista de solo lectura de lo que va registrando la auxiliar — aquí no se puede editar ninguna respuesta, solo consultar los resultados y los gráficos de aprobados por nivel de cada salón.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Salón</label>
+            <select id="resex-salon-select" onchange="cargarResultadosExamenesDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Curso</label>
+            <select id="resex-curso-select" onchange="cargarResultadosExamenesDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un curso...</option>
+            </select>
+          </div>
+          <div style="color:var(--text2);font-size:13px;padding-bottom:9px" id="resex-n-evaluados"></div>
+        </div>
+
+        <div id="resex-clave-banner" style="display:none;background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
+
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;margin-bottom:0.9rem">
+          <input type="text" id="resex-buscador" placeholder="🔍 Buscar alumno por nombre..." oninput="aplicarFiltrosResultadosExamenes()"
+            style="flex:1;min-width:200px;max-width:300px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap" id="resex-filtros-rapidos">
+            <button type="button" class="eval-btn" data-filtro="todos" onclick="setFiltroRapidoResultadosExamenes('todos')">Todos</button>
+            <button type="button" class="eval-btn" data-filtro="sin-empezar" onclick="setFiltroRapidoResultadosExamenes('sin-empezar')">Sin empezar</button>
+            <button type="button" class="eval-btn" data-filtro="incompleto" onclick="setFiltroRapidoResultadosExamenes('incompleto')">Incompletos</button>
+            <button type="button" class="eval-btn" data-filtro="completo" onclick="setFiltroRapidoResultadosExamenes('completo')">Completos</button>
+          </div>
+        </div>
+
+        <div class="table-card" style="overflow-x:auto">
+          <div class="table-header"><h3>Respuestas registradas <span style="color:var(--text2);font-size:12px;font-weight:500">(solo lectura)</span></h3></div>
+          <table id="tabla-resex-wrap" style="min-width:1100px">
+            <thead><tr id="resex-thead-row"><th>N°</th><th>Apellidos y Nombres</th></tr></thead>
+            <tbody id="tabla-resex-alumnos"><tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📊</div><p>Selecciona un salón y un curso</p></div></td></tr></tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-top:1.5rem" id="resex-charts-grid">
+          <div class="table-card">
+            <div class="table-header"><h3>Nivel Básico<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con ≥ 80%</span></h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-resex-basico"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Nivel Intermedio<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con ≥ 50%</span></h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-resex-intermedio"></canvas></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><h3>Nivel Avanzado<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con 1 de 5 (20%)</span></h3></div>
+            <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-resex-avanzado"></canvas></div>
+          </div>
         </div>
       </div>
 
@@ -4296,6 +4356,9 @@
       if (navApod) navApod.style.display = 'none';
       const navAsis = document.getElementById('nav-asistencia');
       if (navAsis) navAsis.style.display = 'none';
+      // ✅ Resultados de Exámenes (solo lectura): solo lo ve el Gerente General
+      const navResEx = document.getElementById('nav-resultados-examenes');
+      if (navResEx) navResEx.style.display = 'none';
     }
 
     // ✅ Coordinadores: solo lo ve la cuenta exacta del Gerente General
@@ -4337,6 +4400,7 @@
       if (id === 'tutoria') cargarTutoriaDirector();
       if (id === 'censal') cargarSalonesCensalDirector();
       if (id === 'examenes-clave') cargarSelectsClaveDirector();
+      if (id === 'resultados-examenes') cargarSelectsResultadosExamenes();
       if (id === 'auditoria') cargarAuditoria();
       if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
       if (id === 'coordinadores') cargarCoordinadores();
@@ -7432,6 +7496,164 @@ async function guardarEvaluacionTutor() {
       chartExamenesBasico = renderChartDonutNivel('chart-examenes-basico', alumnos, 'BASICO');
       chartExamenesIntermedio = renderChartDonutNivel('chart-examenes-intermedio', alumnos, 'INTERMEDIO');
       chartExamenesAvanzado = renderChartDonutNivel('chart-examenes-avanzado', alumnos, 'AVANZADO');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  RESULTADOS DE EXÁMENES (Director/Gerente General — SOLO LECTURA)
+    //  Misma información que digita la auxiliar, pero sin poder editar
+    //  ninguna respuesta: se ve la letra marcada como texto y los gráficos
+    //  de aprobados por nivel de cada salón/curso.
+    // ══════════════════════════════════════════════════════════════════
+    let resexAlumnosActuales = [];
+    let resexFiltroActivo = 'todos';
+    let chartResexBasico = null, chartResexIntermedio = null, chartResexAvanzado = null;
+
+    async function cargarSelectsResultadosExamenes() {
+      const salonSelect = document.getElementById('resex-salon-select');
+      if (!salonSelect.dataset.cargado) {
+        try {
+          const headers = { 'Authorization': 'Bearer ' + token };
+          const res = await fetch('/api/alumnos/salones', { headers });
+          const salones = await res.json();
+          salonSelect.innerHTML = '<option value="">Selecciona un salón...</option>' +
+            salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+          salonSelect.dataset.cargado = '1';
+        } catch (err) { console.error('Error cargando salones (resultados exámenes):', err); }
+      }
+      const cursoSelect = document.getElementById('resex-curso-select');
+      if (!cursoSelect.dataset.cargado) {
+        try {
+          const headers = { 'Authorization': 'Bearer ' + token };
+          const res = await fetch('/api/examenes/cursos', { headers });
+          const cursos = await res.json();
+          cursoSelect.innerHTML = '<option value="">Selecciona un curso...</option>' +
+            cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+          cursoSelect.dataset.cargado = '1';
+        } catch (err) { console.error('Error cargando cursos (resultados exámenes):', err); }
+      }
+    }
+
+    function alumnosFiltradosResex(alumnos) {
+      const q = normalizarTextoExamen(document.getElementById('resex-buscador') ? document.getElementById('resex-buscador').value : '');
+      return alumnos.filter(a => {
+        if (q && !normalizarTextoExamen(a.apellidos_nombres).includes(q)) return false;
+        const n = contarRespondidasExamen(a);
+        if (resexFiltroActivo === 'sin-empezar') return n === 0;
+        if (resexFiltroActivo === 'incompleto') return n > 0 && n < 25;
+        if (resexFiltroActivo === 'completo') return n === 25;
+        return true;
+      });
+    }
+
+    function aplicarFiltrosResultadosExamenes() {
+      renderTablaResultadosExamenes(resexAlumnosActuales);
+    }
+
+    function setFiltroRapidoResultadosExamenes(filtro) {
+      resexFiltroActivo = filtro;
+      document.querySelectorAll('#resex-filtros-rapidos .eval-btn').forEach(btn => {
+        btn.classList.toggle('activo', btn.getAttribute('data-filtro') === filtro);
+      });
+      renderTablaResultadosExamenes(resexAlumnosActuales);
+    }
+
+    async function cargarResultadosExamenesDirector() {
+      const salonId = document.getElementById('resex-salon-select').value;
+      const curso = document.getElementById('resex-curso-select').value;
+      const thead = document.getElementById('resex-thead-row');
+      const tbody = document.getElementById('tabla-resex-alumnos');
+      const banner = document.getElementById('resex-clave-banner');
+      banner.style.display = 'none';
+      document.getElementById('resex-n-evaluados').textContent = '';
+
+      if (!salonId || !curso) {
+        thead.innerHTML = '<th>N°</th><th>Apellidos y Nombres</th>';
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">📊</div><p>Selecciona un salón y un curso</p></div></td></tr>';
+        destruirChartsResultadosExamenes();
+        resexAlumnosActuales = [];
+        return;
+      }
+
+      tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/examenes/grid?salon_id=${salonId}&curso=${encodeURIComponent(curso)}`, { headers });
+        const grid = await res.json();
+        resexAlumnosActuales = grid.alumnos || [];
+
+        if (!grid.clave_completa) {
+          banner.textContent = '⚠️ La clave de respuestas de este curso todavía no está completa, así que el aprobado/desaprobado por nivel todavía no se calcula.';
+          banner.style.display = 'block';
+        } else if (!grid.clave_aprobada) {
+          banner.textContent = '🔒 La clave de este curso está completa pero todavía no está aprobada — la auxiliar aún no puede registrar respuestas, así que aquí no debería haber datos nuevos hasta que la apruebes en "Clave de Exámenes".';
+          banner.style.display = 'block';
+        }
+
+        renderTablaResultadosExamenes(resexAlumnosActuales);
+        renderChartsResultadosExamenes(resexAlumnosActuales);
+      } catch (err) {
+        console.error('Error cargando resultados de examen (director):', err);
+        tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar el examen</p></div></td></tr>';
+      }
+    }
+
+    function renderTablaResultadosExamenes(alumnos) {
+      const thead = document.getElementById('resex-thead-row');
+      const tbody = document.getElementById('tabla-resex-alumnos');
+      const totalCols = 2 + 25 + 3;
+
+      let headHtml = '<th>N°</th><th>Apellidos y Nombres</th>';
+      for (let p = 1; p <= 25; p++) {
+        const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
+        headHtml += `<th style="background:${colorNivelExamen(nivel)}">${p}</th>`;
+      }
+      headHtml += '<th>Básico</th><th>Intermedio</th><th>Avanzado</th>';
+      thead.innerHTML = headHtml;
+
+      document.getElementById('resex-n-evaluados').textContent =
+        alumnos.length ? (alumnos.filter(a => Object.keys(a.respuestas || {}).length > 0).length + ' de ' + alumnos.length + ' con respuestas') : '';
+
+      const visibles = alumnosFiltradosResex(alumnos);
+
+      if (!alumnos.length) {
+        tbody.innerHTML = `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>`;
+        return;
+      }
+
+      if (!visibles.length) {
+        tbody.innerHTML = `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🔍</div><p>Ningún alumno coincide con la búsqueda/filtro</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = visibles.map(a => {
+        const completo = contarRespondidasExamen(a) === 25;
+        const bgFila = completo ? 'background:rgba(46,204,113,0.12)' : '';
+        const bgSticky = completo ? 'background-image:linear-gradient(rgba(46,204,113,.18),rgba(46,204,113,.18))' : '';
+        let fila = `<tr style="${bgFila}"><td style="${bgSticky}">${a.numero ?? '—'}</td><td style="color:var(--text);font-weight:500;${bgSticky}">${a.apellidos_nombres}${completo ? ' ✅' : ''}</td>`;
+        for (let p = 1; p <= 25; p++) {
+          const nivel = p <= 10 ? 'BASICO' : p <= 20 ? 'INTERMEDIO' : 'AVANZADO';
+          const marcada = (a.respuestas || {})[p];
+          fila += `<td style="background:${colorNivelExamen(nivel)};text-align:center;font-weight:600;color:var(--text)">${marcada || '<span style="color:var(--text3)">—</span>'}</td>`;
+        }
+        fila += `<td>${badgeAprobadoNivel(a.niveles.BASICO)}</td>`;
+        fila += `<td>${badgeAprobadoNivel(a.niveles.INTERMEDIO)}</td>`;
+        fila += `<td>${badgeAprobadoNivel(a.niveles.AVANZADO)}</td>`;
+        fila += '</tr>';
+        return fila;
+      }).join('');
+    }
+
+    function destruirChartsResultadosExamenes() {
+      [chartResexBasico, chartResexIntermedio, chartResexAvanzado].forEach(c => { if (c) c.destroy(); });
+      chartResexBasico = chartResexIntermedio = chartResexAvanzado = null;
+    }
+
+    function renderChartsResultadosExamenes(alumnos) {
+      destruirChartsResultadosExamenes();
+      chartResexBasico = renderChartDonutNivel('chart-resex-basico', alumnos, 'BASICO');
+      chartResexIntermedio = renderChartDonutNivel('chart-resex-intermedio', alumnos, 'INTERMEDIO');
+      chartResexAvanzado = renderChartDonutNivel('chart-resex-avanzado', alumnos, 'AVANZADO');
     }
 
     // ══════════════════════════════════════════════════════════════════
