@@ -901,6 +901,48 @@
       from { opacity: 0; transform: scale(0.6); }
       to   { opacity: 1; transform: scale(1); }
     }
+    /* ✨ Tema "sueño" — cielo nocturno con estrellitas, lunita y foto con brillo tipo portal */
+    .laura-welcome-card.laura-tema-sueno .laura-welcome-card-inner {
+      background:
+        radial-gradient(1.6px 1.6px at 18% 22%, rgba(255,255,255,0.95), transparent),
+        radial-gradient(1.6px 1.6px at 72% 14%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(1.2px 1.2px at 42% 58%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(1.6px 1.6px at 88% 42%, rgba(255,255,255,0.65), transparent),
+        radial-gradient(1.2px 1.2px at 10% 78%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(1.6px 1.6px at 58% 88%, rgba(255,255,255,0.65), transparent),
+        radial-gradient(1.2px 1.2px at 92% 82%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(1.2px 1.2px at 30% 92%, rgba(255,255,255,0.6), transparent),
+        linear-gradient(160deg, #1a1a3d 0%, #2d1b4e 55%, #14141c 100%);
+      background-repeat: no-repeat;
+      animation: laura-estrellas-titilar 2.4s ease-in-out infinite alternate;
+    }
+    @keyframes laura-estrellas-titilar {
+      from { filter: brightness(0.85); }
+      to   { filter: brightness(1.3); }
+    }
+    .laura-welcome-moon {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 22px;
+      filter: drop-shadow(0 0 6px rgba(255,244,214,0.8));
+      animation: laura-luna-brillo 3s ease-in-out infinite;
+    }
+    .laura-welcome-card.laura-tema-sueno .laura-welcome-moon { display: block; }
+    @keyframes laura-luna-brillo {
+      0%, 100% { opacity: 0.75; transform: scale(1); }
+      50%      { opacity: 1; transform: scale(1.12); }
+    }
+    .laura-welcome-photo.laura-welcome-photo-sueno {
+      animation: laura-photo-pop 0.5s 0.15s both cubic-bezier(.34,1.56,.64,1),
+                 laura-heartbeat 1.8s ease-in-out 0.7s infinite,
+                 laura-portal-glow 2.2s ease-in-out infinite;
+    }
+    @keyframes laura-portal-glow {
+      0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.35), 0 0 8px 2px rgba(205,180,219,0.45); }
+      50%      { box-shadow: 0 8px 20px rgba(0,0,0,0.35), 0 0 20px 7px rgba(255,194,209,0.7); }
+    }
     .laura-welcome-badge {
       display: inline-block;
       background: linear-gradient(90deg, #ffd166, #ffc2d1);
@@ -1463,8 +1505,9 @@
   <!-- BIENVENIDA PERSONALIZADA (solo cuenta de Laura) -->
   <canvas id="laura-confetti-canvas"></canvas>
   <div class="laura-welcome-overlay" id="laura-welcome-overlay">
-    <div class="laura-welcome-card">
+    <div class="laura-welcome-card" id="laura-welcome-card">
       <div class="laura-welcome-card-inner">
+        <span class="laura-welcome-moon">🌙</span>
         <img class="laura-welcome-photo" id="laura-welcome-photo" src="laura-gustavo.jpg" alt="">
         <div class="laura-welcome-date" id="laura-welcome-date"></div>
         <div class="laura-welcome-badge" id="laura-welcome-badge" style="display:none"></div>
@@ -3984,15 +4027,16 @@
     const LAURA_PANELES = [
       {
         badge: "⭐ Auxiliar destacada",
-        titulo: "Alerta del sistema: Ve y brilla como siempre, yo aquí sigo pensando en ti ❤️",
+        titulo: "Reporte diario: hoy va a ser un gran día — lo sé porque tú eres la mejor auxiliar de Cervantes School",
         nota: "Pensando en ti más de lo que debería jaja ❤️",
         boton: "Gracias ❤️"
       },
       {
-        titulo: "Desde ayer, oficialmente nosotros. Así empezamos esto, de la mano (en forma de corazón) ❤️",
+        titulo: "¿Qué soñaste anoche? Yo soñé viéndote ingresar en mi salón, así que sorpréndeme, mi princesa ❤️",
         boton: "Te quiero ❤️",
         foto: "laura-oficial.jpg",
-        fotoGrande: true
+        fotoGrande: true,
+        tema: "sueno"
       }
     ];
     let laura_panelIndex = 0;
@@ -4031,8 +4075,10 @@
       const btnEl = document.getElementById('laura-welcome-btn');
       const fotoEl = document.getElementById('laura-welcome-photo');
       const badgeEl = document.getElementById('laura-welcome-badge');
+      const cardEl = document.getElementById('laura-welcome-card');
       const panel = LAURA_PANELES[i];
       if (!panel) return;
+      if (cardEl) cardEl.classList.toggle('laura-tema-sueno', panel.tema === 'sueno');
       if (tituloEl) tituloEl.classList.remove('laura-shine');
       escribirTextoLaura(tituloEl, panel.titulo, 30, () => {
         if (tituloEl) {
@@ -4060,6 +4106,7 @@
         if (panel.foto) {
           fotoEl.src = panel.foto;
           fotoEl.classList.toggle('laura-welcome-photo-grande', !!panel.fotoGrande);
+          fotoEl.classList.toggle('laura-welcome-photo-sueno', panel.tema === 'sueno');
           fotoEl.style.display = 'none';
           void fotoEl.offsetWidth; // reinicia la animación de aparición
           fotoEl.style.display = '';
