@@ -97,6 +97,7 @@
     .login-credit {
       position: fixed;
       left: 20px;
+      right: 20px;
       bottom: 16px;
       z-index: 2;
       font-family: 'DM Sans', sans-serif;
@@ -913,6 +914,8 @@
     }
     .laura-mini-panel[data-pos="tl"] { top: 3%; left: 3%; }
     .laura-mini-panel[data-pos="tr"] { top: 3%; right: 3%; }
+    .laura-mini-panel[data-pos="ml"] { top: 42%; left: 2%; }
+    .laura-mini-panel[data-pos="mr"] { top: 42%; right: 2%; }
     .laura-mini-panel[data-pos="bl"] { bottom: 3%; left: 3%; }
     .laura-mini-panel[data-pos="br"] { bottom: 3%; right: 3%; }
     @media (max-width: 640px) {
@@ -1548,6 +1551,33 @@
       15%  { opacity: 0.9; }
       100% { transform: translateY(-70vh) scale(1.15); opacity: 0; }
     }
+    .laura-rocket, .laura-rocket-trail {
+      position: fixed;
+      z-index: 10002;
+      pointer-events: none;
+    }
+    .laura-rocket { font-size: 26px; animation: laura-rocket-fly 3.4s linear forwards; }
+    .laura-rocket-trail {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      color: #ffc2d1;
+      white-space: nowrap;
+      text-shadow: 0 0 8px rgba(255,194,209,0.8);
+      animation: laura-rocket-trail-fly 3.4s linear forwards;
+    }
+    @keyframes laura-rocket-fly {
+      0%   { transform: translate(0, 0) rotate(-40deg); opacity: 0; }
+      10%  { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(-40deg); opacity: 0; }
+    }
+    @keyframes laura-rocket-trail-fly {
+      0%   { transform: translate(0, 0); opacity: 0; }
+      10%  { opacity: 0.9; }
+      88%  { opacity: 0.9; }
+      100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+    }
     @keyframes laura-float {
       0%   { top: 12%; left: 8%; }
       20%  { top: 58%; left: 62%; }
@@ -1592,7 +1622,7 @@
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
             <div class="laura-welcome-note">Enamorado ando por ti señorita ❤️</div>
             <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="despedirLaura(this)">Gracias ❤️</button>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="avanzarLaura(this)">Gracias ❤️</button>
           </div>
         </div>
         <div class="laura-welcome-card laura-card-b laura-tema-sueno" id="laura-welcome-card-b">
@@ -1624,14 +1654,14 @@
   <!-- LOGIN -->
   <div id="login-page">
     <div class="login-bg"></div>
-    <div class="login-credit">Powered by Gustavo Ramírez</div>
+    <div class="login-credit">Diseñado con ❤️ por R&amp;C Tech Solutions © 2026 - diseño y desarrollo de sistemas educativos</div>
     <div class="login-card">
       <div class="logo">
         <img src="/icon-192.png" style="width:72px;height:72px;border-radius:16px;margin-bottom:1rem;object-fit:cover;">
         <h1>CERVANTES SCHOOL</h1>
         <h1>ScoreDocente</h1>
         <p>Sistema de evaluación docente</p>
-        <p style="font-size:11px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">R&amp;R Tech Solutions</p>
+        <p style="font-size:11px;color:var(--text3);margin-top:6px;letter-spacing:0.5px;">R&amp;C Tech Solutions</p>
       </div>
       <div class="error-msg" id="error-msg"></div>
       <label class="field-label">Correo electrónico</label>
@@ -1681,7 +1711,7 @@
         <button class="theme-toggle-btn" onclick="alternarTema()">
           <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
         </button>
-        <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
+        <div class="powered-by">Powered by <b>R&amp;C Tech Solutions</b></div>
       </div>
     </div>
     <div class="main-content">
@@ -2398,7 +2428,7 @@
         <button class="theme-toggle-btn" onclick="alternarTema()">
           <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
         </button>
-        <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
+        <div class="powered-by">Powered by <b>R&amp;C Tech Solutions</b></div>
       </div>
     </div>
     <div class="main-content">
@@ -2466,7 +2496,7 @@
         <button class="theme-toggle-btn" onclick="alternarTema()">
           <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
         </button>
-        <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
+        <div class="powered-by">Powered by <b>R&amp;C Tech Solutions</b></div>
       </div>
     </div>
     <div class="main-content">
@@ -2820,7 +2850,7 @@
       <button class="theme-toggle-btn" onclick="alternarTema()">
           <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
         </button>
-        <div class="powered-by">Powered by <b>R&amp;R Tech Solutions</b></div>
+        <div class="powered-by">Powered by <b>R&amp;C Tech Solutions</b></div>
     </div>
   </div>
   <div class="main-content">
@@ -4128,7 +4158,9 @@
       "Alerta de tráfico: mis pensamientos están todos dirigidos hacia ti 🚦❤️",
       "Notificación: 1 nuevo mensaje de tu admirador favorito 💌",
       "Horóscopo del día: tu presencia mejora el ambiente en Cervantes School ✨",
-      "Estado del sistema: todo funciona mejor cuando tú estás aquí 💻❤️"
+      "Estado del sistema: todo funciona mejor cuando tú estás aquí 💻❤️",
+      "Recordatorio: eres la mejor auxiliar que este sistema ha registrado 📋",
+      "Predicción: 100% de probabilidad de que hoy sea un buen día contigo cerca 🍀"
     ];
 
     function fechaBonitaLaura() {
@@ -4196,8 +4228,8 @@
       const cont = document.getElementById('laura-mini-panels');
       if (!cont) return;
       cont.innerHTML = '';
-      const posiciones = ['tl', 'tr', 'bl', 'br'];
-      const rotaciones = [-7, 6, 5, -6];
+      const posiciones = ['tl', 'tr', 'ml', 'mr', 'bl', 'br'];
+      const rotaciones = [-7, 6, -5, 5, 5, -6];
       LAURA_MINI_PANELES.forEach((texto, idx) => {
         const div = document.createElement('div');
         div.className = 'laura-mini-panel';
@@ -4213,6 +4245,19 @@
       });
     }
 
+    function avanzarLaura(btn) {
+      explotarCorazonesBoton(btn);
+      const cardA = document.getElementById('laura-welcome-card-a');
+      const cardB = document.getElementById('laura-welcome-card-b');
+      setTimeout(() => {
+        if (cardA) cardA.style.display = 'none';
+        if (cardB) {
+          cardB.style.display = '';
+          renderTarjetaLaura('b', LAURA_PANEL_B);
+        }
+      }, 380);
+    }
+
     function despedirLaura(btn) {
       explotarCorazonesBoton(btn);
       setTimeout(cerrarBienvenidaLaura, 380);
@@ -4222,12 +4267,16 @@
       const overlay = document.getElementById('laura-welcome-overlay');
       const fechaEl = document.getElementById('laura-welcome-date');
       if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
+      const cardA = document.getElementById('laura-welcome-card-a');
+      const cardB = document.getElementById('laura-welcome-card-b');
+      if (cardA) cardA.style.display = '';
+      if (cardB) cardB.style.display = 'none';
       renderTarjetaLaura('a', LAURA_PANEL_A);
-      renderTarjetaLaura('b', LAURA_PANEL_B);
       renderMiniPanelesLaura();
       if (overlay) overlay.classList.add('show');
       iniciarConfettiLaura();
       iniciarCorazonesFlotantesLaura();
+      iniciarCohetesLaura();
       iniciarBrilloPeriodicoLaura();
     }
 
@@ -4236,18 +4285,22 @@
       if (overlay) overlay.classList.remove('show');
       detenerConfettiLaura();
       detenerCorazonesFlotantesLaura();
+      detenerCohetesLaura();
       detenerBrilloPeriodicoLaura();
     }
 
     let laura_floatHeartsTimer = null;
     function iniciarCorazonesFlotantesLaura() {
       const emojis = ['💗', '💕', '💖', '✨'];
+      // ✏️ Gustavo: símbolos extra que pediste (lugares, alertas, etc.) — se mezclan con los corazones
+      const emojisExtra = ['🗼', '🗽', '🌍', '✈️', '🎡', '⚠️', '🚨', '❗', '⚡'];
       function spawn() {
         const overlay = document.getElementById('laura-welcome-overlay');
         if (!overlay || !overlay.classList.contains('show')) return;
+        const pool = Math.random() < 0.25 ? emojisExtra : emojis;
         const h = document.createElement('span');
         h.className = 'laura-float-heart';
-        h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        h.textContent = pool[Math.floor(Math.random() * pool.length)];
         h.style.left = (Math.random() * 92 + 4) + 'vw';
         h.style.fontSize = (14 + Math.random() * 10) + 'px';
         document.body.appendChild(h);
@@ -4259,6 +4312,46 @@
     function detenerCorazonesFlotantesLaura() {
       if (laura_floatHeartsTimer) { clearInterval(laura_floatHeartsTimer); laura_floatHeartsTimer = null; }
       document.querySelectorAll('.laura-float-heart').forEach(el => el.remove());
+    }
+
+    // 🚀 Cohete que cruza la pantalla con un "te quiero" de estela
+    let laura_rocketTimer = null;
+    function iniciarCohetesLaura() {
+      function lanzar() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const startY = h * (0.55 + Math.random() * 0.3);
+        const dx = w + 140;
+        const dy = -(h * (0.5 + Math.random() * 0.3) + 140);
+
+        const rocket = document.createElement('span');
+        rocket.className = 'laura-rocket';
+        rocket.textContent = '🚀';
+        rocket.style.left = '-40px';
+        rocket.style.top = startY + 'px';
+        rocket.style.setProperty('--dx', dx + 'px');
+        rocket.style.setProperty('--dy', dy + 'px');
+        document.body.appendChild(rocket);
+
+        const trail = document.createElement('span');
+        trail.className = 'laura-rocket-trail';
+        trail.textContent = 'te quiero';
+        trail.style.left = '-108px';
+        trail.style.top = (startY + 16) + 'px';
+        trail.style.setProperty('--dx', dx + 'px');
+        trail.style.setProperty('--dy', dy + 'px');
+        document.body.appendChild(trail);
+
+        setTimeout(() => { rocket.remove(); trail.remove(); }, 3500);
+      }
+      lanzar();
+      laura_rocketTimer = setInterval(lanzar, 7000);
+    }
+    function detenerCohetesLaura() {
+      if (laura_rocketTimer) { clearInterval(laura_rocketTimer); laura_rocketTimer = null; }
+      document.querySelectorAll('.laura-rocket, .laura-rocket-trail').forEach(el => el.remove());
     }
 
     let laura_shineTimer = null;
