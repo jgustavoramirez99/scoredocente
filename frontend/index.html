@@ -852,8 +852,86 @@
       justify-content: center;
       background: rgba(10,10,15,0.75);
       backdrop-filter: blur(3px);
+      overflow-y: auto;
+      padding: 24px 0;
+      box-sizing: border-box;
     }
     .laura-welcome-overlay.show { display: flex; }
+    .laura-welcome-stage {
+      position: relative;
+      width: 100%;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .laura-welcome-cards {
+      position: relative;
+      z-index: 10001;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      padding: 0 16px;
+    }
+    .laura-mini-panels {
+      position: absolute;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .laura-mini-panel {
+      position: absolute;
+      width: 148px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(20,20,28,0.9);
+      border: 1px solid rgba(255,194,209,0.35);
+      color: #ffe9ee;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      text-align: center;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+      opacity: 0;
+      transform: scale(0.5) rotate(var(--rot, 0deg));
+    }
+    .laura-mini-panel.show {
+      animation: laura-mini-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards,
+                 laura-mini-float 5s ease-in-out infinite;
+      animation-delay: var(--pop-delay, 0s), var(--float-delay, 0.5s);
+    }
+    @keyframes laura-mini-pop {
+      from { opacity: 0; transform: scale(0.5) rotate(var(--rot, 0deg)); }
+      to   { opacity: 1; transform: scale(1) rotate(var(--rot, 0deg)); }
+    }
+    @keyframes laura-mini-float {
+      0%, 100% { transform: scale(1) rotate(var(--rot, 0deg)) translateY(0); }
+      50%      { transform: scale(1) rotate(var(--rot, 0deg)) translateY(-8px); }
+    }
+    .laura-mini-panel[data-pos="tl"] { top: 3%; left: 3%; }
+    .laura-mini-panel[data-pos="tr"] { top: 3%; right: 3%; }
+    .laura-mini-panel[data-pos="bl"] { bottom: 3%; left: 3%; }
+    .laura-mini-panel[data-pos="br"] { bottom: 3%; right: 3%; }
+    @media (max-width: 640px) {
+      .laura-mini-panels {
+        position: static;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 18px;
+        padding: 0 16px;
+        pointer-events: auto;
+      }
+      .laura-mini-panel {
+        position: static !important;
+        top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+        width: calc(50% - 14px);
+      }
+    }
     .laura-welcome-card {
       position: relative;
       z-index: 10000;
@@ -1505,17 +1583,28 @@
   <!-- BIENVENIDA PERSONALIZADA (solo cuenta de Laura) -->
   <canvas id="laura-confetti-canvas"></canvas>
   <div class="laura-welcome-overlay" id="laura-welcome-overlay">
-    <div class="laura-welcome-card" id="laura-welcome-card">
-      <div class="laura-welcome-card-inner">
-        <span class="laura-welcome-moon">🌙</span>
-        <img class="laura-welcome-photo" id="laura-welcome-photo" src="laura-gustavo.jpg" alt="">
-        <div class="laura-welcome-date" id="laura-welcome-date"></div>
-        <div class="laura-welcome-badge" id="laura-welcome-badge" style="display:none"></div>
-        <div class="laura-welcome-title" id="laura-welcome-title"></div>
-        <div class="laura-welcome-note" id="laura-welcome-note">Enamorado ando por ti señorita ❤️</div>
-        <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
-        <button class="laura-welcome-btn" id="laura-welcome-btn" onclick="avanzarPanelLaura(this)">Cuéntame más 👀</button>
+    <div class="laura-welcome-stage">
+      <div class="laura-welcome-cards">
+        <div class="laura-welcome-card laura-card-a" id="laura-welcome-card-a">
+          <div class="laura-welcome-card-inner">
+            <div class="laura-welcome-date" id="laura-welcome-date"></div>
+            <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
+            <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
+            <div class="laura-welcome-note">Enamorado ando por ti señorita ❤️</div>
+            <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="despedirLaura(this)">Gracias ❤️</button>
+          </div>
+        </div>
+        <div class="laura-welcome-card laura-card-b laura-tema-sueno" id="laura-welcome-card-b">
+          <div class="laura-welcome-card-inner">
+            <span class="laura-welcome-moon">🌙</span>
+            <img class="laura-welcome-photo laura-welcome-photo-grande laura-welcome-photo-sueno" id="laura-welcome-photo-b" src="laura-oficial.jpg" alt="">
+            <div class="laura-welcome-title" id="laura-welcome-title-b"></div>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-b" onclick="despedirLaura(this)">Te quiero ❤️</button>
+          </div>
+        </div>
       </div>
+      <div class="laura-mini-panels" id="laura-mini-panels"></div>
     </div>
   </div>
 
@@ -4024,22 +4113,23 @@
     const EMAIL_LAURA_BIENVENIDA = 'laurachavez@cervantesschool.edu.pe';
 
     // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
-    const LAURA_PANELES = [
-      {
-        badge: "⭐ Auxiliar destacada",
-        titulo: "Reporte diario: hoy va a ser un gran día — lo sé porque tú eres la mejor auxiliar de Cervantes School",
-        nota: "Pensando en ti más de lo que debería jaja ❤️",
-        boton: "Gracias ❤️"
-      },
-      {
-        titulo: "¿Qué soñaste anoche? Yo soñé viéndote ingresar en mi salón, así que sorpréndeme, mi princesa ❤️",
-        boton: "Te quiero ❤️",
-        foto: "laura-oficial.jpg",
-        fotoGrande: true,
-        tema: "sueno"
-      }
+    // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
+    const LAURA_PANEL_A = {
+      badge: "🌤️ Reporte del día",
+      titulo: "Reporte meteorológico: cielo despejado, corazón nublado (de tanto pensar en ti) ⛅❤️",
+      boton: "Gracias ❤️"
+    };
+    const LAURA_PANEL_B = {
+      titulo: "¿Qué soñaste anoche? Yo soñé viéndote ingresar en mi salón, así que sorpréndeme, mi princesa ❤️",
+      boton: "Te quiero ❤️",
+      foto: "laura-oficial.jpg"
+    };
+    const LAURA_MINI_PANELES = [
+      "Alerta de tráfico: mis pensamientos están todos dirigidos hacia ti 🚦❤️",
+      "Notificación: 1 nuevo mensaje de tu admirador favorito 💌",
+      "Horóscopo del día: tu presencia mejora el ambiente en Cervantes School ✨",
+      "Estado del sistema: todo funciona mejor cuando tú estás aquí 💻❤️"
     ];
-    let laura_panelIndex = 0;
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -4049,10 +4139,9 @@
       return txt.charAt(0).toUpperCase() + txt.slice(1);
     }
 
-    let laura_typeTimer = null;
     function escribirTextoLaura(el, texto, velocidad = 30, alTerminar) {
       if (!el) return;
-      if (laura_typeTimer) clearTimeout(laura_typeTimer);
+      if (el._typeTimer) clearTimeout(el._typeTimer);
       el.textContent = '';
       el.classList.add('laura-typing');
       let i = 0;
@@ -4060,7 +4149,7 @@
         el.textContent = texto.slice(0, i);
         i++;
         if (i <= texto.length) {
-          laura_typeTimer = setTimeout(paso, velocidad);
+          el._typeTimer = setTimeout(paso, velocidad);
         } else {
           el.classList.remove('laura-typing');
           if (typeof alTerminar === 'function') alTerminar();
@@ -4069,70 +4158,74 @@
       paso();
     }
 
-    function renderPanelLaura(i) {
-      const tituloEl = document.getElementById('laura-welcome-title');
-      const notaEl = document.getElementById('laura-welcome-note');
-      const btnEl = document.getElementById('laura-welcome-btn');
-      const fotoEl = document.getElementById('laura-welcome-photo');
-      const badgeEl = document.getElementById('laura-welcome-badge');
-      const cardEl = document.getElementById('laura-welcome-card');
-      const panel = LAURA_PANELES[i];
-      if (!panel) return;
-      if (cardEl) cardEl.classList.toggle('laura-tema-sueno', panel.tema === 'sueno');
-      if (tituloEl) tituloEl.classList.remove('laura-shine');
-      escribirTextoLaura(tituloEl, panel.titulo, 30, () => {
-        if (tituloEl) {
-          tituloEl.classList.remove('laura-shine');
-          void tituloEl.offsetWidth; // reinicia la animación
-          tituloEl.classList.add('laura-shine');
-        }
-      });
-      if (notaEl) {
-        notaEl.textContent = panel.nota || '';
-        notaEl.style.display = panel.nota ? '' : 'none';
-      }
+    function aplicarShineLaura(el) {
+      if (!el) return;
+      el.classList.remove('laura-shine');
+      void el.offsetWidth; // reinicia la animación
+      el.classList.add('laura-shine');
+    }
+
+    // Tarjeta A: reporte meteorológico. Tarjeta B: sueño (con foto). Ambas aparecen a la vez.
+    function renderTarjetaLaura(sufijo, panel) {
+      const tituloEl = document.getElementById('laura-welcome-title-' + sufijo);
+      const btnEl = document.getElementById('laura-welcome-btn-' + sufijo);
+      const fotoEl = document.getElementById('laura-welcome-photo-' + sufijo);
+      const badgeEl = document.getElementById('laura-welcome-badge-' + sufijo);
       if (btnEl) btnEl.textContent = panel.boton;
+      if (fotoEl) {
+        if (panel.foto) { fotoEl.src = panel.foto; fotoEl.style.display = ''; }
+        else { fotoEl.style.display = 'none'; }
+      }
       if (badgeEl) {
         if (panel.badge) {
           badgeEl.textContent = panel.badge;
           badgeEl.style.display = 'none';
-          void badgeEl.offsetWidth; // reinicia la animación
+          void badgeEl.offsetWidth;
           badgeEl.style.display = 'inline-block';
         } else {
           badgeEl.style.display = 'none';
         }
       }
-      if (fotoEl) {
-        if (panel.foto) {
-          fotoEl.src = panel.foto;
-          fotoEl.classList.toggle('laura-welcome-photo-grande', !!panel.fotoGrande);
-          fotoEl.classList.toggle('laura-welcome-photo-sueno', panel.tema === 'sueno');
-          fotoEl.style.display = 'none';
-          void fotoEl.offsetWidth; // reinicia la animación de aparición
-          fotoEl.style.display = '';
-        } else {
-          fotoEl.style.display = 'none';
-        }
+      if (tituloEl) {
+        tituloEl.classList.remove('laura-shine');
+        escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
       }
     }
 
-    function avanzarPanelLaura(btn) {
+    function renderMiniPanelesLaura() {
+      const cont = document.getElementById('laura-mini-panels');
+      if (!cont) return;
+      cont.innerHTML = '';
+      const posiciones = ['tl', 'tr', 'bl', 'br'];
+      const rotaciones = [-7, 6, 5, -6];
+      LAURA_MINI_PANELES.forEach((texto, idx) => {
+        const div = document.createElement('div');
+        div.className = 'laura-mini-panel';
+        div.dataset.pos = posiciones[idx % posiciones.length];
+        div.style.setProperty('--rot', rotaciones[idx % rotaciones.length] + 'deg');
+        const popDelay = 0.5 + idx * 0.18;
+        div.style.setProperty('--pop-delay', popDelay + 's');
+        div.style.setProperty('--float-delay', (popDelay + 0.5) + 's');
+        div.textContent = texto;
+        cont.appendChild(div);
+        void div.offsetWidth;
+        div.classList.add('show');
+      });
+    }
+
+    function despedirLaura(btn) {
       explotarCorazonesBoton(btn);
-      if (laura_panelIndex < LAURA_PANELES.length - 1) {
-        laura_panelIndex++;
-        setTimeout(() => renderPanelLaura(laura_panelIndex), 380);
-      } else {
-        setTimeout(cerrarBienvenidaLaura, 380);
-      }
+      setTimeout(cerrarBienvenidaLaura, 380);
     }
 
     function mostrarBienvenidaLaura() {
       const overlay = document.getElementById('laura-welcome-overlay');
       const fechaEl = document.getElementById('laura-welcome-date');
       if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
+      renderTarjetaLaura('a', LAURA_PANEL_A);
+      renderTarjetaLaura('b', LAURA_PANEL_B);
+      renderMiniPanelesLaura();
       if (overlay) overlay.classList.add('show');
-      laura_panelIndex = 0;
-      renderPanelLaura(0);
       iniciarConfettiLaura();
       iniciarCorazonesFlotantesLaura();
       iniciarBrilloPeriodicoLaura();
@@ -4172,11 +4265,13 @@
     function iniciarBrilloPeriodicoLaura() {
       if (laura_shineTimer) clearInterval(laura_shineTimer);
       laura_shineTimer = setInterval(() => {
-        const tituloEl = document.getElementById('laura-welcome-title');
-        if (!tituloEl || tituloEl.classList.contains('laura-typing')) return;
-        tituloEl.classList.remove('laura-shine');
-        void tituloEl.offsetWidth;
-        tituloEl.classList.add('laura-shine');
+        ['a', 'b'].forEach(sufijo => {
+          const tituloEl = document.getElementById('laura-welcome-title-' + sufijo);
+          if (!tituloEl || tituloEl.classList.contains('laura-typing')) return;
+          tituloEl.classList.remove('laura-shine');
+          void tituloEl.offsetWidth;
+          tituloEl.classList.add('laura-shine');
+        });
       }, 4000);
     }
     function detenerBrilloPeriodicoLaura() {
