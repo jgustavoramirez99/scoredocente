@@ -1620,9 +1620,9 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
-            <div class="laura-welcome-note">Enamorado ando por ti señorita ❤️</div>
+            <div class="laura-welcome-note">Tu ingeniero GusGus ❤️</div>
             <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="avanzarLaura(this)">Gracias ❤️</button>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="avanzarLaura(this, 'a', 'b', LAURA_PANEL_B)">Gracias ❤️</button>
           </div>
         </div>
         <div class="laura-welcome-card laura-card-b laura-tema-sueno" id="laura-welcome-card-b">
@@ -1630,7 +1630,14 @@
             <span class="laura-welcome-moon">🌙</span>
             <img class="laura-welcome-photo laura-welcome-photo-grande laura-welcome-photo-sueno" id="laura-welcome-photo-b" src="laura-oficial.jpg" alt="">
             <div class="laura-welcome-title" id="laura-welcome-title-b"></div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-b" onclick="despedirLaura(this)">Te quiero ❤️</button>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-b" onclick="avanzarLaura(this, 'b', 'c', LAURA_PANEL_C)">Te quiero ❤️</button>
+          </div>
+        </div>
+        <div class="laura-welcome-card laura-card-c" id="laura-welcome-card-c">
+          <div class="laura-welcome-card-inner">
+            <img class="laura-welcome-photo laura-welcome-photo-grande" id="laura-welcome-photo-c" src="laura-fecha13.jpg" alt="">
+            <div class="laura-welcome-title" id="laura-welcome-title-c"></div>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-c" onclick="despedirLaura(this)">Gracias, mi amor ❤️</button>
           </div>
         </div>
       </div>
@@ -4146,13 +4153,18 @@
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     const LAURA_PANEL_A = {
       badge: "🌤️ Reporte del día",
-      titulo: "Reporte meteorológico: cielo despejado, corazón nublado (de tanto pensar en ti) ⛅❤️",
+      titulo: "Reporte meteorológico: eres la mejor auxiliar que este sistema ha registrado 📋",
       boton: "Gracias ❤️"
     };
     const LAURA_PANEL_B = {
       titulo: "¿Qué soñaste anoche? Yo soñé viéndote ingresar en mi salón, así que sorpréndeme, mi princesa ❤️",
       boton: "Te quiero ❤️",
       foto: "laura-oficial.jpg"
+    };
+    const LAURA_PANEL_C = {
+      titulo: "Nuestra fecha favorita: el 13. Recuerda que esta página está diseñada por R&C Tech Solutions. Que tengas un grandioso día, Princesa ❤️",
+      boton: "Gracias, mi amor ❤️",
+      foto: "laura-fecha13.jpg"
     };
     const LAURA_MINI_PANELES = [
       "Alerta de tráfico: mis pensamientos están todos dirigidos hacia ti 🚦❤️",
@@ -4245,15 +4257,15 @@
       });
     }
 
-    function avanzarLaura(btn) {
+    function avanzarLaura(btn, deSufijo, aSufijo, siguientePanel) {
       explotarCorazonesBoton(btn);
-      const cardA = document.getElementById('laura-welcome-card-a');
-      const cardB = document.getElementById('laura-welcome-card-b');
+      const cardFrom = document.getElementById('laura-welcome-card-' + deSufijo);
+      const cardTo = document.getElementById('laura-welcome-card-' + aSufijo);
       setTimeout(() => {
-        if (cardA) cardA.style.display = 'none';
-        if (cardB) {
-          cardB.style.display = '';
-          renderTarjetaLaura('b', LAURA_PANEL_B);
+        if (cardFrom) cardFrom.style.display = 'none';
+        if (cardTo) {
+          cardTo.style.display = '';
+          renderTarjetaLaura(aSufijo, siguientePanel);
         }
       }, 380);
     }
@@ -4269,8 +4281,10 @@
       if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
       const cardA = document.getElementById('laura-welcome-card-a');
       const cardB = document.getElementById('laura-welcome-card-b');
+      const cardC = document.getElementById('laura-welcome-card-c');
       if (cardA) cardA.style.display = '';
       if (cardB) cardB.style.display = 'none';
+      if (cardC) cardC.style.display = 'none';
       renderTarjetaLaura('a', LAURA_PANEL_A);
       renderMiniPanelesLaura();
       if (overlay) overlay.classList.add('show');
@@ -4317,6 +4331,8 @@
     // 🚀 Cohete que cruza la pantalla con un "te quiero" de estela
     let laura_rocketTimer = null;
     function iniciarCohetesLaura() {
+      // ✏️ Gustavo: frases que van de estela detrás del cohete — cambia/agrega las que quieras
+      const LAURA_FRASES_COHETE = ['te quiero', 'te adoro', 'tu pequeño gusgus', 'eres mi berrinchuda', 'mi chica hermosa', 'mi gata'];
       function lanzar() {
         const overlay = document.getElementById('laura-welcome-overlay');
         if (!overlay || !overlay.classList.contains('show')) return;
@@ -4325,6 +4341,7 @@
         const startY = h * (0.55 + Math.random() * 0.3);
         const dx = w + 140;
         const dy = -(h * (0.5 + Math.random() * 0.3) + 140);
+        const texto = LAURA_FRASES_COHETE[Math.floor(Math.random() * LAURA_FRASES_COHETE.length)];
 
         const rocket = document.createElement('span');
         rocket.className = 'laura-rocket';
@@ -4337,8 +4354,8 @@
 
         const trail = document.createElement('span');
         trail.className = 'laura-rocket-trail';
-        trail.textContent = 'te quiero';
-        trail.style.left = '-108px';
+        trail.textContent = texto;
+        trail.style.left = -(60 + texto.length * 7) + 'px';
         trail.style.top = (startY + 16) + 'px';
         trail.style.setProperty('--dx', dx + 'px');
         trail.style.setProperty('--dy', dy + 'px');
@@ -4347,7 +4364,7 @@
         setTimeout(() => { rocket.remove(); trail.remove(); }, 3500);
       }
       lanzar();
-      laura_rocketTimer = setInterval(lanzar, 7000);
+      laura_rocketTimer = setInterval(lanzar, 4500);
     }
     function detenerCohetesLaura() {
       if (laura_rocketTimer) { clearInterval(laura_rocketTimer); laura_rocketTimer = null; }
@@ -4358,7 +4375,7 @@
     function iniciarBrilloPeriodicoLaura() {
       if (laura_shineTimer) clearInterval(laura_shineTimer);
       laura_shineTimer = setInterval(() => {
-        ['a', 'b'].forEach(sufijo => {
+        ['a', 'b', 'c'].forEach(sufijo => {
           const tituloEl = document.getElementById('laura-welcome-title-' + sufijo);
           if (!tituloEl || tituloEl.classList.contains('laura-typing')) return;
           tituloEl.classList.remove('laura-shine');
