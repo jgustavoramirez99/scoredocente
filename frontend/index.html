@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>(function(){try{var t=localStorage.getItem('tema');if(t==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
   <title>EduScore CS</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Lora:wght@600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0a0a0f;
@@ -884,21 +884,35 @@
     }
     .laura-mini-panel {
       position: absolute;
-      width: 148px;
-      padding: 12px 12px;
-      border-radius: 14px;
-      background: rgba(20,20,28,0.9);
-      border: 1px solid rgba(255,194,209,0.35);
-      color: #ffe9ee;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 11.5px;
-      font-weight: 600;
-      line-height: 1.35;
+      width: 140px;
+      padding: 20px 12px 14px;
+      border-radius: 3px 3px 8px 8px;
+      background: #fff3b0;
+      color: #5c4300;
+      font-family: 'Caveat', 'DM Sans', cursive, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.28;
       text-align: center;
-      box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+      box-shadow: 3px 6px 14px rgba(0,0,0,0.35);
       opacity: 0;
       transform: scale(0.5) rotate(var(--rot, 0deg));
     }
+    .laura-mini-panel::before {
+      content: '📌';
+      position: absolute;
+      top: -13px;
+      left: 50%;
+      font-size: 19px;
+      transform: translateX(-50%) rotate(calc(var(--rot, 0deg) * -0.6));
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,0.45));
+    }
+    .laura-mini-panel:nth-child(1) { background: #fff3b0; color: #5c4300; }
+    .laura-mini-panel:nth-child(2) { background: #ffc2d1; color: #6b1f34; }
+    .laura-mini-panel:nth-child(3) { background: #d8c4f0; color: #3f2a5e; }
+    .laura-mini-panel:nth-child(4) { background: #b9ecd0; color: #14532d; }
+    .laura-mini-panel:nth-child(5) { background: #ffdac1; color: #7a3b12; }
+    .laura-mini-panel:nth-child(6) { background: #bde0fe; color: #1b3a5c; }
     .laura-mini-panel.show {
       animation: laura-mini-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards,
                  laura-mini-bob 4.6s ease-in-out infinite,
@@ -914,8 +928,8 @@
       50%      { transform: scale(1) rotate(var(--rot, 0deg)) translateY(-9px); }
     }
     @keyframes laura-mini-glow {
-      0%, 100% { box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 0px rgba(255,194,209,0); }
-      50%      { box-shadow: 0 10px 26px rgba(0,0,0,0.35), 0 0 16px rgba(255,194,209,0.6); }
+      0%, 100% { box-shadow: 3px 6px 14px rgba(0,0,0,0.35), 0 0 0px rgba(255,255,255,0); }
+      50%      { box-shadow: 3px 6px 14px rgba(0,0,0,0.35), 0 0 14px rgba(255,255,255,0.55); }
     }
     .laura-mini-panel[data-pos="tl"] { top: 3%; left: 3%; }
     .laura-mini-panel[data-pos="tr"] { top: 3%; right: 3%; }
