@@ -884,35 +884,57 @@
     }
     .laura-mini-panel {
       position: absolute;
-      width: 140px;
-      padding: 20px 12px 14px;
-      border-radius: 3px 3px 8px 8px;
-      background: #fff3b0;
-      color: #5c4300;
-      font-family: 'Caveat', 'DM Sans', cursive, sans-serif;
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.28;
-      text-align: center;
-      box-shadow: 3px 6px 14px rgba(0,0,0,0.35);
+      width: 138px;
+      aspect-ratio: 100 / 88;
       opacity: 0;
-      transform: scale(0.5) rotate(var(--rot, 0deg));
+      scale: 0.5;
+      rotate: var(--rot, 0deg);
+      filter: drop-shadow(3px 7px 10px rgba(0,0,0,0.38));
     }
-    .laura-mini-panel::before {
-      content: '📌';
+    .laura-mini-heart-beat {
       position: absolute;
-      top: -13px;
-      left: 50%;
-      font-size: 19px;
-      transform: translateX(-50%) rotate(calc(var(--rot, 0deg) * -0.6));
-      filter: drop-shadow(0 3px 3px rgba(0,0,0,0.45));
+      inset: 0;
+      animation: laura-mini-heartbeat 1.8s ease-in-out infinite;
+      animation-delay: var(--beat-delay, 0s);
     }
-    .laura-mini-panel:nth-child(1) { background: #fff3b0; color: #5c4300; }
-    .laura-mini-panel:nth-child(2) { background: #ffc2d1; color: #6b1f34; }
-    .laura-mini-panel:nth-child(3) { background: #d8c4f0; color: #3f2a5e; }
-    .laura-mini-panel:nth-child(4) { background: #b9ecd0; color: #14532d; }
-    .laura-mini-panel:nth-child(5) { background: #ffdac1; color: #7a3b12; }
-    .laura-mini-panel:nth-child(6) { background: #bde0fe; color: #1b3a5c; }
+    .laura-mini-heart-shape {
+      position: absolute;
+      inset: 0;
+      background: #fff3b0;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 88'%3E%3Cpath d='M50 88C22 66 0 46 0 26C0 10 12 0 26 0C36 0 45 6 50 16C55 6 64 0 74 0C88 0 100 10 100 26C100 46 78 66 50 88Z'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 88'%3E%3Cpath d='M50 88C22 66 0 46 0 26C0 10 12 0 26 0C36 0 45 6 50 16C55 6 64 0 74 0C88 0 100 10 100 26C100 46 78 66 50 88Z'/%3E%3C/svg%3E");
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+    }
+    .laura-mini-heart-text {
+      position: absolute;
+      left: 50%;
+      top: 57%;
+      transform: translate(-50%, -50%);
+      width: 54%;
+      text-align: center;
+      font-family: 'Caveat', 'DM Sans', cursive, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.12;
+      color: #5c4300;
+    }
+    .laura-mini-panel:nth-child(1) .laura-mini-heart-shape { background: #fff3b0; }
+    .laura-mini-panel:nth-child(1) .laura-mini-heart-text  { color: #5c4300; }
+    .laura-mini-panel:nth-child(2) .laura-mini-heart-shape { background: #ffc2d1; }
+    .laura-mini-panel:nth-child(2) .laura-mini-heart-text  { color: #6b1f34; }
+    .laura-mini-panel:nth-child(3) .laura-mini-heart-shape { background: #d8c4f0; }
+    .laura-mini-panel:nth-child(3) .laura-mini-heart-text  { color: #3f2a5e; }
+    .laura-mini-panel:nth-child(4) .laura-mini-heart-shape { background: #b9ecd0; }
+    .laura-mini-panel:nth-child(4) .laura-mini-heart-text  { color: #14532d; }
+    .laura-mini-panel:nth-child(5) .laura-mini-heart-shape { background: #ffdac1; }
+    .laura-mini-panel:nth-child(5) .laura-mini-heart-text  { color: #7a3b12; }
+    .laura-mini-panel:nth-child(6) .laura-mini-heart-shape { background: #bde0fe; }
+    .laura-mini-panel:nth-child(6) .laura-mini-heart-text  { color: #1b3a5c; }
     .laura-mini-panel.show {
       animation: laura-mini-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards,
                  laura-mini-bob 4.6s ease-in-out infinite,
@@ -920,16 +942,23 @@
       animation-delay: var(--pop-delay, 0s), var(--float-delay, 0.5s), var(--glow-delay, 0.5s);
     }
     @keyframes laura-mini-pop {
-      from { opacity: 0; transform: scale(0.5) rotate(var(--rot, 0deg)); }
-      to   { opacity: 1; transform: scale(1) rotate(var(--rot, 0deg)); }
+      from { opacity: 0; scale: 0.5; }
+      to   { opacity: 1; scale: 1; }
     }
     @keyframes laura-mini-bob {
-      0%, 100% { transform: scale(1) rotate(var(--rot, 0deg)) translateY(0); }
-      50%      { transform: scale(1) rotate(var(--rot, 0deg)) translateY(-9px); }
+      0%, 100% { translate: 0 0; }
+      50%      { translate: 0 -9px; }
     }
     @keyframes laura-mini-glow {
-      0%, 100% { box-shadow: 3px 6px 14px rgba(0,0,0,0.35), 0 0 0px rgba(255,255,255,0); }
-      50%      { box-shadow: 3px 6px 14px rgba(0,0,0,0.35), 0 0 14px rgba(255,255,255,0.55); }
+      0%, 100% { filter: drop-shadow(3px 7px 10px rgba(0,0,0,0.38)) drop-shadow(0 0 0px rgba(255,255,255,0)); }
+      50%      { filter: drop-shadow(3px 7px 10px rgba(0,0,0,0.38)) drop-shadow(0 0 13px rgba(255,255,255,0.6)); }
+    }
+    @keyframes laura-mini-heartbeat {
+      0%, 100% { transform: scale(1); }
+      15%      { transform: scale(1.045); }
+      30%      { transform: scale(1); }
+      45%      { transform: scale(1.03); }
+      60%      { transform: scale(1); }
     }
     .laura-mini-panel[data-pos="tl"] { top: 3%; left: 3%; }
     .laura-mini-panel[data-pos="tr"] { top: 3%; right: 3%; }
@@ -952,6 +981,7 @@
         position: static !important;
         top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
         width: calc(50% - 14px);
+        aspect-ratio: 100 / 88;
       }
     }
     .laura-welcome-card {
@@ -986,8 +1016,10 @@
       text-align: center;
       overflow: visible;
     }
+    .laura-card-b .laura-welcome-card-inner { background: #bde0fe; }
     .laura-card-c .laura-welcome-card-inner { background: #ffdac1; }
     .laura-card-a .laura-welcome-title,
+    .laura-card-b .laura-welcome-title,
     .laura-card-c .laura-welcome-title {
       font-family: 'Caveat', 'Syne', sans-serif;
       font-size: 27px;
@@ -996,12 +1028,15 @@
       -webkit-text-fill-color: currentColor;
       color: #5c4300;
     }
+    .laura-card-b .laura-welcome-title { color: #1b3a5c; }
     .laura-card-c .laura-welcome-title { color: #7a3b12; }
     .laura-card-a .laura-welcome-title.laura-typing::after,
+    .laura-card-b .laura-welcome-title.laura-typing::after,
     .laura-card-c .laura-welcome-title.laura-typing::after {
       -webkit-text-fill-color: currentColor;
     }
     .laura-card-a .laura-welcome-title.laura-shine,
+    .laura-card-b .laura-welcome-title.laura-shine,
     .laura-card-c .laura-welcome-title.laura-shine {
       background: none;
       animation: none;
@@ -1010,6 +1045,11 @@
     .laura-card-a .laura-welcome-sub,
     .laura-card-a .laura-welcome-date {
       color: #7a5c00;
+    }
+    .laura-card-b .laura-welcome-note,
+    .laura-card-b .laura-welcome-sub,
+    .laura-card-b .laura-welcome-date {
+      color: #234b73;
     }
     .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
     .laura-welcome-photo {
@@ -1662,6 +1702,26 @@
       95%  { opacity: 1; }
       100% { left: -90px; transform: scaleX(1); opacity: 0; }
     }
+    .laura-criatura {
+      position: fixed;
+      bottom: -70px;
+      z-index: 10001;
+      font-size: 52px;
+      pointer-events: none;
+      animation: laura-criatura-float 10s ease-in-out forwards;
+    }
+    .laura-criatura-plomo {
+      filter: grayscale(1) brightness(0.92) contrast(1.05);
+    }
+    @keyframes laura-criatura-float {
+      0%   { bottom: -70px; opacity: 0; transform: translateX(0) rotate(0deg); }
+      8%   { opacity: 1; }
+      30%  { transform: translateX(22px) rotate(6deg); }
+      50%  { transform: translateX(-18px) rotate(-5deg); }
+      70%  { transform: translateX(20px) rotate(5deg); }
+      92%  { opacity: 1; }
+      100% { bottom: 108%; opacity: 0; transform: translateX(0) rotate(0deg); }
+    }
     .laura-shooting-star {
       position: fixed;
       z-index: 10001;
@@ -1760,10 +1820,9 @@
             <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="avanzarLaura(this, 'a', 'b', LAURA_PANEL_B)">Gracias ❤️</button>
           </div>
         </div>
-        <div class="laura-welcome-card laura-card-b laura-tema-sueno" id="laura-welcome-card-b">
+        <div class="laura-welcome-card laura-card-b" id="laura-welcome-card-b">
           <div class="laura-welcome-card-inner">
-            <span class="laura-welcome-moon">🌙</span>
-            <img class="laura-welcome-photo laura-welcome-photo-grande laura-welcome-photo-sueno" id="laura-welcome-photo-b" src="laura-oficial.jpg" alt="">
+            <img class="laura-welcome-photo laura-welcome-photo-grande" id="laura-welcome-photo-b" src="laura-oficial.jpg" alt="">
             <div class="laura-welcome-title" id="laura-welcome-title-b"></div>
             <button class="laura-welcome-btn" id="laura-welcome-btn-b" onclick="avanzarLaura(this, 'b', 'c', LAURA_PANEL_C)">Te quiero ❤️</button>
           </div>
@@ -4291,26 +4350,26 @@
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     const LAURA_PANEL_A = {
       badge: "🌤️ Reporte del día",
-      titulo: "Reporte meteorológico: se detectó a una princesa hermosa el día de hoy ❤️",
+      titulo: "Alerta de seguridad: se detecto una chica berrinchuda pero tierna en el sistema ❤️",
       boton: "Gracias ❤️"
     };
     const LAURA_PANEL_B = {
-      titulo: "Backup completado: todos mis pensamientos están respaldados en la nube... contigo mi amor 🌥️❤️",
+      titulo: "Sincronizando corazones... proceso completado con éxito 💞",
       boton: "Te quiero ❤️",
       foto: "laura-oficial.jpg"
     };
     const LAURA_PANEL_C = {
-      titulo: "Error 404: no se encontró a nadie más como tú en este sistema, ¿soportas mis berrinches? ❤️",
+      titulo: "Estado del corazón: 100% ocupado por ti ❤️",
       boton: "Gracias, mi amor ❤️",
       foto: "laura-fecha13.jpg"
     };
     const LAURA_MINI_PANELES = [
-      "Alerta de tráfico: mis pensamientos están todos dirigidos hacia ti 🚦❤️",
-      "Notificación: 1 nuevo mensaje de tu admirador favorito 💌",
-      "Horóscopo del día: tu presencia mejora el ambiente en Cervantes School ✨",
-      "Estado del sistema: todo funciona mejor cuando tú estás aquí 💻❤️",
-      "Recordatorio: eres la mejor auxiliar que este sistema ha registrado 📋",
-      "Predicción: 100% de probabilidad de que hoy sea un buen día contigo cerca 🍀"
+      "Ternura fuera de rango ❤️📊",
+      "Backup: 100% tú ☁️💕",
+      "Firewall: solo tú entras 🔓❤️",
+      "Cero fallas en ti ✅",
+      "Corazón desbloqueado 🔑💞",
+      "Modo avión off, conectado a ti 📶❤️"
     ];
 
     function fechaBonitaLaura() {
@@ -4388,7 +4447,19 @@
         const popDelay = 0.5 + idx * 0.18;
         div.style.setProperty('--pop-delay', popDelay + 's');
         div.style.setProperty('--float-delay', (popDelay + 0.5) + 's');
-        div.textContent = texto;
+        div.style.setProperty('--beat-delay', (idx * 0.22) + 's');
+        const beat = document.createElement('div');
+        beat.className = 'laura-mini-heart-beat';
+        const shape = document.createElement('div');
+        shape.className = 'laura-mini-heart-shape';
+        const textEl = document.createElement('div');
+        textEl.className = 'laura-mini-heart-text';
+        textEl.textContent = texto;
+        if (texto.length > 26) textEl.style.fontSize = '12px';
+        else if (texto.length > 18) textEl.style.fontSize = '13px';
+        beat.appendChild(shape);
+        beat.appendChild(textEl);
+        div.appendChild(beat);
         cont.appendChild(div);
         void div.offsetWidth;
         div.classList.add('show');
@@ -4463,6 +4534,7 @@
       iniciarCorazonesFlotantesLaura();
       iniciarCohetesLaura();
       iniciarGatoLaura();
+      iniciarCriaturasLaura();
       iniciarEstrellasFugacesLaura();
       iniciarGlobosLaura();
       iniciarBrilloPeriodicoLaura();
@@ -4475,6 +4547,7 @@
       detenerCorazonesFlotantesLaura();
       detenerCohetesLaura();
       detenerGatoLaura();
+      detenerCriaturasLaura();
       detenerEstrellasFugacesLaura();
       detenerGlobosLaura();
       detenerBrilloPeriodicoLaura();
@@ -4498,6 +4571,31 @@
     function detenerGatoLaura() {
       if (laura_catTimer) { clearInterval(laura_catTimer); laura_catTimer = null; }
       document.querySelectorAll('.laura-cat').forEach(el => el.remove());
+    }
+
+    // 🧸🐶🐇🐹 Ositos, perritos, conejito (plomo) y hamster flotando por la pantalla
+    let laura_criaturaTimer = null;
+    function iniciarCriaturasLaura() {
+      const criaturas = ['🧸', '🐶', '🐇', '🐹'];
+      function spawn() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const emoji = criaturas[Math.floor(Math.random() * criaturas.length)];
+        const c = document.createElement('span');
+        c.className = 'laura-criatura' + (emoji === '🐇' ? ' laura-criatura-plomo' : '');
+        c.textContent = emoji;
+        c.style.left = (Math.random() * 82 + 6) + 'vw';
+        const dur = 9 + Math.random() * 2.5;
+        c.style.animationDuration = dur + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), dur * 1000 + 200);
+      }
+      spawn();
+      laura_criaturaTimer = setInterval(spawn, 2800);
+    }
+    function detenerCriaturasLaura() {
+      if (laura_criaturaTimer) { clearInterval(laura_criaturaTimer); laura_criaturaTimer = null; }
+      document.querySelectorAll('.laura-criatura').forEach(el => el.remove());
     }
 
     // 🌠 Lluvia de estrellas fugaces (más sutil que el cohete)
