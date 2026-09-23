@@ -944,12 +944,18 @@
       border-radius: 20px;
       max-width: 380px;
       width: 90%;
-      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite, laura-gradient-shift 8s ease-in-out infinite;
+      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite, laura-gradient-shift 8s ease-in-out infinite, laura-glow-border 3s ease-in-out infinite;
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    @keyframes laura-glow-border {
+      0%, 100% { filter: drop-shadow(0 0 0px rgba(255,194,209,0)); }
+      50%      { filter: drop-shadow(0 0 14px rgba(255,194,209,0.65)); }
     }
     .laura-welcome-card-inner {
       position: relative;
-      background: #14141c;
+      background: rgba(20,20,28,0.86);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-radius: 18px;
       padding: 2.6rem 2.2rem 2.4rem;
       text-align: center;
@@ -1578,6 +1584,81 @@
       88%  { opacity: 0.9; }
       100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
     }
+    .laura-firework {
+      position: fixed;
+      z-index: 10003;
+      pointer-events: none;
+      animation: laura-firework-pop 1.1s ease-out forwards;
+    }
+    @keyframes laura-firework-pop {
+      0%   { opacity: 0; transform: scale(0.3); }
+      15%  { opacity: 1; transform: scale(1.15); }
+      100% { opacity: 0; transform: scale(1.5) translateY(-24px); }
+    }
+    .laura-cat {
+      position: fixed;
+      bottom: 6%;
+      left: -60px;
+      z-index: 10001;
+      font-size: 30px;
+      pointer-events: none;
+      animation: laura-cat-walk 9.2s linear forwards;
+    }
+    @keyframes laura-cat-walk {
+      0%   { left: -60px; transform: scaleX(-1); opacity: 0; }
+      5%   { opacity: 1; }
+      45%  { left: calc(100% + 20px); transform: scaleX(-1); }
+      50%  { left: calc(100% + 20px); transform: scaleX(1); opacity: 1; }
+      95%  { opacity: 1; }
+      100% { left: -60px; transform: scaleX(1); opacity: 0; }
+    }
+    .laura-shooting-star {
+      position: fixed;
+      z-index: 10001;
+      pointer-events: none;
+      font-size: 16px;
+      animation: laura-star-fly 1.7s linear forwards;
+    }
+    @keyframes laura-star-fly {
+      0%   { transform: translate(0, 0) rotate(-35deg); opacity: 0; }
+      10%  { opacity: 1; }
+      85%  { opacity: 1; }
+      100% { transform: translate(var(--sdx), var(--sdy)) rotate(-35deg); opacity: 0; }
+    }
+    .laura-float-balloon {
+      position: fixed;
+      bottom: -40px;
+      z-index: 10000;
+      pointer-events: none;
+      animation: laura-balloon-up 8s linear forwards;
+    }
+    @keyframes laura-balloon-up {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: 0.9; }
+      100% { transform: translateY(-85vh) translateX(18px); opacity: 0; }
+    }
+    .laura-notif-banner {
+      position: fixed;
+      top: -90px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10005;
+      background: rgba(255,255,255,0.96);
+      color: #14141c;
+      border-radius: 16px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      font-family: 'DM Sans', sans-serif;
+      transition: top 0.5s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .laura-notif-banner.show { top: 20px; }
+    .laura-notif-icon { font-size: 24px; }
+    .laura-notif-text { font-size: 13px; line-height: 1.3; text-align: left; }
     @keyframes laura-float {
       0%   { top: 12%; left: 8%; }
       20%  { top: 58%; left: 62%; }
@@ -1611,6 +1692,10 @@
 <body>
 
   <!-- BIENVENIDA PERSONALIZADA (solo cuenta de Laura) -->
+  <div class="laura-notif-banner" id="laura-notif-banner">
+    <span class="laura-notif-icon">💌</span>
+    <div class="laura-notif-text"><b>Laura</b><br>1 mensaje nuevo</div>
+  </div>
   <canvas id="laura-confetti-canvas"></canvas>
   <div class="laura-welcome-overlay" id="laura-welcome-overlay">
     <div class="laura-welcome-stage">
@@ -1637,7 +1722,7 @@
           <div class="laura-welcome-card-inner">
             <img class="laura-welcome-photo laura-welcome-photo-grande" id="laura-welcome-photo-c" src="laura-fecha13.jpg" alt="">
             <div class="laura-welcome-title" id="laura-welcome-title-c"></div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-c" onclick="despedirLaura(this)">Gracias, mi amor ❤️</button>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-c" onclick="despedirLauraFinal(this)">Gracias, mi amor ❤️</button>
           </div>
         </div>
       </div>
@@ -4153,16 +4238,16 @@
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     const LAURA_PANEL_A = {
       badge: "🌤️ Reporte del día",
-      titulo: "Reporte meteorológico: eres la mejor auxiliar que este sistema ha registrado 📋",
+      titulo: "Reporte meteorológico: se detectó a una princesa hermosa el día de hoy ❤️",
       boton: "Gracias ❤️"
     };
     const LAURA_PANEL_B = {
-      titulo: "¿Qué soñaste anoche? Yo soñé viéndote ingresar en mi salón, así que sorpréndeme, mi princesa ❤️",
+      titulo: "Backup completado: todos mis pensamientos están respaldados en la nube... contigo mi amor 🌥️❤️",
       boton: "Te quiero ❤️",
       foto: "laura-oficial.jpg"
     };
     const LAURA_PANEL_C = {
-      titulo: "Nuestra fecha favorita: el 13. Recuerda que esta página está diseñada por R&C Tech Solutions. Que tengas un grandioso día, Princesa ❤️",
+      titulo: "Error 404: no se encontró a nadie más como tú en este sistema, ¿soportas mis berrinches? ❤️",
       boton: "Gracias, mi amor ❤️",
       foto: "laura-fecha13.jpg"
     };
@@ -4275,7 +4360,40 @@
       setTimeout(cerrarBienvenidaLaura, 380);
     }
 
+    // 🎆 Cierre del último panel: corazones + fuegos artificiales antes de cerrar
+    function despedirLauraFinal(btn) {
+      explotarCorazonesBoton(btn);
+      explotarFuegosArtificialesLaura();
+      setTimeout(cerrarBienvenidaLaura, 900);
+    }
+
+    function explotarFuegosArtificialesLaura() {
+      const emojis = ['🎆', '🎇', '✨'];
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const f = document.createElement('span');
+          f.className = 'laura-firework';
+          f.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          f.style.left = (Math.random() * 80 + 10) + 'vw';
+          f.style.top = (Math.random() * 55 + 8) + 'vh';
+          f.style.fontSize = (24 + Math.random() * 20) + 'px';
+          document.body.appendChild(f);
+          setTimeout(() => f.remove(), 1200);
+        }, i * 120);
+      }
+    }
+
+    // 💌 Notificación estilo celular antes de abrir el primer panel
     function mostrarBienvenidaLaura() {
+      const notif = document.getElementById('laura-notif-banner');
+      if (notif) notif.classList.add('show');
+      setTimeout(() => {
+        if (notif) notif.classList.remove('show');
+        abrirPanelesBienvenidaLaura();
+      }, 1600);
+    }
+
+    function abrirPanelesBienvenidaLaura() {
       const overlay = document.getElementById('laura-welcome-overlay');
       const fechaEl = document.getElementById('laura-welcome-date');
       if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
@@ -4291,6 +4409,9 @@
       iniciarConfettiLaura();
       iniciarCorazonesFlotantesLaura();
       iniciarCohetesLaura();
+      iniciarGatoLaura();
+      iniciarEstrellasFugacesLaura();
+      iniciarGlobosLaura();
       iniciarBrilloPeriodicoLaura();
     }
 
@@ -4300,7 +4421,83 @@
       detenerConfettiLaura();
       detenerCorazonesFlotantesLaura();
       detenerCohetesLaura();
+      detenerGatoLaura();
+      detenerEstrellasFugacesLaura();
+      detenerGlobosLaura();
       detenerBrilloPeriodicoLaura();
+    }
+
+    // 🐱 Gatito caminando de un lado a otro
+    let laura_catTimer = null;
+    function iniciarGatoLaura() {
+      function lanzar() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const cat = document.createElement('span');
+        cat.className = 'laura-cat';
+        cat.textContent = '🐱';
+        document.body.appendChild(cat);
+        setTimeout(() => cat.remove(), 9300);
+      }
+      lanzar();
+      laura_catTimer = setInterval(lanzar, 14000);
+    }
+    function detenerGatoLaura() {
+      if (laura_catTimer) { clearInterval(laura_catTimer); laura_catTimer = null; }
+      document.querySelectorAll('.laura-cat').forEach(el => el.remove());
+    }
+
+    // 🌠 Lluvia de estrellas fugaces (más sutil que el cohete)
+    let laura_starTimer = null;
+    function iniciarEstrellasFugacesLaura() {
+      function lanzar() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const startX = Math.random() * w * 0.6;
+        const startY = Math.random() * h * 0.35;
+        const sdx = w * (0.35 + Math.random() * 0.25);
+        const sdy = h * (0.3 + Math.random() * 0.2);
+        const star = document.createElement('span');
+        star.className = 'laura-shooting-star';
+        star.textContent = '🌠';
+        star.style.left = startX + 'px';
+        star.style.top = startY + 'px';
+        star.style.setProperty('--sdx', sdx + 'px');
+        star.style.setProperty('--sdy', sdy + 'px');
+        document.body.appendChild(star);
+        setTimeout(() => star.remove(), 1750);
+      }
+      lanzar();
+      laura_starTimer = setInterval(lanzar, 3800);
+    }
+    function detenerEstrellasFugacesLaura() {
+      if (laura_starTimer) { clearInterval(laura_starTimer); laura_starTimer = null; }
+      document.querySelectorAll('.laura-shooting-star').forEach(el => el.remove());
+    }
+
+    // 🎈 Globitos subiendo lento, mezclados con corazones
+    let laura_balloonTimer = null;
+    function iniciarGlobosLaura() {
+      const emojis = ['🎈', '🎈', '💗'];
+      function spawn() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const b = document.createElement('span');
+        b.className = 'laura-float-balloon';
+        b.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        b.style.left = (Math.random() * 85 + 5) + 'vw';
+        b.style.fontSize = (20 + Math.random() * 14) + 'px';
+        document.body.appendChild(b);
+        setTimeout(() => b.remove(), 8300);
+      }
+      spawn();
+      laura_balloonTimer = setInterval(spawn, 2600);
+    }
+    function detenerGlobosLaura() {
+      if (laura_balloonTimer) { clearInterval(laura_balloonTimer); laura_balloonTimer = null; }
+      document.querySelectorAll('.laura-float-balloon').forEach(el => el.remove());
     }
 
     let laura_floatHeartsTimer = null;
