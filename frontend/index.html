@@ -2906,6 +2906,9 @@
             </select>
           </div>
           <div style="color:var(--text2);font-size:13px;padding-bottom:9px" id="examenes-n-evaluados"></div>
+          <div style="margin-left:auto;padding-bottom:0">
+            <button type="button" onclick="descargarPDFExamenesDiagnostico(this)" style="padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">📄 Descargar PDF</button>
+          </div>
         </div>
 
         <div id="examenes-clave-banner" style="display:none;background:var(--amber-bg);border:1px solid rgba(243,156,18,0.35);color:var(--amber);padding:12px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem"></div>
@@ -7995,6 +7998,264 @@ async function guardarEvaluacionTutor() {
       chartExamenesBasico = renderChartDonutNivel('chart-examenes-basico', alumnos, 'BASICO');
       chartExamenesIntermedio = renderChartDonutNivel('chart-examenes-intermedio', alumnos, 'INTERMEDIO');
       chartExamenesAvanzado = renderChartDonutNivel('chart-examenes-avanzado', alumnos, 'AVANZADO');
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  PDF — EXÁMENES DIAGNÓSTICOS (por salón/curso, filtrado)
+    //  Hoja 1 horizontal: tabla completa (25 respuestas + resumen).
+    //  Hoja 2: los 3 gráficos por nivel + gráfico general del curso.
+    //  Aprobado General = aprobó al menos 2 de los 3 niveles.
+    // ══════════════════════════════════════════════════════════════════
+
+    // Decide el estado general de un alumno mirando sus 3 niveles.
+    // Si ya tiene 2 niveles aprobados (o 2 desaprobados) el resultado está
+    // "decidido" aunque falte un nivel por responder; si no, queda Pendiente.
+    function nivelGeneralAlumnoExamen(a) {
+      let aprobados = 0, desaprobados = 0;
+      ['BASICO', 'INTERMEDIO', 'AVANZADO'].forEach(k => {
+        const n = a.niveles[k];
+        if (n && n.respondidas > 0 && n.aprobado !== null) {
+          if (n.aprobado) aprobados++; else desaprobados++;
+        }
+      });
+      if (aprobados >= 2) return 'aprobado';
+      if (desaprobados >= 2) return 'no_aprobado';
+      return 'pendiente';
+    }
+
+    function badgeGeneralTextoExamen(estado) {
+      if (estado === 'aprobado') return 'Aprobado';
+      if (estado === 'no_aprobado') return 'No aprobado';
+      return 'Pendiente';
+    }
+
+    // Captura un <canvas> de Chart.js con fondo blanco (para que se vea bien en el PDF).
+    function _canvasExamenesConFondo(canvasId) {
+      const original = document.getElementById(canvasId);
+      if (!original || !original.width || !original.height) return null;
+      const temp = document.createElement('canvas');
+      temp.width = original.width;
+      temp.height = original.height;
+      const ctx = temp.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, temp.width, temp.height);
+      ctx.drawImage(original, 0, 0);
+      return { data: temp.toDataURL('image/png'), ratio: original.width / original.height };
+    }
+
+    function _addImagenAjustadaExamen(doc, img, x, y, maxW, maxH) {
+      if (!img) return 0;
+      let w = maxW, h = w / img.ratio;
+      if (h > maxH) { h = maxH; w = h * img.ratio; }
+      doc.addImage(img.data, 'PNG', x + (maxW - w) / 2, y, w, h);
+      return h;
+    }
+
+    // Renderiza un doughnut "Resultado General del curso" en un canvas oculto,
+    // solo para poder capturarlo como imagen y meterlo en el PDF.
+    async function _capturarChartGeneralExamen(alumnos) {
+      let aprobados = 0, noAprobados = 0, pendientes = 0;
+      alumnos.forEach(a => {
+        const e = nivelGeneralAlumnoExamen(a);
+        if (e === 'aprobado') aprobados++;
+        else if (e === 'no_aprobado') noAprobados++;
+        else pendientes++;
+      });
+
+      const temp = document.createElement('canvas');
+      temp.width = 480; temp.height = 360;
+      temp.style.position = 'fixed';
+      temp.style.left = '-9999px';
+      document.body.appendChild(temp);
+      const ctx = temp.getContext('2d');
+
+      const fondoBlancoPlugin = {
+        id: 'fondoBlancoExamenGeneral',
+        beforeDraw: (c) => {
+          const { ctx: cctx, width, height } = c;
+          cctx.save();
+          cctx.globalCompositeOperation = 'destination-over';
+          cctx.fillStyle = '#ffffff';
+          cctx.fillRect(0, 0, width, height);
+          cctx.restore();
+        }
+      };
+
+      const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Aprobado', 'No aprobado', 'Pendiente'],
+          datasets: [{ data: [aprobados, noAprobados, pendientes], backgroundColor: ['#2ecc71', '#e63946', '#c9c9d4'] }]
+        },
+        plugins: [ChartDataLabels, fondoBlancoPlugin],
+        options: {
+          responsive: false, animation: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#333', font: { size: 13 } } },
+            datalabels: {
+              color: '#fff', font: { weight: 'bold', size: 14 },
+              formatter: (value) => {
+                const total = aprobados + noAprobados + pendientes;
+                const pct = total ? Math.round((value / total) * 100) : 0;
+                return value > 0 ? value + ' (' + pct + '%)' : '';
+              }
+            }
+          }
+        }
+      });
+
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      const img = { data: temp.toDataURL('image/png'), ratio: temp.width / temp.height };
+      chart.destroy();
+      document.body.removeChild(temp);
+      return { img, aprobados, noAprobados, pendientes };
+    }
+
+    async function descargarPDFExamenesDiagnostico(btnEl) {
+      const salonSelect = document.getElementById('examenes-salon-select');
+      const cursoSelect = document.getElementById('examenes-curso-select');
+      const salonId = salonSelect.value;
+      const curso = cursoSelect.value;
+      if (!salonId || !curso) { alert('Selecciona un salón y un curso antes de descargar el PDF.'); return; }
+      if (!examenesAlumnosActuales.length) { alert('Este salón no tiene alumnos registrados para exportar.'); return; }
+
+      const salonNombre = salonSelect.options[salonSelect.selectedIndex].text;
+      const impresoPor = (typeof usuario !== 'undefined' && usuario && usuario.nombre) ? usuario.nombre : '—';
+      const ahora = new Date();
+      const fechaTexto = ahora.toLocaleDateString('es-PE');
+      const horaTexto = ahora.toLocaleTimeString('es-PE');
+
+      const btn = btnEl || null;
+      const textoBtnOriginal = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Generando...'; }
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 8;
+
+        const dibujarEncabezado = () => {
+          doc.setFillColor(180, 0, 30);
+          doc.rect(0, 0, pageW, 2, 'F');
+          doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+          doc.text('EXÁMENES DIAGNÓSTICOS — ' + curso.toUpperCase(), pageW / 2, 10, { align: 'center' });
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 100, 100);
+          doc.text('I.E.P. Cervantes School  —  Grado/Salón: ' + salonNombre, pageW / 2, 15.5, { align: 'center' });
+          doc.setFontSize(8);
+          doc.text('Impreso por: ' + impresoPor, margin, 21);
+          doc.text('Fecha: ' + fechaTexto + '   Hora: ' + horaTexto, pageW - margin, 21, { align: 'right' });
+          doc.setDrawColor(180, 0, 30); doc.setLineWidth(0.4);
+          doc.line(margin, 23.5, pageW - margin, 23.5);
+        };
+        dibujarEncabezado();
+
+        // ── Hoja 1: tabla completa (25 respuestas + resumen) ──
+        const head = [['N°', 'Apellidos y Nombres', ...Array.from({ length: 25 }, (_, i) => String(i + 1)), 'Básico', 'Interm.', 'Avanz.', 'General']];
+        const body = examenesAlumnosActuales.map(a => {
+          const fila = [a.numero ?? '—', a.apellidos_nombres];
+          for (let p = 1; p <= 25; p++) fila.push((a.respuestas || {})[p] || '—');
+          const nB = a.niveles.BASICO, nI = a.niveles.INTERMEDIO, nA = a.niveles.AVANZADO;
+          const txtNivel = (n) => (!n || n.respondidas === 0 || n.aprobado === null) ? '—' : (n.aprobado ? '✓' : '✗');
+          fila.push(txtNivel(nB), txtNivel(nI), txtNivel(nA), badgeGeneralTextoExamen(nivelGeneralAlumnoExamen(a)));
+          return fila;
+        });
+
+        doc.autoTable({
+          head, body,
+          startY: 26,
+          margin: { left: margin, right: margin, bottom: 12 },
+          styles: { font: 'helvetica', fontSize: 6.6, cellPadding: 1, halign: 'center', valign: 'middle', lineColor: [220, 220, 230], lineWidth: 0.1 },
+          headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 6.6 },
+          columnStyles: {
+            0: { cellWidth: 7 },
+            1: { cellWidth: 40, halign: 'left', fontSize: 6.8 },
+            27: { cellWidth: 12 }, 28: { cellWidth: 12 }, 29: { cellWidth: 12 }, 30: { cellWidth: 16, fontStyle: 'bold' }
+          },
+          alternateRowStyles: { fillColor: [246, 246, 250] },
+          didParseCell: (data) => {
+            const col = data.column.index;
+            if (col >= 2 && col <= 26) {
+              const p = col - 1;
+              const bg = p <= 10 ? [235, 250, 241] : p <= 20 ? [255, 246, 230] : [253, 233, 234];
+              if (data.section === 'head' || data.section === 'body') data.cell.styles.fillColor = data.section === 'head' ? [180, 0, 30] : bg;
+            }
+            if (data.section === 'body' && col === 30) {
+              const val = data.cell.raw;
+              if (val === 'Aprobado') { data.cell.styles.textColor = [39, 141, 79]; }
+              else if (val === 'No aprobado') { data.cell.styles.textColor = [200, 45, 60]; }
+              else { data.cell.styles.textColor = [140, 140, 150]; }
+            }
+          },
+          didDrawPage: () => { dibujarEncabezado(); }
+        });
+
+        // ── Hoja 2: gráficos por nivel + gráfico general ──
+        doc.addPage('a4', 'landscape');
+        dibujarEncabezado();
+
+        const imgBasico = _canvasExamenesConFondo('chart-examenes-basico');
+        const imgIntermedio = _canvasExamenesConFondo('chart-examenes-intermedio');
+        const imgAvanzado = _canvasExamenesConFondo('chart-examenes-avanzado');
+        const general = await _capturarChartGeneralExamen(examenesAlumnosActuales);
+
+        let y = 30;
+        const anchoTercio = (pageW - margin * 2 - 12) / 3;
+        const altoGrafico = 68;
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+        doc.text('Nivel Básico (≥80%)', margin, y);
+        doc.text('Nivel Intermedio (≥50%)', margin + anchoTercio + 6, y);
+        doc.text('Nivel Avanzado (1 de 5)', margin + (anchoTercio + 6) * 2, y);
+        y += 4;
+        _addImagenAjustadaExamen(doc, imgBasico, margin, y, anchoTercio, altoGrafico);
+        _addImagenAjustadaExamen(doc, imgIntermedio, margin + anchoTercio + 6, y, anchoTercio, altoGrafico);
+        _addImagenAjustadaExamen(doc, imgAvanzado, margin + (anchoTercio + 6) * 2, y, anchoTercio, altoGrafico);
+        y += altoGrafico + 10;
+
+        doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+        doc.text('Resultado General del curso — ' + curso, margin, y);
+        y += 4;
+        const anchoGeneral = 90;
+        _addImagenAjustadaExamen(doc, general.img, margin, y, anchoGeneral, 62);
+
+        const total = examenesAlumnosActuales.length;
+        const pct = (n) => total ? Math.round((n / total) * 100) : 0;
+        const descX = margin + anchoGeneral + 10;
+        let descY = y + 6;
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+        const descripcion = [
+          'Se considera "Aprobado" al alumno que aprueba al menos 2 de los 3 niveles evaluados',
+          '(Básico, Intermedio y Avanzado). "Pendiente" es un alumno cuyo resultado todavía no',
+          'está decidido porque le falta completar respuestas.',
+          '',
+          'Total de alumnos evaluados: ' + total,
+          'Aprobados: ' + general.aprobados + ' (' + pct(general.aprobados) + '%)',
+          'No aprobados: ' + general.noAprobados + ' (' + pct(general.noAprobados) + '%)',
+          'Pendientes: ' + general.pendientes + ' (' + pct(general.pendientes) + '%)'
+        ];
+        descripcion.forEach(linea => { doc.text(linea, descX, descY, { maxWidth: pageW - margin - descX }); descY += 5; });
+
+        // ── Pie de página en todas las hojas: marca R&C + página ──
+        const totalPags = doc.getNumberOfPages();
+        for (let i = 1; i <= totalPags; i++) {
+          doc.setPage(i);
+          doc.setFillColor(20, 20, 80);
+          doc.rect(0, pageH - 7, pageW, 7, 'F');
+          doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+          doc.text('R&C Tech Solutions — Todos los derechos reservados', margin, pageH - 2.6);
+          doc.text('Página ' + i + ' de ' + totalPags, pageW - margin, pageH - 2.6, { align: 'right' });
+        }
+
+        const nombreArchivo = 'Examenes_Diagnosticos_' + curso.replace(/[^a-zA-Z0-9]+/g, '_') + '_' + salonNombre.replace(/[^a-zA-Z0-9]+/g, '_') + '.pdf';
+        doc.save(nombreArchivo);
+      } catch (err) {
+        console.error('Error generando PDF de exámenes diagnósticos:', err);
+        alert('No se pudo generar el PDF. Intenta de nuevo.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = textoBtnOriginal; }
+      }
     }
 
     // ══════════════════════════════════════════════════════════════════
