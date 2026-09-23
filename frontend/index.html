@@ -8153,26 +8153,37 @@ async function guardarEvaluacionTutor() {
         dibujarEncabezado();
 
         // ── Hoja 1: tabla completa (25 respuestas + resumen) ──
+        // Nota: jsPDF con las fuentes estándar (helvetica) no soporta los símbolos
+        // ✓/✗ (salen como un caracter roto) — por eso acá se usa la fracción
+        // "correctas/total" como texto, coloreando el fondo de la celda para dar
+        // el mismo golpe de vista que el badge de la pantalla.
         const head = [['N°', 'Apellidos y Nombres', ...Array.from({ length: 25 }, (_, i) => String(i + 1)), 'Básico', 'Interm.', 'Avanz.', 'General']];
         const body = examenesAlumnosActuales.map(a => {
           const fila = [a.numero ?? '—', a.apellidos_nombres];
           for (let p = 1; p <= 25; p++) fila.push((a.respuestas || {})[p] || '—');
           const nB = a.niveles.BASICO, nI = a.niveles.INTERMEDIO, nA = a.niveles.AVANZADO;
-          const txtNivel = (n) => (!n || n.respondidas === 0 || n.aprobado === null) ? '—' : (n.aprobado ? '✓' : '✗');
+          const txtNivel = (n) => (!n || n.respondidas === 0 || n.aprobado === null) ? '—' : (n.correctas + '/' + n.total);
           fila.push(txtNivel(nB), txtNivel(nI), txtNivel(nA), badgeGeneralTextoExamen(nivelGeneralAlumnoExamen(a)));
           return fila;
         });
 
+        const estadoNivelCeldaExamen = (n) => (!n || n.respondidas === 0 || n.aprobado === null) ? 'pendiente' : (n.aprobado ? 'aprobado' : 'no_aprobado');
+        const coloresEstadoExamen = {
+          aprobado: { fill: [223, 246, 233], text: [39, 141, 79] },
+          no_aprobado: { fill: [253, 226, 228], text: [200, 45, 60] },
+          pendiente: { fill: [240, 240, 244], text: [140, 140, 150] }
+        };
+
         doc.autoTable({
           head, body,
           startY: 26,
-          margin: { left: margin, right: margin, bottom: 12 },
+          margin: { top: 26, left: margin, right: margin, bottom: 12 },
           styles: { font: 'helvetica', fontSize: 6.6, cellPadding: 1, halign: 'center', valign: 'middle', lineColor: [220, 220, 230], lineWidth: 0.1 },
           headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 6.6 },
           columnStyles: {
             0: { cellWidth: 7 },
             1: { cellWidth: 40, halign: 'left', fontSize: 6.8 },
-            27: { cellWidth: 12 }, 28: { cellWidth: 12 }, 29: { cellWidth: 12 }, 30: { cellWidth: 16, fontStyle: 'bold' }
+            27: { cellWidth: 13 }, 28: { cellWidth: 13 }, 29: { cellWidth: 13 }, 30: { cellWidth: 17, fontStyle: 'bold' }
           },
           alternateRowStyles: { fillColor: [246, 246, 250] },
           didParseCell: (data) => {
@@ -8182,11 +8193,18 @@ async function guardarEvaluacionTutor() {
               const bg = p <= 10 ? [235, 250, 241] : p <= 20 ? [255, 246, 230] : [253, 233, 234];
               if (data.section === 'head' || data.section === 'body') data.cell.styles.fillColor = data.section === 'head' ? [180, 0, 30] : bg;
             }
-            if (data.section === 'body' && col === 30) {
-              const val = data.cell.raw;
-              if (val === 'Aprobado') { data.cell.styles.textColor = [39, 141, 79]; }
-              else if (val === 'No aprobado') { data.cell.styles.textColor = [200, 45, 60]; }
-              else { data.cell.styles.textColor = [140, 140, 150]; }
+            if (data.section === 'body' && (col === 27 || col === 28 || col === 29 || col === 30)) {
+              const alumno = examenesAlumnosActuales[data.row.index];
+              let estado;
+              if (col === 30) {
+                estado = nivelGeneralAlumnoExamen(alumno);
+              } else {
+                const nivelKey = col === 27 ? 'BASICO' : col === 28 ? 'INTERMEDIO' : 'AVANZADO';
+                estado = estadoNivelCeldaExamen(alumno.niveles[nivelKey]);
+              }
+              const c = coloresEstadoExamen[estado];
+              data.cell.styles.fillColor = c.fill;
+              data.cell.styles.textColor = c.text;
             }
           },
           didDrawPage: () => { dibujarEncabezado(); }
