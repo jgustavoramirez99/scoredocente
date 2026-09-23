@@ -957,28 +957,59 @@
     .laura-welcome-card {
       position: relative;
       z-index: 10000;
-      background: linear-gradient(135deg, #cdb4db, #ffc2d1, #ffddd2, #ffc2d1, #cdb4db);
-      background-size: 300% 300%;
-      padding: 3px;
-      border-radius: 20px;
       max-width: 380px;
       width: 90%;
-      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite, laura-gradient-shift 8s ease-in-out infinite, laura-glow-border 3s ease-in-out infinite;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-sway 3.6s ease-in-out 0.6s infinite, laura-card-glow 3.4s ease-in-out infinite;
     }
-    @keyframes laura-glow-border {
-      0%, 100% { filter: drop-shadow(0 0 0px rgba(255,194,209,0)); }
-      50%      { filter: drop-shadow(0 0 14px rgba(255,194,209,0.65)); }
+    .laura-card-a { rotate: -2deg; }
+    .laura-card-b { rotate: 1.5deg; }
+    .laura-card-c { rotate: -1.5deg; }
+    .laura-welcome-card::before {
+      content: '📌';
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      font-size: 36px;
+      transform: translateX(-50%) rotate(7deg);
+      filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
+      z-index: 2;
+    }
+    @keyframes laura-card-glow {
+      0%, 100% { filter: drop-shadow(0 16px 30px rgba(0,0,0,0.45)) drop-shadow(0 0 0px rgba(255,255,255,0)); }
+      50%      { filter: drop-shadow(0 16px 30px rgba(0,0,0,0.45)) drop-shadow(0 0 16px rgba(255,255,255,0.55)); }
     }
     .laura-welcome-card-inner {
       position: relative;
-      background: rgba(20,20,28,0.86);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 18px;
-      padding: 2.6rem 2.2rem 2.4rem;
+      background: #fff3b0;
+      border-radius: 5px 5px 16px 16px;
+      padding: 2.8rem 2.2rem 2.4rem;
       text-align: center;
       overflow: visible;
+    }
+    .laura-card-c .laura-welcome-card-inner { background: #ffdac1; }
+    .laura-card-a .laura-welcome-title,
+    .laura-card-c .laura-welcome-title {
+      font-family: 'Caveat', 'Syne', sans-serif;
+      font-size: 27px;
+      font-weight: 700;
+      background: none;
+      -webkit-text-fill-color: currentColor;
+      color: #5c4300;
+    }
+    .laura-card-c .laura-welcome-title { color: #7a3b12; }
+    .laura-card-a .laura-welcome-title.laura-typing::after,
+    .laura-card-c .laura-welcome-title.laura-typing::after {
+      -webkit-text-fill-color: currentColor;
+    }
+    .laura-card-a .laura-welcome-title.laura-shine,
+    .laura-card-c .laura-welcome-title.laura-shine {
+      background: none;
+      animation: none;
+    }
+    .laura-card-a .laura-welcome-note,
+    .laura-card-a .laura-welcome-sub,
+    .laura-card-a .laura-welcome-date {
+      color: #7a5c00;
     }
     .laura-welcome-emoji { font-size: 48px; margin-bottom: 1rem; }
     .laura-welcome-photo {
