@@ -901,8 +901,9 @@
     }
     .laura-mini-panel.show {
       animation: laura-mini-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards,
-                 laura-mini-float 7s ease-in-out infinite;
-      animation-delay: var(--pop-delay, 0s), var(--float-delay, 0.5s);
+                 laura-mini-float 3.2s ease-in-out infinite,
+                 laura-mini-blink 1.9s ease-in-out infinite;
+      animation-delay: var(--pop-delay, 0s), var(--float-delay, 0.5s), var(--blink-delay, 0.3s);
     }
     @keyframes laura-mini-pop {
       from { opacity: 0; transform: scale(0.5) rotate(var(--rot, 0deg)); }
@@ -910,10 +911,18 @@
     }
     @keyframes laura-mini-float {
       0%   { transform: scale(1) rotate(var(--rot, 0deg)) translate(0, 0); }
-      25%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(-11px, -5px); }
-      50%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(0, -9px); }
-      75%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(11px, -5px); }
+      20%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(16vw, -8vh); }
+      40%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(7vw, 11vh); }
+      60%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(-15vw, 7vh); }
+      80%  { transform: scale(1) rotate(var(--rot, 0deg)) translate(-7vw, -10vh); }
       100% { transform: scale(1) rotate(var(--rot, 0deg)) translate(0, 0); }
+    }
+    @keyframes laura-mini-blink {
+      0%, 100% { opacity: 1; }
+      12%      { opacity: 0.25; }
+      24%      { opacity: 1; }
+      36%      { opacity: 0.25; }
+      48%      { opacity: 1; }
     }
     .laura-mini-panel[data-pos="tl"] { top: 3%; left: 3%; }
     .laura-mini-panel[data-pos="tr"] { top: 3%; right: 3%; }
