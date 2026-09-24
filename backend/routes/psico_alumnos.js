@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const ExcelJS = require('exceljs');
-const { verificarToken } = require('./auth');
+const { verificarToken, esLaura } = require('./auth');
 
 // Solo la psicóloga (y el director, como respaldo, igual que en otras rutas)
-// puede ver o editar esta lista.
+// puede ver o editar esta lista. Laura (auxiliar) también puede, a pedido de
+// Gustavo — ver esLaura() en auth.js.
 const ROLES_PERMITIDOS = ['psicologa', 'director'];
 
 function permitirRoles(req, res, next) {
-  if (!ROLES_PERMITIDOS.includes(req.usuario.rol)) {
+  if (!ROLES_PERMITIDOS.includes(req.usuario.rol) && !esLaura(req.usuario)) {
     return res.status(403).json({ error: 'No tienes permiso para esta acción' });
   }
   next();

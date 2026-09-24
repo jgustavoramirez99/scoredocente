@@ -2686,6 +2686,8 @@
       <div class="nav-section">Evaluaciones</div>
       <div class="nav-item" onclick="showSectionAux('aux-censal', this)">📝 Evaluación Censal</div>
       <div class="nav-item" onclick="showSectionAux('aux-examenes', this)">🧮 Exámenes Diagnósticos</div>
+      <div class="nav-section" id="nav-aux-psico-section" style="display:none">Psicología</div>
+      <div class="nav-item" id="nav-aux-psico" style="display:none" onclick="abrirPanelPsicoDesdeAuxiliar()">🧠 Panel Psicología</div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -3050,6 +3052,7 @@
         <div class="user-avatar">👤</div>
         <div class="user-name" id="psico-user-info"></div>
       </div>
+      <button class="logout-btn" id="psico-volver-aux-btn" style="display:none" onclick="volverAPanelAuxiliar()"><span>↩</span> Volver a mi panel</button>
       <button class="logout-btn" onclick="logout()"><span>↩</span> Cerrar sesión</button>
       <button class="theme-toggle-btn" onclick="alternarTema()">
           <span class="theme-toggle-icon">🌙</span> <span class="theme-toggle-label">Modo oscuro</span>
@@ -4937,6 +4940,13 @@
     // "Reportes" (rango de fechas + PDF) es exclusivo de la cuenta de Laura, a pedido suyo.
     const navRep = document.getElementById('nav-aux-reportes');
     if (navRep) navRep.style.display = esLaura ? 'flex' : 'none';
+    // Laura también puede entrar al Panel Psicología completo, con todas sus
+    // funciones (evaluar tutores, historial, resultados, reportes de asistencia
+    // y la lista de seguimiento) — a pedido de Gustavo.
+    const navPsico = document.getElementById('nav-aux-psico');
+    const navPsicoSection = document.getElementById('nav-aux-psico-section');
+    if (navPsico) navPsico.style.display = esLaura ? 'flex' : 'none';
+    if (navPsicoSection) navPsicoSection.style.display = esLaura ? 'block' : 'none';
   } else if (rolesDirector.includes(usuario.rol)) {
     document.getElementById('director-page').style.display = 'flex';
     document.getElementById('dir-user-info').textContent = usuario.nombre;
@@ -4981,6 +4991,27 @@
     cargarDatosSupervisor();
   }
 }
+
+    // 🧠 Laura (auxiliar) puede abrir el Panel Psicología completo desde su
+    // propio panel, sin cerrar sesión, y volver después. El backend ya le da
+    // permiso a su cuenta específica para usar estas funciones (ver auth.js).
+    function abrirPanelPsicoDesdeAuxiliar() {
+      const auxPage = document.getElementById('auxiliar-page');
+      const psicoPage = document.getElementById('psicologa-page');
+      if (auxPage) auxPage.style.display = 'none';
+      if (psicoPage) psicoPage.style.display = 'flex';
+      const infoEl = document.getElementById('psico-user-info');
+      if (infoEl) infoEl.textContent = usuario.nombre;
+      const volverBtn = document.getElementById('psico-volver-aux-btn');
+      if (volverBtn) volverBtn.style.display = 'flex';
+      cargarDatosPsicologa();
+    }
+    function volverAPanelAuxiliar() {
+      const auxPage = document.getElementById('auxiliar-page');
+      const psicoPage = document.getElementById('psicologa-page');
+      if (psicoPage) psicoPage.style.display = 'none';
+      if (auxPage) auxPage.style.display = 'flex';
+    }
 
     function logout() {
       if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual);

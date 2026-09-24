@@ -126,4 +126,15 @@ router.patch('/usuarios/:id/desactivar', verificarToken, async (req, res) => {
 router.get('/verificar', verificarToken, (req, res) => {
   res.json({ valido: true, usuario: req.usuario });
 });
-module.exports = { router, verificarToken };
+
+// Cuenta de Laura (auxiliar): a pedido de Gustavo, también puede usar TODAS
+// las funciones del Panel Psicología (evaluar tutores, historial, resultados,
+// reportes de asistencia y la lista de seguimiento), sin cambiarle el rol de
+// "auxiliar" en la base de datos. Mismo correo que ya se usa en el frontend
+// para su bienvenida personalizada (EMAIL_LAURA_BIENVENIDA en index.html).
+const EMAIL_LAURA = 'laurachavez@cervantesschool.edu.pe';
+function esLaura(usuario) {
+  return !!usuario && (usuario.email || '').toLowerCase().trim() === EMAIL_LAURA;
+}
+
+module.exports = { router, verificarToken, esLaura, EMAIL_LAURA };

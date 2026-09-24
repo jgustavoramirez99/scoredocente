@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { verificarToken } = require('./auth');
+const { verificarToken, esLaura } = require('./auth');
 const { registrarAuditoria } = require('../utils/auditoria');
 
 // Roles que pueden VER los resultados (solo lectura)
@@ -10,6 +10,13 @@ const { registrarAuditoria } = require('../utils/auditoria');
 const ROLES_LECTURA = ['director', 'directora', 'coordinador_general', 'psicologa'];
 // Rol que registra las evaluaciones
 const ROL_EVALUADOR = 'psicologa';
+// Laura (auxiliar) también puede evaluar/ver todo esto — ver esLaura() en auth.js
+function puedeEvaluar(usuario) {
+  return usuario.rol === ROL_EVALUADOR || esLaura(usuario);
+}
+function puedeLeerTodo(usuario) {
+  return ROLES_LECTURA.includes(usuario.rol) || esLaura(usuario);
+}
 
 const CAMPOS_IND = [
   'planif_ind1','planif_ind2','planif_ind3','planif_ind4','planif_ind5',
@@ -23,7 +30,7 @@ const CAMPOS_IND = [
 // Solo docentes marcados como tutor (es_tutor = true) y que el supervisor
 // aún no evaluó hoy en esta ficha (tabla separada de la ficha regular).
 router.get('/pendientes', verificarToken, async (req, res) => {
-  if (req.usuario.rol !== ROL_EVALUADOR) {
+  if (!puedeEvaluar(req.usuario)) {
     return res.status(403).json({ error: 'Solo la psicóloga puede ver esta lista' });
   }
   try {
@@ -65,7 +72,7 @@ router.get('/mias', verificarToken, async (req, res) => {
 
 // GET /api/evaluaciones-tutor  (todas, para el director)
 router.get('/', verificarToken, async (req, res) => {
-  if (!ROLES_LECTURA.includes(req.usuario.rol)) {
+  if (!puedeLeerTodo(req.usuario)) {
     return res.status(403).json({ error: 'No autorizado para ver estos resultados' });
   }
   try {
@@ -100,7 +107,7 @@ router.get('/:id', verificarToken, async (req, res) => {
 
 // POST /api/evaluaciones-tutor
 router.post('/', verificarToken, async (req, res) => {
-  if (req.usuario.rol !== ROL_EVALUADOR) {
+  if (!puedeEvaluar(req.usuario)) {
     return res.status(403).json({ error: 'Solo la psicóloga puede registrar esta evaluación' });
   }
   const b = req.body;
@@ -168,7 +175,7 @@ router.post('/', verificarToken, async (req, res) => {
 // PUT /api/evaluaciones-tutor/:id — editar/completar una evaluación ya guardada
 // (solo la psicóloga que la registró puede editarla)
 router.put('/:id', verificarToken, async (req, res) => {
-  if (req.usuario.rol !== ROL_EVALUADOR) {
+  if (!puedeEvaluar(req.usuario)) {
     return res.status(403).json({ error: 'Solo la psicóloga puede editar esta evaluación' });
   }
   const b = req.body;
@@ -235,7 +242,7 @@ router.put('/:id', verificarToken, async (req, res) => {
 
 // DELETE /api/evaluaciones-tutor/:id
 router.delete('/:id', verificarToken, async (req, res) => {
-  if (req.usuario.rol !== ROL_EVALUADOR && !ROLES_LECTURA.includes(req.usuario.rol)) {
+  if (!puedeEvaluar(req.usuario) && !puedeLeerTodo(req.usuario)) {
     return res.status(403).json({ error: 'No autorizado' });
   }
   try {
