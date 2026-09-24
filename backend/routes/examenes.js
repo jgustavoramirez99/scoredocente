@@ -24,7 +24,11 @@ function permitirRoles(...rolesPermitidos) {
   };
 }
 
-const CURSOS = ['Razonamiento Matemático', 'Geometría', 'Álgebra', 'Trigonometría', 'Aritmética'];
+const CURSOS = [
+  'Razonamiento Matemático', 'Geometría', 'Álgebra', 'Trigonometría', 'Aritmética',
+  // Cursos de letras (mismo formato: 25 preguntas, 10 básico + 10 intermedio + 5 avanzado)
+  'Lenguaje', 'Literatura', 'Razonamiento Verbal'
+];
 const LETRAS_VALIDAS = ['A', 'B', 'C', 'D', 'E'];
 
 // Preguntas 1-10 = BÁSICO, 11-20 = INTERMEDIO, 21-25 = AVANZADO (fijo para todos los cursos/grados)
