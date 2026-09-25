@@ -923,18 +923,18 @@
       line-height: 1.12;
       color: #5c4300;
     }
-    .laura-mini-panel:nth-child(1) .laura-mini-heart-shape { background: #fff3b0; }
-    .laura-mini-panel:nth-child(1) .laura-mini-heart-text  { color: #5c4300; }
-    .laura-mini-panel:nth-child(2) .laura-mini-heart-shape { background: #ffc2d1; }
-    .laura-mini-panel:nth-child(2) .laura-mini-heart-text  { color: #6b1f34; }
-    .laura-mini-panel:nth-child(3) .laura-mini-heart-shape { background: #d8c4f0; }
-    .laura-mini-panel:nth-child(3) .laura-mini-heart-text  { color: #3f2a5e; }
-    .laura-mini-panel:nth-child(4) .laura-mini-heart-shape { background: #b9ecd0; }
-    .laura-mini-panel:nth-child(4) .laura-mini-heart-text  { color: #14532d; }
-    .laura-mini-panel:nth-child(5) .laura-mini-heart-shape { background: #ffdac1; }
-    .laura-mini-panel:nth-child(5) .laura-mini-heart-text  { color: #7a3b12; }
-    .laura-mini-panel:nth-child(6) .laura-mini-heart-shape { background: #bde0fe; }
-    .laura-mini-panel:nth-child(6) .laura-mini-heart-text  { color: #1b3a5c; }
+    .laura-mini-panel:nth-child(1) .laura-mini-heart-shape { background: #ffd3d3; }
+    .laura-mini-panel:nth-child(1) .laura-mini-heart-text  { color: #8a1c1c; }
+    .laura-mini-panel:nth-child(2) .laura-mini-heart-shape { background: #ffc9c9; }
+    .laura-mini-panel:nth-child(2) .laura-mini-heart-text  { color: #7a1616; }
+    .laura-mini-panel:nth-child(3) .laura-mini-heart-shape { background: #ffdada; }
+    .laura-mini-panel:nth-child(3) .laura-mini-heart-text  { color: #8f2020; }
+    .laura-mini-panel:nth-child(4) .laura-mini-heart-shape { background: #ffbdbd; }
+    .laura-mini-panel:nth-child(4) .laura-mini-heart-text  { color: #711212; }
+    .laura-mini-panel:nth-child(5) .laura-mini-heart-shape { background: #ffcccc; }
+    .laura-mini-panel:nth-child(5) .laura-mini-heart-text  { color: #841a1a; }
+    .laura-mini-panel:nth-child(6) .laura-mini-heart-shape { background: #ffd6d6; }
+    .laura-mini-panel:nth-child(6) .laura-mini-heart-text  { color: #7d1818; }
     .laura-mini-panel.show {
       animation: laura-mini-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards,
                  laura-mini-bob 4.6s ease-in-out infinite,
@@ -1815,23 +1815,9 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
-            <div class="laura-welcome-note">Tu ingeniero GusGus ❤️</div>
+            <div class="laura-welcome-note">Tu ingeniero Gustavo ❤️</div>
             <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="avanzarLaura(this, 'a', 'b', LAURA_PANEL_B)">Gracias ❤️</button>
-          </div>
-        </div>
-        <div class="laura-welcome-card laura-card-b" id="laura-welcome-card-b">
-          <div class="laura-welcome-card-inner">
-            <img class="laura-welcome-photo laura-welcome-photo-grande" id="laura-welcome-photo-b" src="laura-oficial.jpg" alt="">
-            <div class="laura-welcome-title" id="laura-welcome-title-b"></div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-b" onclick="avanzarLaura(this, 'b', 'c', LAURA_PANEL_C)">Te quiero ❤️</button>
-          </div>
-        </div>
-        <div class="laura-welcome-card laura-card-c" id="laura-welcome-card-c">
-          <div class="laura-welcome-card-inner">
-            <img class="laura-welcome-photo laura-welcome-photo-grande" id="laura-welcome-photo-c" src="laura-fecha13.jpg" alt="">
-            <div class="laura-welcome-title" id="laura-welcome-title-c"></div>
-            <button class="laura-welcome-btn" id="laura-welcome-btn-c" onclick="despedirLauraFinal(this)">Gracias, mi amor ❤️</button>
+            <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="despedirLauraFinal(this)">Gracias ❤️</button>
           </div>
         </div>
       </div>
@@ -4353,26 +4339,16 @@
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     const LAURA_PANEL_A = {
       badge: "🌤️ Reporte del día",
-      titulo: "Alerta de seguridad: se detecto una chica berrinchuda pero tierna en el sistema ❤️",
+      titulo: "Reporte meteorológico: Hoy viernes es un gran dia para sonreir princesa ❤️",
       boton: "Gracias ❤️"
     };
-    const LAURA_PANEL_B = {
-      titulo: "Sincronizando corazones... proceso completado con éxito 💞",
-      boton: "Te quiero ❤️",
-      foto: "laura-oficial.jpg"
-    };
-    const LAURA_PANEL_C = {
-      titulo: "Estado del corazón: 100% ocupado por ti ❤️",
-      boton: "Gracias, mi amor ❤️",
-      foto: "laura-fecha13.jpg"
-    };
     const LAURA_MINI_PANELES = [
-      "Ternura fuera de rango ❤️📊",
-      "Backup: 100% tú ☁️💕",
-      "Firewall: solo tú entras 🔓❤️",
-      "Cero fallas en ti ✅",
-      "Corazón desbloqueado 🔑💞",
-      "Modo avión off, conectado a ti 📶❤️"
+      "Te quiero mucho",
+      "Eres la mejor auxiliar",
+      "Tus labios son lindos",
+      "Mi berrinchuda hermosa",
+      "Cada día te quiero más",
+      "Eres mi bon bon"
     ];
 
     function fechaBonitaLaura() {
@@ -4469,19 +4445,6 @@
       });
     }
 
-    function avanzarLaura(btn, deSufijo, aSufijo, siguientePanel) {
-      explotarCorazonesBoton(btn);
-      const cardFrom = document.getElementById('laura-welcome-card-' + deSufijo);
-      const cardTo = document.getElementById('laura-welcome-card-' + aSufijo);
-      setTimeout(() => {
-        if (cardFrom) cardFrom.style.display = 'none';
-        if (cardTo) {
-          cardTo.style.display = '';
-          renderTarjetaLaura(aSufijo, siguientePanel);
-        }
-      }, 380);
-    }
-
     function despedirLaura(btn) {
       explotarCorazonesBoton(btn);
       setTimeout(cerrarBienvenidaLaura, 380);
@@ -4525,11 +4488,7 @@
       const fechaEl = document.getElementById('laura-welcome-date');
       if (fechaEl) fechaEl.textContent = fechaBonitaLaura();
       const cardA = document.getElementById('laura-welcome-card-a');
-      const cardB = document.getElementById('laura-welcome-card-b');
-      const cardC = document.getElementById('laura-welcome-card-c');
       if (cardA) cardA.style.display = '';
-      if (cardB) cardB.style.display = 'none';
-      if (cardC) cardC.style.display = 'none';
       renderTarjetaLaura('a', LAURA_PANEL_A);
       renderMiniPanelesLaura();
       if (overlay) overlay.classList.add('show');
