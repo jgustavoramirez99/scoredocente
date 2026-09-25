@@ -1785,6 +1785,76 @@
       from { opacity: 0; transform: translateY(-4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ══════════════════════════════
+       REPORTE TOTAL
+    ══════════════════════════════ */
+    .rt-badge-nuevo {
+      margin-left: auto;
+      font-size: 8.5px;
+      font-weight: 700;
+      background: var(--gold);
+      color: #2a2200;
+      padding: 1.5px 5px;
+      border-radius: 5px;
+      letter-spacing: 0.3px;
+    }
+    .rt-filtros-bar {
+      display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.9rem 1.1rem; margin-bottom: 1.5rem;
+    }
+    .rt-filtro-campo { display: flex; flex-direction: column; gap: 3px; }
+    .rt-filtro-campo label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; }
+    .rt-filtro-campo select, .rt-filtro-campo input {
+      background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+      font-size: 12.5px; padding: 8px 10px; border-radius: 7px; font-family: inherit; min-width: 160px;
+    }
+    .rt-btn-generar {
+      padding: 10px 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .rt-btn-pdf {
+      padding: 10px 20px; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff;
+      border: none; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; font-family: 'DM Sans', sans-serif;
+    }
+    .rt-bloque {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      margin-bottom: 1.5rem; overflow: hidden; position: relative;
+    }
+    .rt-bloque::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .rt-bloque-1::before { background: linear-gradient(90deg, var(--navy2), var(--accent)); }
+    .rt-bloque-2::before { background: linear-gradient(90deg, var(--gold), var(--accent)); }
+    .rt-bloque-3::before { background: linear-gradient(90deg, var(--accent), var(--navy2), var(--gold)); }
+    .rt-bloque-header { padding: 1rem 1.4rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .rt-bloque-num {
+      width: 24px; height: 24px; border-radius: 50%; background: var(--surface3); color: var(--text2);
+      font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .rt-bloque-titulo { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+    .rt-bloque-sub { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
+    .rt-bloque-body { padding: 1.2rem 1.4rem; }
+    .rt-stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.85rem; margin-bottom: 1rem;
+    }
+    .rt-stat-card { background: var(--surface2); border: 1px solid var(--border); padding: 1rem 1.15rem; border-radius: 10px; }
+    .rt-stat-icon { font-size: 16px; margin-bottom: 0.5rem; opacity: 0.8; }
+    .rt-stat-number { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+    .rt-stat-label { font-size: 11px; color: var(--text3); margin-top: 3px; }
+    .rt-mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .rt-mini-table th {
+      text-align: left; padding: 7px 10px; font-size: 10px; color: var(--text3); text-transform: uppercase;
+      letter-spacing: 0.4px; border-bottom: 1px solid var(--border);
+    }
+    .rt-mini-table td { padding: 8px 10px; color: var(--text2); border-bottom: 1px solid var(--border); }
+    .rt-barra-wrap { background: var(--surface3); border-radius: 5px; height: 6px; width: 90px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .rt-barra { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--navy2), var(--accent)); }
+    .rt-pill { font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+    .rt-pill-verde { background: var(--green-bg); color: var(--green); }
+    .rt-pill-ambar { background: var(--amber-bg); color: var(--amber); }
+    .rt-pill-rojo { background: var(--red-bg); color: var(--red); }
+    .rt-vacio { color: var(--text3); font-size: 12.5px; padding: 0.5rem 0; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -1875,6 +1945,7 @@
       <div class="nav-item" onclick="showSection('evaluaciones', this)">📋 Evaluaciones</div>
       <div class="nav-item" onclick="showSection('tutoria', this)">📘 Tutoría</div>
       <div class="nav-section">Análisis</div>
+      <div class="nav-item" id="nav-reporte-total" onclick="showSection('reporte-total', this)">📈 Reporte Total <span class="rt-badge-nuevo">NUEVO</span></div>
       <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
       <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
       <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
@@ -2018,6 +2089,74 @@
             <thead><tr><th>Docente Tutor</th><th>Grado/Sección</th><th>Promedio</th><th>Fecha</th><th>Detalle</th></tr></thead>
             <tbody id="tabla-tutoria"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="section" id="section-reporte-total">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div class="page-title">Reporte Total</div>
+            <div class="page-subtitle">Vista consolidada: académico del alumno/salón, institucional/docentes y resumen general del colegio</div>
+          </div>
+          <button class="rt-btn-pdf" onclick="exportarReporteTotalPDF()">📄 Exportar PDF completo</button>
+        </div>
+
+        <div class="rt-filtros-bar">
+          <div class="rt-filtro-campo">
+            <label>Salón (para el bloque académico)</label>
+            <select id="rt-salon"><option value="">Selecciona un salón...</option></select>
+          </div>
+          <div class="rt-filtro-campo">
+            <label>Desde</label>
+            <input type="date" id="rt-desde">
+          </div>
+          <div class="rt-filtro-campo">
+            <label>Hasta</label>
+            <input type="date" id="rt-hasta">
+          </div>
+          <button class="rt-btn-generar" onclick="generarReporteTotal()">Generar Reporte</button>
+        </div>
+
+        <!-- BLOQUE 1: ACADÉMICO -->
+        <div class="rt-bloque rt-bloque-1">
+          <div class="rt-bloque-header">
+            <div class="rt-bloque-num">1</div>
+            <div>
+              <div class="rt-bloque-titulo">🎓 Académico por Alumno / Salón</div>
+              <div class="rt-bloque-sub">Asistencia + Exámenes Diagnósticos + Evaluación Censal</div>
+            </div>
+          </div>
+          <div class="rt-bloque-body" id="rt-bloque-academico">
+            <div class="rt-vacio">Selecciona un salón y presiona "Generar Reporte".</div>
+          </div>
+        </div>
+
+        <!-- BLOQUE 2: INSTITUCIONAL / DOCENTES -->
+        <div class="rt-bloque rt-bloque-2">
+          <div class="rt-bloque-header">
+            <div class="rt-bloque-num">2</div>
+            <div>
+              <div class="rt-bloque-titulo">🏫 Institucional / Docentes</div>
+              <div class="rt-bloque-sub">Evaluación docente + Tutoría/Psicología + Encuesta de estudiantes + Coordinadores</div>
+            </div>
+          </div>
+          <div class="rt-bloque-body" id="rt-bloque-institucional">
+            <div class="rt-vacio">Presiona "Generar Reporte" para ver los resultados de todo el colegio.</div>
+          </div>
+        </div>
+
+        <!-- BLOQUE 3: RESUMEN GENERAL DEL COLEGIO -->
+        <div class="rt-bloque rt-bloque-3">
+          <div class="rt-bloque-header">
+            <div class="rt-bloque-num">3</div>
+            <div>
+              <div class="rt-bloque-titulo">🏢 Resumen General del Colegio</div>
+              <div class="rt-bloque-sub">Estadísticas agregadas de todo Cervantes School</div>
+            </div>
+          </div>
+          <div class="rt-bloque-body" id="rt-bloque-resumen">
+            <div class="rt-vacio">Presiona "Generar Reporte" para ver el resumen general.</div>
+          </div>
         </div>
       </div>
 
@@ -4995,6 +5134,323 @@
       if (id === 'eval-estudiantes') { cargarSalonesEvalEstudiantes(); cargarResumenEvalEstudiantes(); }
       if (id === 'coordinadores') cargarCoordinadores();
       if (id === 'fichas') { cargarFichasDocentes(); cargarFichasNivelEducativo(); }
+      if (id === 'reporte-total') cargarSalonesReporteTotal();
+    }
+
+    // ══════════════════════════════
+    //  REPORTE TOTAL
+    // ══════════════════════════════
+    let _reporteTotalData = null;
+
+    async function cargarSalonesReporteTotal() {
+      const select = document.getElementById('rt-salon');
+      if (select.dataset.cargado) return;
+      try {
+        const res = await fetch('/api/alumnos/salones', { headers: { 'Authorization': 'Bearer ' + token } });
+        const salones = await res.json();
+        select.innerHTML = '<option value="">Selecciona un salón...</option>' +
+          salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        select.dataset.cargado = '1';
+      } catch (err) {
+        console.error('Error cargando salones (Reporte Total):', err);
+      }
+    }
+
+    async function generarReporteTotal() {
+      const salonId = document.getElementById('rt-salon').value;
+      const desde = document.getElementById('rt-desde').value;
+      const hasta = document.getElementById('rt-hasta').value;
+
+      const bAcad = document.getElementById('rt-bloque-academico');
+      const bInst = document.getElementById('rt-bloque-institucional');
+      const bRes  = document.getElementById('rt-bloque-resumen');
+      bInst.innerHTML = '<div class="rt-vacio">⏳ Generando...</div>';
+      bRes.innerHTML  = '<div class="rt-vacio">⏳ Generando...</div>';
+      bAcad.innerHTML = salonId
+        ? '<div class="rt-vacio">⏳ Generando...</div>'
+        : '<div class="rt-vacio">Selecciona un salón para ver el bloque académico.</div>';
+
+      try {
+        const params = new URLSearchParams();
+        if (salonId) params.set('salon_id', salonId);
+        if (desde) params.set('desde', desde);
+        if (hasta) params.set('hasta', hasta);
+        const res = await fetch('/api/reporte-total?' + params.toString(), {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) { alert('Error: ' + (data.error || 'no se pudo generar el reporte')); return; }
+        _reporteTotalData = data;
+        renderBloqueAcademico(data.academico);
+        renderBloqueInstitucional(data.institucional);
+        renderBloqueResumen(data.resumen);
+      } catch (err) {
+        console.error('Error generando Reporte Total:', err);
+        alert('Error de conexión al generar el reporte');
+      }
+    }
+
+    function renderBloqueAcademico(a) {
+      const cont = document.getElementById('rt-bloque-academico');
+      if (!a) { cont.innerHTML = '<div class="rt-vacio">Selecciona un salón para ver el bloque académico.</div>'; return; }
+
+      const asis = a.asistencia.porcentaje !== null ? a.asistencia.porcentaje + '%' : '—';
+      const examProm = a.examenes.promedio_general !== null ? a.examenes.promedio_general : '—';
+      const entradasCensal = Object.entries(a.censal.distribucion || {});
+      const censalTop = a.censal.alumnos_evaluados ? entradasCensal.sort((x, y) => y[1] - x[1])[0] : null;
+
+      let html = `<div class="rt-stats-grid">
+        <div class="rt-stat-card"><div class="rt-stat-icon">🗓</div><div class="rt-stat-number">${asis}</div><div class="rt-stat-label">Asistencia del salón</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">📝</div><div class="rt-stat-number">${examProm}</div><div class="rt-stat-label">Promedio ex. diagnósticos (/20)</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">📖</div><div class="rt-stat-number">${censalTop ? censalTop[0].split(' ')[0] : '—'}</div><div class="rt-stat-label">Nivel más frecuente (Censal)</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">🧑‍🎓</div><div class="rt-stat-number">${a.total_alumnos}</div><div class="rt-stat-label">Alumnos activos del salón</div></div>
+      </div>`;
+
+      if (a.examenes.por_curso.length) {
+        html += `<table class="rt-mini-table"><thead><tr><th>Curso</th><th>Promedio</th><th>Alumnos evaluados</th></tr></thead><tbody>`;
+        a.examenes.por_curso.forEach(c => {
+          const pct = Math.max(0, Math.min(100, Math.round((c.promedio / 20) * 100)));
+          const pillClass = c.promedio >= 14 ? 'rt-pill-verde' : c.promedio >= 11 ? 'rt-pill-ambar' : 'rt-pill-rojo';
+          const pillTexto = c.promedio >= 14 ? 'Logrado' : c.promedio >= 11 ? 'En proceso' : 'En inicio';
+          html += `<tr><td>${c.curso}</td><td><span class="rt-barra-wrap"><span class="rt-barra" style="width:${pct}%"></span></span>${c.promedio}</td><td>${c.alumnos_evaluados} <span class="rt-pill ${pillClass}">${pillTexto}</span></td></tr>`;
+        });
+        html += `</tbody></table>`;
+      } else {
+        html += `<div class="rt-vacio">Aún no hay exámenes diagnósticos con clave aprobada para este salón.</div>`;
+      }
+
+      if (a.censal.alumnos_evaluados) {
+        html += `<div style="margin-top:1rem;font-size:11.5px;color:var(--text3)">Evaluación Censal — ${a.censal.alumnos_evaluados} de ${a.total_alumnos} alumno(s) evaluado(s): ` +
+          entradasCensal.filter(([, v]) => v > 0).map(([k, v]) => `${k}: ${v}`).join(' · ') + `</div>`;
+      }
+
+      cont.innerHTML = html;
+    }
+
+    function renderBloqueInstitucional(inst) {
+      const cont = document.getElementById('rt-bloque-institucional');
+      if (!inst) { cont.innerHTML = '<div class="rt-vacio">Presiona "Generar Reporte".</div>'; return; }
+
+      const evalProm = inst.evaluacion_docente.promedio !== null ? inst.evaluacion_docente.promedio + '%' : '—';
+      const tutProm  = inst.tutoria.promedio !== null ? inst.tutoria.promedio + '%' : '—';
+      const estProm  = inst.encuesta_estudiantes.promedio !== null ? inst.encuesta_estudiantes.promedio + '/5' : '—';
+      const coordConDatos = inst.coordinadores.filter(c => c.total > 0);
+      const coordProm = coordConDatos.length
+        ? Math.round((coordConDatos.reduce((s, c) => s + (c.promedio_gral + c.promedio_acad) / 2, 0) / coordConDatos.length) * 100) / 100
+        : null;
+
+      let html = `<div class="rt-stats-grid">
+        <div class="rt-stat-card"><div class="rt-stat-icon">📋</div><div class="rt-stat-number">${evalProm}</div><div class="rt-stat-label">Evaluación docente (${inst.evaluacion_docente.docentes_evaluados} docentes)</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">📘</div><div class="rt-stat-number">${tutProm}</div><div class="rt-stat-label">Tutoría / Psicología (${inst.tutoria.total} fichas)</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">🧑‍🎓</div><div class="rt-stat-number">${estProm}</div><div class="rt-stat-label">Encuesta de estudiantes (${inst.encuesta_estudiantes.total} resp.)</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">🧑‍💼</div><div class="rt-stat-number">${coordProm !== null ? coordProm + '%' : '—'}</div><div class="rt-stat-label">Gestión de coordinadores</div></div>
+      </div>`;
+
+      if (inst.evaluacion_docente.ranking.length) {
+        html += `<table class="rt-mini-table"><thead><tr><th>Docente</th><th>Promedio</th><th>Evaluaciones</th></tr></thead><tbody>`;
+        inst.evaluacion_docente.ranking.slice(0, 8).forEach(d => {
+          const pillClass = d.promedio >= 90 ? 'rt-pill-verde' : d.promedio >= 70 ? 'rt-pill-ambar' : 'rt-pill-rojo';
+          const pillTexto = d.promedio >= 90 ? 'Destacado' : d.promedio >= 70 ? 'En proceso' : 'Requiere mejora';
+          html += `<tr><td>${d.docente}</td><td><span class="rt-barra-wrap"><span class="rt-barra" style="width:${Math.min(100, d.promedio)}%"></span></span>${d.promedio}%</td><td>${d.total} <span class="rt-pill ${pillClass}">${pillTexto}</span></td></tr>`;
+        });
+        html += `</tbody></table>`;
+        if (inst.evaluacion_docente.ranking.length > 8) {
+          html += `<div style="margin-top:0.5rem;font-size:11px;color:var(--text3)">Mostrando los 8 mejores de ${inst.evaluacion_docente.ranking.length} docentes evaluados. El detalle completo está en "Reportes".</div>`;
+        }
+      } else {
+        html += `<div class="rt-vacio">Aún no hay evaluaciones docentes registradas.</div>`;
+      }
+
+      const nivelesTexto = { inicial: 'Inicial', primaria: 'Primaria', secundaria: 'Secundaria' };
+      html += `<div style="margin-top:1rem;font-size:11.5px;color:var(--text3)">Gestión de coordinadores por nivel: ` +
+        inst.coordinadores.map(c => `${nivelesTexto[c.nivel] || c.nivel}: ${c.total ? (((c.promedio_gral + c.promedio_acad) / 2).toFixed(1) + '%') : 'sin datos'}`).join(' · ') +
+        `</div>`;
+
+      cont.innerHTML = html;
+    }
+
+    function renderBloqueResumen(r) {
+      const cont = document.getElementById('rt-bloque-resumen');
+      if (!r) { cont.innerHTML = '<div class="rt-vacio">Presiona "Generar Reporte".</div>'; return; }
+
+      const asis = r.asistencia_promedio_pct !== null ? r.asistencia_promedio_pct + '%' : '—';
+      const exam = r.resultado_agregado_examenes !== null ? r.resultado_agregado_examenes : '—';
+      const evalDoc = r.promedio_evaluaciones_docentes !== null ? r.promedio_evaluaciones_docentes + '%' : '—';
+      const fichasPct = r.fichas_docentes.total ? Math.round((r.fichas_docentes.procesadas / r.fichas_docentes.total) * 100) : null;
+
+      cont.innerHTML = `<div class="rt-stats-grid">
+        <div class="rt-stat-card"><div class="rt-stat-icon">🧑‍🎓</div><div class="rt-stat-number">${r.total_alumnos}</div><div class="rt-stat-label">Total de alumnos activos</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">🗓</div><div class="rt-stat-number">${asis}</div><div class="rt-stat-label">Asistencia promedio del colegio</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">📊</div><div class="rt-stat-number">${exam}</div><div class="rt-stat-label">Resultado agregado de exámenes (/20)</div></div>
+        <div class="rt-stat-card"><div class="rt-stat-icon">👨‍🏫</div><div class="rt-stat-number">${evalDoc}</div><div class="rt-stat-label">Promedio evaluación docente</div></div>
+      </div>
+      <div style="margin-top:0.75rem;font-size:11.5px;color:var(--text3)">Fichas de docentes (datos personales/RR.HH.): ${r.fichas_docentes.procesadas} de ${r.fichas_docentes.total} revisadas${fichasPct !== null ? ' (' + fichasPct + '%)' : ''}.</div>`;
+    }
+
+    // ── Exportar Reporte Total a PDF (mismo estilo de casa que los demás reportes) ──
+    function exportarReporteTotalPDF() {
+      if (!_reporteTotalData) { alert('Primero genera el reporte con el botón "Generar Reporte".'); return; }
+      const { jsPDF } = window.jspdf;
+      const fecha = new Date().toLocaleDateString('es-PE');
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = logoImg.width; canvas.height = logoImg.height;
+        canvas.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarReporteTotalPDFConLogo(doc, _reporteTotalData, fecha, canvas.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarReporteTotalPDFConLogo(doc, _reporteTotalData, fecha, null);
+    }
+
+    function _rtEncabezadoPDF(doc, logoData, subtitulo, fecha) {
+      doc.setFillColor(180, 0, 30);
+      doc.rect(0, 0, 210, 2, 'F');
+      if (logoData) doc.addImage(logoData, 'PNG', 10, 4, 24, 17);
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(20, 20, 80);
+      doc.text('REPORTE TOTAL', 120, 10, { align: 'center' });
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('I.E.P. Cervantes School — ' + subtitulo + ' — Generado: ' + fecha, 120, 16, { align: 'center' });
+      doc.setDrawColor(180, 0, 30);
+      doc.setLineWidth(0.5);
+      doc.line(10, 24, 200, 24);
+    }
+
+    function _rtStatCards(doc, y, stats) {
+      const cols = 2;
+      stats.forEach((s, i) => {
+        const x = 14 + (i % cols) * 93;
+        const yy = y + Math.floor(i / cols) * 24;
+        doc.setFillColor(...s.color);
+        doc.roundedRect(x, yy, 89, 20, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(String(s.valor), x + 44.5, yy + 9, { align: 'center' });
+        doc.setFontSize(7.2); doc.setFont('helvetica', 'normal');
+        doc.text(s.label, x + 44.5, yy + 16, { align: 'center', maxWidth: 82 });
+      });
+      return y + Math.ceil(stats.length / cols) * 24 + 6;
+    }
+
+    function _generarReporteTotalPDFConLogo(doc, data, fecha, logoData) {
+      const NAVY = [22, 50, 92], GOLD = [212, 175, 55], RED = [230, 57, 70], GREEN = [46, 204, 113], AMBER = [243, 156, 18];
+
+      // ── PÁGINA: Académico (solo si se eligió un salón) ──
+      if (data.academico) {
+        const a = data.academico;
+        _rtEncabezadoPDF(doc, logoData, 'Académico — ' + (a.salon ? a.salon.nombre : ''), fecha);
+        let y = 30;
+        y = _rtStatCards(doc, y, [
+          { label: 'Asistencia del salón', valor: a.asistencia.porcentaje !== null ? a.asistencia.porcentaje + '%' : '—', color: NAVY },
+          { label: 'Promedio ex. diagnósticos (/20)', valor: a.examenes.promedio_general !== null ? a.examenes.promedio_general : '—', color: RED },
+          { label: 'Alumnos activos del salón', valor: a.total_alumnos, color: GOLD },
+          { label: 'Alumnos evaluados (Censal)', valor: a.censal.alumnos_evaluados, color: GREEN },
+        ]);
+
+        doc.setTextColor(20, 20, 80); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text('Exámenes diagnósticos por curso', 14, y);
+        y += 6;
+        if (a.examenes.por_curso.length) {
+          doc.setFontSize(9);
+          a.examenes.por_curso.forEach(c => {
+            doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+            doc.text(c.curso, 14, y);
+            const barW = Math.max(0, Math.min(100, (c.promedio / 20) * 100)) * 0.8;
+            doc.setFillColor(220, 220, 228); doc.roundedRect(80, y - 3.5, 80, 5, 1.5, 1.5, 'F');
+            doc.setFillColor(...(c.promedio >= 14 ? GREEN : c.promedio >= 11 ? AMBER : RED));
+            if (barW > 0) doc.roundedRect(80, y - 3.5, barW, 5, 1.5, 1.5, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(c.promedio), 178, y, { align: 'right' });
+            y += 7;
+          });
+        } else {
+          doc.setFontSize(9); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 120, 120);
+          doc.text('Aún no hay exámenes con clave aprobada para este salón.', 14, y);
+          y += 7;
+        }
+
+        y += 5;
+        doc.setTextColor(20, 20, 80); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+        doc.text('Evaluación Censal — distribución de niveles de logro', 14, y);
+        y += 7;
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+        const distTxt = Object.entries(a.censal.distribucion || {}).map(([k, v]) => `${k}: ${v}`).join('   ');
+        doc.text(distTxt || 'Sin datos de evaluación censal para este salón.', 14, y);
+
+        doc.addPage();
+      }
+
+      // ── PÁGINA: Institucional / Docentes ──
+      const inst = data.institucional;
+      _rtEncabezadoPDF(doc, logoData, 'Institucional / Docentes', fecha);
+      let y2 = 30;
+      y2 = _rtStatCards(doc, y2, [
+        { label: `Evaluación docente (${inst.evaluacion_docente.docentes_evaluados} docentes)`, valor: inst.evaluacion_docente.promedio !== null ? inst.evaluacion_docente.promedio + '%' : '—', color: NAVY },
+        { label: `Tutoría/Psicología (${inst.tutoria.total} fichas)`, valor: inst.tutoria.promedio !== null ? inst.tutoria.promedio + '%' : '—', color: GOLD },
+        { label: `Encuesta de estudiantes (${inst.encuesta_estudiantes.total})`, valor: inst.encuesta_estudiantes.promedio !== null ? inst.encuesta_estudiantes.promedio + '/5' : '—', color: GREEN },
+        { label: 'Gestión de coordinadores', valor: '—', color: RED },
+      ]);
+
+      doc.setTextColor(20, 20, 80); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('Ranking de evaluación docente', 14, y2);
+      y2 += 6;
+      if (inst.evaluacion_docente.ranking.length) {
+        doc.setFontSize(9);
+        inst.evaluacion_docente.ranking.slice(0, 12).forEach(d => {
+          doc.setFont('helvetica', 'normal'); doc.setTextColor(60, 60, 60);
+          doc.text(d.docente, 14, y2, { maxWidth: 94 });
+          const color = d.promedio >= 90 ? GOLD : d.promedio >= 80 ? GREEN : d.promedio >= 70 ? AMBER : RED;
+          doc.setFillColor(220, 220, 228); doc.roundedRect(110, y2 - 3.5, 60, 5, 1.5, 1.5, 'F');
+          const barW = Math.min(100, d.promedio) * 0.6;
+          doc.setFillColor(...color);
+          if (barW > 0) doc.roundedRect(110, y2 - 3.5, barW, 5, 1.5, 1.5, 'F');
+          doc.setFont('helvetica', 'bold'); doc.setTextColor(...color);
+          doc.text(d.promedio + '%', 178, y2, { align: 'right' });
+          y2 += 7;
+        });
+      } else {
+        doc.setFontSize(9); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 120, 120);
+        doc.text('Aún no hay evaluaciones docentes registradas.', 14, y2);
+        y2 += 7;
+      }
+
+      doc.addPage();
+
+      // ── PÁGINA: Resumen General del Colegio ──
+      const r = data.resumen;
+      _rtEncabezadoPDF(doc, logoData, 'Resumen General del Colegio', fecha);
+      let y3 = 30;
+      _rtStatCards(doc, y3, [
+        { label: 'Total de alumnos activos', valor: r.total_alumnos, color: NAVY },
+        { label: 'Asistencia promedio del colegio', valor: r.asistencia_promedio_pct !== null ? r.asistencia_promedio_pct + '%' : '—', color: GOLD },
+        { label: 'Resultado agregado de exámenes (/20)', valor: r.resultado_agregado_examenes !== null ? r.resultado_agregado_examenes : '—', color: GREEN },
+        { label: 'Promedio evaluación docente', valor: r.promedio_evaluaciones_docentes !== null ? r.promedio_evaluaciones_docentes + '%' : '—', color: RED },
+      ]);
+      y3 += Math.ceil(4 / 2) * 24 + 6;
+      doc.setTextColor(60, 60, 60); doc.setFontSize(9.5); doc.setFont('helvetica', 'normal');
+      const fichasPct = r.fichas_docentes.total ? Math.round((r.fichas_docentes.procesadas / r.fichas_docentes.total) * 100) : null;
+      doc.text(`Fichas de docentes (datos personales/RR.HH.): ${r.fichas_docentes.procesadas} de ${r.fichas_docentes.total} revisadas${fichasPct !== null ? ' (' + fichasPct + '%)' : ''}.`, 14, y3);
+
+      // ── Pie de página en todas las hojas (mismo estilo que el resto del sistema) ──
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      const totalPags = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPags; i++) {
+        doc.setPage(i);
+        doc.setFillColor(20, 20, 80);
+        doc.rect(0, pageH - 7, pageW, 7, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text('R&C Tech Solutions — Todos los derechos reservados', margin, pageH - 2.6);
+        doc.text('Página ' + i + ' de ' + totalPags, pageW - margin, pageH - 2.6, { align: 'right' });
+      }
+
+      doc.save('EduScore_ReporteTotal_' + fecha.replace(/\//g, '-') + '.pdf');
     }
 
     function showSectionSup(id, el) {
