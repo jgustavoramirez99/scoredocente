@@ -299,6 +299,48 @@
       border-radius: 0 2px 2px 0;
     }
 
+    /* ── GRUPOS DE NAVEGACIÓN (estilo Cubicol: módulo + submenú anidado) ── */
+    .nav-group {
+      margin-bottom: 2px;
+    }
+    .nav-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text3);
+      letter-spacing: 0.3px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .nav-group-header:hover { background: var(--surface2); color: var(--text2); }
+    .nav-group-title { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-group-chevron {
+      font-size: 10px;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+      color: var(--text3);
+    }
+    .nav-group.collapsed .nav-group-chevron { transform: rotate(-90deg); }
+    .nav-group-items {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: 600px;
+      transition: max-height 0.25s ease;
+      padding-left: 10px;
+      border-left: 1px solid var(--border);
+      margin-left: 14px;
+    }
+    .nav-group.collapsed .nav-group-items { max-height: 0; }
+    .nav-group-items .nav-item { font-size: 12.5px; padding: 7px 10px; }
+    .nav-group.has-active .nav-group-header { color: var(--text); }
+
     .sidebar-footer {
       margin-top: auto;
       border-top: 1px solid var(--border);
@@ -1942,22 +1984,57 @@
       <div class="nav-section">Principal</div>
       <div class="nav-item active" onclick="showSection('resumen', this)">📊 Resumen</div>
       <div class="nav-item" onclick="showSection('docentes', this)">👨‍🏫 Docentes</div>
-      <div class="nav-item" onclick="showSection('evaluaciones', this)">📋 Evaluaciones</div>
-      <div class="nav-item" onclick="showSection('tutoria', this)">📘 Tutoría</div>
-      <div class="nav-section">Análisis</div>
-      <div class="nav-item" id="nav-reporte-total" onclick="showSection('reporte-total', this)">📈 Reporte Total <span class="rt-badge-nuevo">NUEVO</span></div>
-      <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
-      <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
-      <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
-      <div class="nav-item" onclick="showSection('auditoria', this)">🕵️ Auditoría</div>
-      <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
-      <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
-      <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
-      <div class="nav-item" onclick="showSection('examenes-clave', this)">🗝️ Clave de Exámenes</div>
-      <div class="nav-item" id="nav-resultados-examenes" onclick="showSection('resultados-examenes', this)">📊 Resultados de Exámenes</div>
-      <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
-      <div class="nav-item" id="nav-coordinadores" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
-      <div class="nav-item" id="nav-fichas" onclick="showSection('fichas', this)">🗂️ Fichas de Docentes</div>
+
+      <div class="nav-group" id="navgroup-evaluaciones">
+        <div class="nav-group-header" onclick="toggleNavGroup('evaluaciones')">
+          <span class="nav-group-title">📋 Evaluaciones y Seguimiento</span>
+          <span class="nav-group-chevron">▾</span>
+        </div>
+        <div class="nav-group-items">
+          <div class="nav-item" onclick="showSection('evaluaciones', this)">📋 Evaluaciones</div>
+          <div class="nav-item" onclick="showSection('tutoria', this)">📘 Tutoría</div>
+          <div class="nav-item" onclick="showSection('eval-estudiantes', this)">🧑‍🎓 Eval. de Estudiantes</div>
+          <div class="nav-item" id="nav-coordinadores" onclick="showSection('coordinadores', this)">🧑‍💼 Coordinadores</div>
+          <div class="nav-item" id="nav-fichas" onclick="showSection('fichas', this)">🗂️ Fichas de Docentes</div>
+        </div>
+      </div>
+
+      <div class="nav-group" id="navgroup-reportes">
+        <div class="nav-group-header" onclick="toggleNavGroup('reportes')">
+          <span class="nav-group-title">📈 Reportes y Análisis</span>
+          <span class="nav-group-chevron">▾</span>
+        </div>
+        <div class="nav-group-items">
+          <div class="nav-item" id="nav-reporte-total" onclick="showSection('reporte-total', this)">📈 Reporte Total <span class="rt-badge-nuevo">NUEVO</span></div>
+          <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
+          <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
+          <div class="nav-item" id="nav-resultados-examenes" onclick="showSection('resultados-examenes', this)">📊 Resultados de Exámenes</div>
+          <div class="nav-item" onclick="showSection('auditoria', this)">🕵️ Auditoría</div>
+        </div>
+      </div>
+
+      <div class="nav-group" id="navgroup-asistencia">
+        <div class="nav-group-header" onclick="toggleNavGroup('asistencia')">
+          <span class="nav-group-title">🗓 Asistencia y Exámenes</span>
+          <span class="nav-group-chevron">▾</span>
+        </div>
+        <div class="nav-group-items">
+          <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia', this)">🗓 Asistencia</div>
+          <div class="nav-item" onclick="showSection('censal', this)">📝 Evaluación Censal</div>
+          <div class="nav-item" onclick="showSection('examenes-clave', this)">🗝️ Clave de Exámenes</div>
+        </div>
+      </div>
+
+      <div class="nav-group" id="navgroup-admin">
+        <div class="nav-group-header" onclick="toggleNavGroup('admin')">
+          <span class="nav-group-title">⚙️ Administración</span>
+          <span class="nav-group-chevron">▾</span>
+        </div>
+        <div class="nav-group-items">
+          <div class="nav-item" onclick="showSection('usuarios', this)">👥 Usuarios</div>
+          <div class="nav-item" id="nav-apoderados" onclick="showSection('apoderados', this)">📞 Apoderados</div>
+        </div>
+      </div>
       <div class="sidebar-footer">
         <div class="user-chip">
           <div class="user-avatar">👤</div>
@@ -5119,11 +5196,28 @@
       location.reload();
     }
 
+    // Grupos de navegación estilo Cubicol (módulo + submenú anidado). Por
+    // defecto ningún grupo empieza colapsado (para no "esconder" secciones
+    // que antes eran visibles de una) — el chevron es solo una conveniencia
+    // visual para plegar grupos largos.
+    function toggleNavGroup(nombreGrupo) {
+      const grupo = document.getElementById('navgroup-' + nombreGrupo);
+      if (grupo) grupo.classList.toggle('collapsed');
+    }
+
     function showSection(id, el) {
       document.querySelectorAll('#director-page .section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('#director-page .nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('#director-page .nav-group').forEach(g => g.classList.remove('has-active'));
       document.getElementById('section-' + id).classList.add('active');
       el.classList.add('active');
+      // Si el ítem clickeado vive dentro de un grupo colapsable, lo despliega
+      // (por si el usuario lo había plegado) y marca el grupo como "activo".
+      const grupoPadre = el.closest('.nav-group');
+      if (grupoPadre) {
+        grupoPadre.classList.remove('collapsed');
+        grupoPadre.classList.add('has-active');
+      }
       if (id === 'apoderados') cargarReporteApoderados();
       if (id === 'asistencia') cargarSalonesAsistenciaDirector();
       if (id === 'tutoria') cargarTutoriaDirector();
