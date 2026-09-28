@@ -1036,6 +1036,13 @@
     .laura-card-a { rotate: -2deg; }
     .laura-card-b { rotate: 1.5deg; }
     .laura-card-c { rotate: -1.5deg; }
+    /* Modo atrapame: el panel se mueve solo y esquiva el mouse un rato */
+    .laura-card-movil {
+      position: fixed !important;
+      z-index: 10010;
+      animation: laura-card-pop 0.5s cubic-bezier(.34,1.56,.64,1), laura-card-glow 2.2s ease-in-out infinite;
+      transition: left 0.5s cubic-bezier(.34,1.56,.64,1), top 0.5s cubic-bezier(.34,1.56,.64,1);
+    }
     .laura-welcome-card::before {
       content: '📌';
       position: absolute;
@@ -1928,7 +1935,7 @@
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
             <div class="laura-welcome-note">Tu ingeniero Gustavo ❤️</div>
-            <div class="laura-welcome-sub">Panel Auxiliar — ScoreDocente</div>
+            <div class="laura-welcome-sub">Que tengas una linda semana 🌤️</div>
             <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="despedirLauraFinal(this)">Gracias ❤️</button>
           </div>
         </div>
@@ -4554,18 +4561,11 @@
     // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     const LAURA_PANEL_A = {
-      badge: "🌤️ Reporte del día",
-      titulo: "Reporte meteorológico: Hoy viernes es un gran dia para sonreir princesa ❤️",
+      badge: "🔔 Alerta del sistema",
+      titulo: "Alerta del sistema: Hoy martes hay una auxiliar hermosa en Cervantes School que está leyendo esto ❤️",
       boton: "Gracias ❤️"
     };
-    const LAURA_MINI_PANELES = [
-      "Te quiero mucho",
-      "Eres la mejor auxiliar",
-      "Tus labios son lindos",
-      "Mi berrinchuda hermosa",
-      "Cada día te quiero más",
-      "Eres mi bon bon"
-    ];
+    const LAURA_MINI_PANELES = [];
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -4661,6 +4661,85 @@
       });
     }
 
+    // Modo atrapame: el panel principal se mueve por la pantalla y
+    // esquiva el mouse un rato - Laura tiene que perseguirlo con el cursor
+    // hasta atraparlo para poder darle click al boton. Despues de varios
+    // esquives se "cansa" y se queda quieto para no volverse imposible.
+    let laura_escurridizoActivo = false;
+    let laura_escurridizoTimeout = null;
+    let laura_escurridizoInterval = null;
+    let laura_escurridizoIntentos = 0;
+    const LAURA_ESCURRIDIZO_MAX_INTENTOS = 6;
+    const LAURA_ESCURRIDIZO_RADIO_ESQUIVE = 150;
+
+    function laura_moverCardEscurridiza(lejosDe) {
+      const card = document.getElementById('laura-welcome-card-a');
+      if (!card) return;
+      const w = card.offsetWidth || 320;
+      const h = card.offsetHeight || 320;
+      const margen = 16;
+      const maxLeft = Math.max(margen, window.innerWidth - w - margen);
+      const maxTop = Math.max(margen, window.innerHeight - h - margen);
+      let left, top, intentos = 0;
+      do {
+        left = margen + Math.random() * (maxLeft - margen);
+        top = margen + Math.random() * (maxTop - margen);
+        intentos++;
+      } while (
+        lejosDe && intentos < 8 &&
+        Math.hypot((left + w / 2) - lejosDe.x, (top + h / 2) - lejosDe.y) < LAURA_ESCURRIDIZO_RADIO_ESQUIVE * 1.3
+      );
+      card.style.left = left + 'px';
+      card.style.top = top + 'px';
+    }
+
+    function laura_onMouseMoveEscurridizo(e) {
+      if (!laura_escurridizoActivo) return;
+      const card = document.getElementById('laura-welcome-card-a');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+      if (dist < LAURA_ESCURRIDIZO_RADIO_ESQUIVE) {
+        laura_escurridizoIntentos++;
+        if (laura_escurridizoIntentos >= LAURA_ESCURRIDIZO_MAX_INTENTOS) {
+          laura_escurridizoActivo = false;
+          document.removeEventListener('mousemove', laura_onMouseMoveEscurridizo);
+          if (laura_escurridizoInterval) { clearInterval(laura_escurridizoInterval); laura_escurridizoInterval = null; }
+          return;
+        }
+        laura_moverCardEscurridiza({ x: e.clientX, y: e.clientY });
+      }
+    }
+
+    function laura_iniciarEscurridizo() {
+      const card = document.getElementById('laura-welcome-card-a');
+      if (!card) return;
+      laura_escurridizoActivo = true;
+      laura_escurridizoIntentos = 0;
+      card.classList.add('laura-card-movil');
+      laura_moverCardEscurridiza(null);
+      document.addEventListener('mousemove', laura_onMouseMoveEscurridizo);
+      laura_escurridizoInterval = setInterval(() => {
+        if (laura_escurridizoActivo) laura_moverCardEscurridiza(null);
+      }, 2600);
+    }
+
+    function laura_limpiarEscurridizo() {
+      laura_escurridizoActivo = false;
+      if (laura_escurridizoTimeout) { clearTimeout(laura_escurridizoTimeout); laura_escurridizoTimeout = null; }
+      if (laura_escurridizoInterval) { clearInterval(laura_escurridizoInterval); laura_escurridizoInterval = null; }
+      document.removeEventListener('mousemove', laura_onMouseMoveEscurridizo);
+      laura_escurridizoIntentos = 0;
+      const card = document.getElementById('laura-welcome-card-a');
+      if (card) {
+        card.classList.remove('laura-card-movil');
+        card.style.left = '';
+        card.style.top = '';
+      }
+    }
+
     function despedirLaura(btn) {
       explotarCorazonesBoton(btn);
       setTimeout(cerrarBienvenidaLaura, 380);
@@ -4706,7 +4785,7 @@
       const cardA = document.getElementById('laura-welcome-card-a');
       if (cardA) cardA.style.display = '';
       renderTarjetaLaura('a', LAURA_PANEL_A);
-      renderMiniPanelesLaura();
+      // (las notitas mini se quitaron a pedido de Gustavo - ya no se renderizan)
       if (overlay) overlay.classList.add('show');
       iniciarConfettiLaura();
       iniciarCorazonesFlotantesLaura();
@@ -4716,6 +4795,11 @@
       iniciarEstrellasFugacesLaura();
       iniciarGlobosLaura();
       iniciarBrilloPeriodicoLaura();
+      // Cuando termina de escribirse el titulo, el panel se pone
+      // "escurridizo": se mueve solo y esquiva el mouse hasta que Laura
+      // logra atraparlo con el cursor para poder darle click al boton.
+      const tiempoEscritura = (LAURA_PANEL_A.titulo.length * 26) + 1400;
+      laura_escurridizoTimeout = setTimeout(laura_iniciarEscurridizo, tiempoEscritura);
     }
 
     function cerrarBienvenidaLaura() {
@@ -4729,6 +4813,7 @@
       detenerEstrellasFugacesLaura();
       detenerGlobosLaura();
       detenerBrilloPeriodicoLaura();
+      laura_limpiarEscurridizo();
     }
 
     // 🐱 Gatito caminando de un lado a otro
