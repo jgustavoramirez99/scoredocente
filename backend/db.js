@@ -251,4 +251,21 @@ pool.query(`CREATE TABLE IF NOT EXISTS examenes_clave_estado (
   .then(r => { if (r && r.rowCount) console.log(`✅ ${r.rowCount} clave(s) que ya estaban completas se aprobaron automáticamente (para no romper lo que ya funcionaba)`); })
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "examenes_clave_estado":', err.message));
 
+// Migración idempotente: crea la tabla "reporte_cubicol_pdfs" si no existe.
+// Guarda los PDFs del "Reporte Cubicol" que sube el Gerente General para
+// verlos directo en el sistema, sin tener que descargarlos (por ahora solo
+// esa cuenta sube y ve estos reportes).
+pool.query(`CREATE TABLE IF NOT EXISTS reporte_cubicol_pdfs (
+  id SERIAL PRIMARY KEY,
+  nombre_archivo VARCHAR(255) NOT NULL,
+  archivo_base64 TEXT NOT NULL,
+  tamano_bytes INTEGER NOT NULL,
+  subido_por_id INTEGER,
+  subido_por_nombre VARCHAR(150),
+  subido_por_email VARCHAR(150),
+  creado_en TIMESTAMP NOT NULL DEFAULT NOW()
+)`)
+  .then(() => console.log('✅ Tabla "reporte_cubicol_pdfs" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "reporte_cubicol_pdfs":', err.message));
+
 module.exports = pool;

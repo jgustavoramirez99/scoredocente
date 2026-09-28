@@ -1904,6 +1904,47 @@
     .rt-pill-ambar { background: var(--amber-bg); color: var(--amber); }
     .rt-pill-rojo { background: var(--red-bg); color: var(--red); }
     .rt-vacio { color: var(--text3); font-size: 12.5px; padding: 0.5rem 0; }
+
+    /* REPORTE CUBICOL */
+    .rc-upload-bar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.9rem 1.1rem; margin-bottom: 1.5rem;
+    }
+    .rc-btn-subir {
+      padding: 10px 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .rc-upload-hint { font-size: 11.5px; color: var(--text3); }
+    .rc-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+    .rc-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 0.9rem 1.1rem;
+    }
+    .rc-item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .rc-item-nombre { font-size: 13.5px; font-weight: 600; color: var(--text); }
+    .rc-item-meta { font-size: 11px; color: var(--text3); }
+    .rc-item-acciones { display: flex; gap: 8px; flex-shrink: 0; }
+    .rc-btn-ver {
+      padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+      border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .rc-btn-eliminar {
+      padding: 7px 14px; background: transparent; border: 1px solid var(--border2); color: #e63946;
+      border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .rc-visor { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .rc-visor-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 0.8rem 1.1rem; border-bottom: 1px solid var(--border);
+    }
+    .rc-visor-nombre { font-size: 13px; font-weight: 600; color: var(--text); }
+    .rc-btn-cerrar-visor {
+      padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
+      border-radius: 7px; font-size: 11.5px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    .rc-visor-iframe { width: 100%; height: 80vh; border: none; display: block; background: #525659; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -2013,6 +2054,7 @@
         </div>
         <div class="nav-group-items">
           <div class="nav-item" id="nav-reporte-total" onclick="showSection('reporte-total', this)">📈 Reporte Total <span class="rt-badge-nuevo">NUEVO</span></div>
+          <div class="nav-item" id="nav-reporte-cubicol" onclick="showSection('reporte-cubicol', this)">🗂️ Reporte Cubicol <span class="rt-badge-nuevo">NUEVO</span></div>
           <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
           <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
           <div class="nav-item" id="nav-resultados-examenes" onclick="showSection('resultados-examenes', this)">📊 Resultados de Exámenes</div>
@@ -2241,6 +2283,33 @@
           <div class="rt-bloque-body" id="rt-bloque-resumen">
             <div class="rt-vacio">Presiona "Generar Reporte" para ver el resumen general.</div>
           </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-reporte-cubicol">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Reporte Cubicol</div>
+            <div class="page-subtitle">Sube el PDF del reporte de Cubicol y ábrelo directo aquí, sin necesidad de descargarlo</div>
+          </div>
+        </div>
+
+        <div class="rc-upload-bar">
+          <input type="file" id="rc-archivo-input" accept="application/pdf" style="display:none" onchange="subirReporteCubicol(event)">
+          <button class="rc-btn-subir" onclick="document.getElementById('rc-archivo-input').click()">📤 Subir PDF</button>
+          <span class="rc-upload-hint">Solo PDF · máximo 10 MB</span>
+        </div>
+
+        <div class="rc-lista" id="rc-lista">
+          <div class="rt-vacio">Cargando...</div>
+        </div>
+
+        <div class="rc-visor" id="rc-visor" style="display:none">
+          <div class="rc-visor-header">
+            <div class="rc-visor-nombre" id="rc-visor-nombre"></div>
+            <button class="rc-btn-cerrar-visor" onclick="cerrarVisorReporteCubicol()">✕ Cerrar</button>
+          </div>
+          <iframe id="rc-visor-iframe" class="rc-visor-iframe"></iframe>
         </div>
       </div>
 
@@ -5314,6 +5383,7 @@
       if (id === 'coordinadores') cargarCoordinadores();
       if (id === 'fichas') { cargarFichasDocentes(); cargarFichasNivelEducativo(); }
       if (id === 'reporte-total') cargarSalonesReporteTotal();
+      if (id === 'reporte-cubicol') cargarReporteCubicol();
     }
 
     // ══════════════════════════════
@@ -5630,6 +5700,139 @@
       }
 
       doc.save('EduScore_ReporteTotal_' + fecha.replace(/\//g, '-') + '.pdf');
+    }
+
+    // ══════════════════════════════
+    //  REPORTE CUBICOL
+    // ══════════════════════════════
+    // Por ahora (a pedido de Gustavo) solo el Gerente General sube y ve
+    // estos PDFs; más adelante lo subirá el encargado de generarlo y lo
+    // podrán ver todos los directivos.
+    let _reporteCubicolLista = [];
+    let _rcUrlObjetoActual = null;
+    function _rcRevocarUrlObjeto() {
+      if (_rcUrlObjetoActual) { URL.revokeObjectURL(_rcUrlObjetoActual); _rcUrlObjetoActual = null; }
+    }
+
+    async function cargarReporteCubicol() {
+      const cont = document.getElementById('rc-lista');
+      cont.innerHTML = '<div class="rt-vacio">Cargando...</div>';
+      try {
+        const res = await fetch('/api/reporte-cubicol', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!res.ok) throw new Error('No se pudo cargar la lista');
+        _reporteCubicolLista = await res.json();
+        renderListaReporteCubicol();
+      } catch (err) {
+        console.error('Error cargando Reporte Cubicol:', err);
+        cont.innerHTML = '<div class="rt-vacio">No se pudo cargar la lista. Intenta de nuevo.</div>';
+      }
+    }
+
+    function _rcFormatearTamano(bytes) {
+      if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderListaReporteCubicol() {
+      const cont = document.getElementById('rc-lista');
+      if (!_reporteCubicolLista.length) {
+        cont.innerHTML = '<div class="rt-vacio">Todavía no se ha subido ningún Reporte Cubicol.</div>';
+        return;
+      }
+      cont.innerHTML = _reporteCubicolLista.map(r => `
+        <div class="rc-item">
+          <div class="rc-item-info">
+            <div class="rc-item-nombre">📄 ${escapeHtmlMsg(r.nombre_archivo)}</div>
+            <div class="rc-item-meta">${_rcFormatearTamano(r.tamano_bytes)} · Subido por ${escapeHtmlMsg(r.subido_por_nombre || r.subido_por_email || 'Gerente General')} · ${new Date(r.creado_en).toLocaleDateString('es-PE')}</div>
+          </div>
+          <div class="rc-item-acciones">
+            <button class="rc-btn-ver" onclick="verReporteCubicol(${r.id}, '${(r.nombre_archivo || '').replace(/'/g, "\\'")}')">👁️ Ver</button>
+            <button class="rc-btn-eliminar" onclick="eliminarReporteCubicol(${r.id}, '${(r.nombre_archivo || '').replace(/'/g, "\\'")}')">🗑️ Eliminar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function subirReporteCubicol(ev) {
+      const file = ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      if (file.type !== 'application/pdf') {
+        alert('El archivo debe ser un PDF');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert('El PDF no debe superar 10 MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const res = await fetch('/api/reporte-cubicol', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ nombre_archivo: file.name, archivo_base64: reader.result })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al subir el reporte');
+          await cargarReporteCubicol();
+        } catch (err) {
+          console.error('Error subiendo Reporte Cubicol:', err);
+          alert('No se pudo subir el PDF: ' + (err.message || 'intenta de nuevo'));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function verReporteCubicol(id, nombre) {
+      const visor = document.getElementById('rc-visor');
+      const iframe = document.getElementById('rc-visor-iframe');
+      const nombreEl = document.getElementById('rc-visor-nombre');
+      nombreEl.textContent = 'Cargando "' + nombre + '"...';
+      visor.style.display = '';
+      iframe.src = '';
+      visor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      try {
+        const res = await fetch('/api/reporte-cubicol/' + id, { headers: { 'Authorization': 'Bearer ' + token } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo abrir el reporte');
+        nombreEl.textContent = '📄 ' + data.nombre_archivo;
+        _rcRevocarUrlObjeto();
+        const base64Datos = (data.archivo_base64.split(',')[1] || '');
+        const binario = atob(base64Datos);
+        const bytes = new Uint8Array(binario.length);
+        for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+        const blobPdf = new Blob([bytes], { type: 'application/pdf' });
+        _rcUrlObjetoActual = URL.createObjectURL(blobPdf);
+        iframe.src = _rcUrlObjetoActual;
+      } catch (err) {
+        console.error('Error abriendo Reporte Cubicol:', err);
+        nombreEl.textContent = 'No se pudo abrir el PDF';
+        alert('No se pudo abrir el PDF: ' + (err.message || 'intenta de nuevo'));
+      }
+    }
+
+    function cerrarVisorReporteCubicol() {
+      document.getElementById('rc-visor').style.display = 'none';
+      document.getElementById('rc-visor-iframe').src = '';
+      _rcRevocarUrlObjeto();
+    }
+
+    async function eliminarReporteCubicol(id, nombre) {
+      if (!confirm('¿Eliminar "' + nombre + '"? Esta acción no se puede deshacer.')) return;
+      try {
+        const res = await fetch('/api/reporte-cubicol/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo eliminar');
+        cerrarVisorReporteCubicol();
+        await cargarReporteCubicol();
+      } catch (err) {
+        console.error('Error eliminando Reporte Cubicol:', err);
+        alert('No se pudo eliminar: ' + (err.message || 'intenta de nuevo'));
+      }
     }
 
     function showSectionSup(id, el) {

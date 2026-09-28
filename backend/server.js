@@ -51,6 +51,8 @@ const examenesRouter = require('./routes/examenes');
 app.use('/api/examenes', examenesRouter);
 const reporteTotalRouter = require('./routes/reporteTotal');
 app.use('/api/reporte-total', reporteTotalRouter);
+const reporteCubicolRouter = require('./routes/reporteCubicol');
+app.use('/api/reporte-cubicol', reporteCubicolRouter);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
