@@ -117,7 +117,7 @@ router.get('/exportar-excel', verificarToken, permitirRoles, async (req, res) =>
     const sheet = workbook.addWorksheet('Alumnos en seguimiento', {
       views: [{ state: 'frozen', ySplit: 1 }]
     });
-
+    
     sheet.columns = [
       { header: 'Nombre y Apellidos', key: 'nombre', width: 32 },
       { header: 'Grado', key: 'grado', width: 12 },
@@ -141,7 +141,7 @@ router.get('/exportar-excel', verificarToken, permitirRoles, async (req, res) =>
         right: { style: 'thin', color: { argb: 'FFB8C4E0' } },
       };
     });
-
+ 
     result.rows.forEach((a, i) => {
       const row = sheet.addRow({
         nombre: a.nombre || '',
