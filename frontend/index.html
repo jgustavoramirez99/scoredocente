@@ -1762,6 +1762,14 @@
     .laura-criatura-plomo {
       filter: grayscale(1) brightness(0.92) contrast(1.05);
     }
+    .laura-corazon-grande {
+      position: fixed;
+      bottom: -70px;
+      z-index: 10001;
+      font-size: 52px;
+      pointer-events: none;
+      animation: laura-criatura-float 10s ease-in-out forwards;
+    }
     @keyframes laura-criatura-float {
       0%   { bottom: -70px; opacity: 0; transform: translateX(0) rotate(0deg); }
       8%   { opacity: 1; }
@@ -4631,7 +4639,7 @@
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     const LAURA_PANEL_A = {
       badge: "🔔 Alerta del sistema",
-      titulo: "Alerta del sistema: Hoy martes hay una auxiliar hermosa en Cervantes School que está leyendo esto ❤️",
+      titulo: "Alerta meteorológica: Hoy miércoles se detectó a la mejor auxiliar de Cervantes School, eres la mejor de todas ❤️",
       boton: "Gracias ❤️"
     };
     const LAURA_MINI_PANELES = [];
@@ -4861,6 +4869,7 @@
       iniciarCohetesLaura();
       iniciarGatoLaura();
       iniciarCriaturasLaura();
+      iniciarCorazonesGrandesLaura();
       iniciarEstrellasFugacesLaura();
       iniciarGlobosLaura();
       iniciarBrilloPeriodicoLaura();
@@ -4879,6 +4888,7 @@
       detenerCohetesLaura();
       detenerGatoLaura();
       detenerCriaturasLaura();
+      detenerCorazonesGrandesLaura();
       detenerEstrellasFugacesLaura();
       detenerGlobosLaura();
       detenerBrilloPeriodicoLaura();
@@ -4928,6 +4938,31 @@
     function detenerCriaturasLaura() {
       if (laura_criaturaTimer) { clearInterval(laura_criaturaTimer); laura_criaturaTimer = null; }
       document.querySelectorAll('.laura-criatura').forEach(el => el.remove());
+    }
+
+    // ❤️ Corazones grandes flotando, del mismo tamaño que los animalitos (🧸🐶🐇🐹)
+    let laura_corazonGrandeTimer = null;
+    function iniciarCorazonesGrandesLaura() {
+      const corazones = ['❤️', '💕', '💖', '💗'];
+      function spawn() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const emoji = corazones[Math.floor(Math.random() * corazones.length)];
+        const c = document.createElement('span');
+        c.className = 'laura-corazon-grande';
+        c.textContent = emoji;
+        c.style.left = (Math.random() * 82 + 6) + 'vw';
+        const dur = 9 + Math.random() * 2.5;
+        c.style.animationDuration = dur + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), dur * 1000 + 200);
+      }
+      spawn();
+      laura_corazonGrandeTimer = setInterval(spawn, 2800);
+    }
+    function detenerCorazonesGrandesLaura() {
+      if (laura_corazonGrandeTimer) { clearInterval(laura_corazonGrandeTimer); laura_corazonGrandeTimer = null; }
+      document.querySelectorAll('.laura-corazon-grande').forEach(el => el.remove());
     }
 
     // 🌠 Lluvia de estrellas fugaces (más sutil que el cohete)
