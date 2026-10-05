@@ -926,57 +926,47 @@
     }
     .laura-mini-panel {
       position: absolute;
-      width: 138px;
-      aspect-ratio: 100 / 88;
+      width: 134px;
       opacity: 0;
       scale: 0.5;
       rotate: var(--rot, 0deg);
       filter: drop-shadow(3px 7px 10px rgba(0,0,0,0.38));
     }
-    .laura-mini-heart-beat {
-      position: absolute;
-      inset: 0;
-      animation: laura-mini-heartbeat 1.8s ease-in-out infinite;
-      animation-delay: var(--beat-delay, 0s);
-    }
-    .laura-mini-heart-shape {
-      position: absolute;
-      inset: 0;
+    .laura-mini-nota {
+      position: relative;
       background: #fff3b0;
-      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 88'%3E%3Cpath d='M50 88C22 66 0 46 0 26C0 10 12 0 26 0C36 0 45 6 50 16C55 6 64 0 74 0C88 0 100 10 100 26C100 46 78 66 50 88Z'/%3E%3C/svg%3E");
-      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 88'%3E%3Cpath d='M50 88C22 66 0 46 0 26C0 10 12 0 26 0C36 0 45 6 50 16C55 6 64 0 74 0C88 0 100 10 100 26C100 46 78 66 50 88Z'/%3E%3C/svg%3E");
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-      -webkit-mask-position: center;
-      mask-position: center;
-    }
-    .laura-mini-heart-text {
-      position: absolute;
-      left: 50%;
-      top: 57%;
-      transform: translate(-50%, -50%);
-      width: 54%;
+      border-radius: 4px 4px 14px 14px;
+      padding: 1.3rem 0.8rem 1rem;
       text-align: center;
+    }
+    .laura-mini-nota::before {
+      content: '📌';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      font-size: 22px;
+      transform: translateX(-50%) rotate(6deg);
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,0.5));
+    }
+    .laura-mini-nota-text {
       font-family: 'Caveat', 'DM Sans', cursive, sans-serif;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
-      line-height: 1.12;
+      line-height: 1.18;
       color: #5c4300;
     }
-    .laura-mini-panel:nth-child(1) .laura-mini-heart-shape { background: #ffd3d3; }
-    .laura-mini-panel:nth-child(1) .laura-mini-heart-text  { color: #8a1c1c; }
-    .laura-mini-panel:nth-child(2) .laura-mini-heart-shape { background: #ffc9c9; }
-    .laura-mini-panel:nth-child(2) .laura-mini-heart-text  { color: #7a1616; }
-    .laura-mini-panel:nth-child(3) .laura-mini-heart-shape { background: #ffdada; }
-    .laura-mini-panel:nth-child(3) .laura-mini-heart-text  { color: #8f2020; }
-    .laura-mini-panel:nth-child(4) .laura-mini-heart-shape { background: #ffbdbd; }
-    .laura-mini-panel:nth-child(4) .laura-mini-heart-text  { color: #711212; }
-    .laura-mini-panel:nth-child(5) .laura-mini-heart-shape { background: #ffcccc; }
-    .laura-mini-panel:nth-child(5) .laura-mini-heart-text  { color: #841a1a; }
-    .laura-mini-panel:nth-child(6) .laura-mini-heart-shape { background: #ffd6d6; }
-    .laura-mini-panel:nth-child(6) .laura-mini-heart-text  { color: #7d1818; }
+    .laura-mini-panel:nth-child(1) .laura-mini-nota { background: #fff3b0; }
+    .laura-mini-panel:nth-child(1) .laura-mini-nota-text { color: #6b4e00; }
+    .laura-mini-panel:nth-child(2) .laura-mini-nota { background: #ffd3d3; }
+    .laura-mini-panel:nth-child(2) .laura-mini-nota-text { color: #8a1c1c; }
+    .laura-mini-panel:nth-child(3) .laura-mini-nota { background: #bde0fe; }
+    .laura-mini-panel:nth-child(3) .laura-mini-nota-text { color: #10507a; }
+    .laura-mini-panel:nth-child(4) .laura-mini-nota { background: #ffdac1; }
+    .laura-mini-panel:nth-child(4) .laura-mini-nota-text { color: #7a3b12; }
+    .laura-mini-panel:nth-child(5) .laura-mini-nota { background: #caffbf; }
+    .laura-mini-panel:nth-child(5) .laura-mini-nota-text { color: #1f6b1f; }
+    .laura-mini-panel:nth-child(6) .laura-mini-nota { background: #e0bbff; }
+    .laura-mini-panel:nth-child(6) .laura-mini-nota-text { color: #5b1f8a; }
     .laura-mini-panel.show {
       animation: laura-mini-pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards,
                  laura-mini-bob 4.6s ease-in-out infinite,
@@ -4704,7 +4694,14 @@
       titulo: "Hoy viernes brilla señorita Laura, no olvides que tu sonrisa cautiva a todo Cervantes School ❤️",
       boton: "Gracias ❤️"
     };
-    const LAURA_MINI_PANELES = [];
+    const LAURA_MINI_PANELES = LAURA_CUMPLE_HOY ? [
+      "21 años de pura magia ✨",
+      "La mejor versión de ti, a los 21 🥳",
+      "Cumpleañera oficial de Cervantes School 👑",
+      "21 nunca se vio tan hermoso ❤️",
+      "Mi persona favorita, cumpliendo 21 🎂",
+      "Que este año sea tan especial como tú"
+    ] : [];
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -4781,19 +4778,16 @@
         const popDelay = 0.5 + idx * 0.18;
         div.style.setProperty('--pop-delay', popDelay + 's');
         div.style.setProperty('--float-delay', (popDelay + 0.5) + 's');
-        div.style.setProperty('--beat-delay', (idx * 0.22) + 's');
-        const beat = document.createElement('div');
-        beat.className = 'laura-mini-heart-beat';
-        const shape = document.createElement('div');
-        shape.className = 'laura-mini-heart-shape';
+        div.style.setProperty('--glow-delay', (popDelay + 0.3) + 's');
+        const nota = document.createElement('div');
+        nota.className = 'laura-mini-nota';
         const textEl = document.createElement('div');
-        textEl.className = 'laura-mini-heart-text';
+        textEl.className = 'laura-mini-nota-text';
         textEl.textContent = texto;
-        if (texto.length > 26) textEl.style.fontSize = '12px';
-        else if (texto.length > 18) textEl.style.fontSize = '13px';
-        beat.appendChild(shape);
-        beat.appendChild(textEl);
-        div.appendChild(beat);
+        if (texto.length > 26) textEl.style.fontSize = '12.5px';
+        else if (texto.length > 18) textEl.style.fontSize = '13.5px';
+        nota.appendChild(textEl);
+        div.appendChild(nota);
         cont.appendChild(div);
         void div.offsetWidth;
         div.classList.add('show');
@@ -4924,7 +4918,7 @@
       const cardA = document.getElementById('laura-welcome-card-a');
       if (cardA) cardA.style.display = '';
       renderTarjetaLaura('a', LAURA_PANEL_A);
-      // (las notitas mini se quitaron a pedido de Gustavo - ya no se renderizan)
+      renderMiniPanelesLaura();
       if (overlay) overlay.classList.add('show');
       iniciarConfettiLaura();
       iniciarCorazonesFlotantesLaura();
