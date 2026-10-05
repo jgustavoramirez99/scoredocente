@@ -1762,6 +1762,54 @@
     .laura-criatura-plomo {
       filter: grayscale(1) brightness(0.92) contrast(1.05);
     }
+    .laura-pastel-cumple {
+      margin: 0.4rem 0 1.1rem;
+      text-align: center;
+    }
+    .laura-pastel-emoji {
+      font-size: 42px;
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+    .laura-velitas {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 0.5rem;
+    }
+    .laura-velita {
+      font-size: 26px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.15s ease;
+      animation: laura-velita-flicker 1.1s ease-in-out infinite;
+    }
+    .laura-velita:hover { transform: scale(1.15); }
+    .laura-velita.apagada {
+      cursor: default;
+      animation: none;
+      opacity: 0.75;
+      transform: scale(0.95);
+    }
+    @keyframes laura-velita-flicker {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.25); }
+    }
+    .laura-pastel-hint {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+    .laura-confetti-dorado {
+      position: fixed;
+      top: -40px;
+      z-index: 10002;
+      pointer-events: none;
+    }
+    @keyframes laura-confetti-dorado-fall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
     .laura-corazon-grande {
       position: fixed;
       bottom: -70px;
@@ -1985,6 +2033,11 @@
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
             <div class="laura-welcome-note">Tu ingeniero Gustavo ❤️</div>
             <div class="laura-welcome-sub">Que tengas una linda semana 🌤️</div>
+            <div class="laura-pastel-cumple" id="laura-pastel-cumple" style="display:none">
+              <div class="laura-pastel-emoji">🎂</div>
+              <div class="laura-velitas" id="laura-velitas"></div>
+              <div class="laura-pastel-hint" id="laura-pastel-hint">Sopla las velitas (haz clic en cada una) para pedir tu deseo 🤫</div>
+            </div>
             <button class="laura-welcome-btn" id="laura-welcome-btn-a" onclick="despedirLauraFinal(this)">Gracias ❤️</button>
           </div>
         </div>
@@ -4637,7 +4690,16 @@
 
     // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
-    const LAURA_PANEL_A = {
+    // ✏️ Gustavo: pon esto en false cuando pase su cumpleaños para volver al modo normal
+    const LAURA_CUMPLE_HOY = true;
+    const LAURA_NUM_VELITAS = 5;
+    let laura_velitasApagadas = 0;
+
+    const LAURA_PANEL_A = LAURA_CUMPLE_HOY ? {
+      badge: "🎂 ¡Feliz cumpleaños!",
+      titulo: "¡Feliz cumpleaños, mi amor! Hoy el colegio entero celebra a la persona más especial que tiene ❤️🎉",
+      boton: "Gracias ❤️"
+    } : {
       badge: "🔔 Alerta del sistema",
       titulo: "Hoy viernes brilla señorita Laura, no olvides que tu sonrisa cautiva a todo Cervantes School ❤️",
       boton: "Gracias ❤️"
@@ -4870,6 +4932,8 @@
       iniciarGatoLaura();
       iniciarCriaturasLaura();
       iniciarCorazonesGrandesLaura();
+      iniciarPastelCumpleLaura();
+      explotarConfettiDoradoCumpleLaura();
       iniciarEstrellasFugacesLaura();
       iniciarGlobosLaura();
       iniciarBrilloPeriodicoLaura();
@@ -4877,7 +4941,9 @@
       // "escurridizo": se mueve solo y esquiva el mouse hasta que Laura
       // logra atraparlo con el cursor para poder darle click al boton.
       const tiempoEscritura = (LAURA_PANEL_A.titulo.length * 26) + 1400;
-      laura_escurridizoTimeout = setTimeout(laura_iniciarEscurridizo, tiempoEscritura);
+      if (!LAURA_CUMPLE_HOY) {
+        laura_escurridizoTimeout = setTimeout(laura_iniciarEscurridizo, tiempoEscritura);
+      }
     }
 
     function cerrarBienvenidaLaura() {
@@ -4943,7 +5009,9 @@
     // ❤️ Corazones grandes flotando, del mismo tamaño que los animalitos (🧸🐶🐇🐹)
     let laura_corazonGrandeTimer = null;
     function iniciarCorazonesGrandesLaura() {
-      const corazones = ['❤️', '💕', '💖', '💗'];
+      const corazones = LAURA_CUMPLE_HOY
+        ? ['❤️', '💕', '💖', '💗', '🎂', '🎈', '🎁']
+        : ['❤️', '💕', '💖', '💗'];
       function spawn() {
         const overlay = document.getElementById('laura-welcome-overlay');
         if (!overlay || !overlay.classList.contains('show')) return;
@@ -4963,6 +5031,64 @@
     function detenerCorazonesGrandesLaura() {
       if (laura_corazonGrandeTimer) { clearInterval(laura_corazonGrandeTimer); laura_corazonGrandeTimer = null; }
       document.querySelectorAll('.laura-corazon-grande').forEach(el => el.remove());
+    }
+
+    // 🎂 Mini-juego especial de cumpleaños: hay que "soplar" (hacer clic)
+    // cada velita del pastelito para poder pedir el deseo y que aparezca
+    // el botón de cerrar. Solo se activa cuando LAURA_CUMPLE_HOY es true.
+    function iniciarPastelCumpleLaura() {
+      const pastel = document.getElementById('laura-pastel-cumple');
+      const velitasCont = document.getElementById('laura-velitas');
+      const hint = document.getElementById('laura-pastel-hint');
+      const btn = document.getElementById('laura-welcome-btn-a');
+      if (!LAURA_CUMPLE_HOY) {
+        if (pastel) pastel.style.display = 'none';
+        return;
+      }
+      if (!pastel || !velitasCont) return;
+      velitasCont.innerHTML = '';
+      laura_velitasApagadas = 0;
+      if (hint) hint.textContent = 'Sopla las velitas (haz clic en cada una) para pedir tu deseo 🤫';
+      for (let i = 0; i < LAURA_NUM_VELITAS; i++) {
+        const vela = document.createElement('span');
+        vela.className = 'laura-velita';
+        vela.textContent = '🕯️';
+        vela.onclick = () => laura_apagarVelita(vela);
+        velitasCont.appendChild(vela);
+      }
+      pastel.style.display = '';
+      if (btn) btn.style.display = 'none';
+    }
+
+    function laura_apagarVelita(vela) {
+      if (vela.classList.contains('apagada')) return;
+      vela.classList.add('apagada');
+      vela.textContent = '💨';
+      laura_velitasApagadas++;
+      if (laura_velitasApagadas >= LAURA_NUM_VELITAS) {
+        const hint = document.getElementById('laura-pastel-hint');
+        const btn = document.getElementById('laura-welcome-btn-a');
+        if (hint) hint.textContent = '¡Pediste tu deseo! Ahora sí, dale click abajo 🎉✨';
+        if (btn) { btn.style.display = ''; aplicarShineLaura(btn); }
+      }
+    }
+
+    // 🎊 Ráfaga extra de confetti dorado/morado al abrir, solo el día de su cumpleaños
+    function explotarConfettiDoradoCumpleLaura() {
+      if (!LAURA_CUMPLE_HOY) return;
+      const emojis = ['🎊', '⭐', '✨', '🟡', '🟣'];
+      for (let i = 0; i < 40; i++) {
+        setTimeout(() => {
+          const c = document.createElement('span');
+          c.className = 'laura-confetti-dorado';
+          c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          c.style.left = (Math.random() * 96 + 2) + 'vw';
+          c.style.fontSize = (18 + Math.random() * 14) + 'px';
+          c.style.animation = 'laura-confetti-dorado-fall ' + (2 + Math.random() * 1.2) + 's ease-in forwards';
+          document.body.appendChild(c);
+          setTimeout(() => c.remove(), 3600);
+        }, i * 35);
+      }
     }
 
     // 🌠 Lluvia de estrellas fugaces (más sutil que el cohete)
