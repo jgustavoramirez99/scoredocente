@@ -4681,7 +4681,7 @@
     // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
     // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
     // ✏️ Gustavo: pon esto en false cuando pase su cumpleaños para volver al modo normal
-    const LAURA_CUMPLE_HOY = true;
+    const LAURA_CUMPLE_HOY = false;
     const LAURA_NUM_VELITAS = 5;
     let laura_velitasApagadas = 0;
 
@@ -4691,17 +4691,17 @@
       boton: "Gracias ❤️"
     } : {
       badge: "🔔 Alerta del sistema",
-      titulo: "Hoy viernes brilla señorita Laura, no olvides que tu sonrisa cautiva a todo Cervantes School ❤️",
+      titulo: "Alerta del sistema: ya se le pasó la resaca de cumpleaños a la auxiliar más linda del colegio 😂🎈",
       boton: "Gracias ❤️"
     };
-    const LAURA_MINI_PANELES = LAURA_CUMPLE_HOY ? [
-      "21 años de pura magia ✨",
-      "La mejor versión de ti, a los 21 🥳",
-      "Cumpleañera oficial de Cervantes School 👑",
-      "21 nunca se vio tan hermoso ❤️",
-      "Mi persona favorita, cumpliendo 21 🎂",
-      "Que este año sea tan especial como tú"
-    ] : [];
+    const LAURA_MINI_PANELES = [
+      "La persona más linda de Cervantes School 💕",
+      "Gracias por existir, mi amor",
+      "Hoy también brillas más que nadie ✨",
+      "Que tengas un día hermoso como tú",
+      "Contigo todo es mejor ❤️",
+      "La mejor parte de mi día, siempre"
+    ];
 
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
