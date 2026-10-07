@@ -11278,7 +11278,7 @@ function cerrarModal() {
       }, 'chart-ranking-evaluaciones', 'chart-ranking-evaluaciones-wrap', filas);
       renderizarGraficoCategoriasEvaluaciones(evaluaciones);
       renderizarGraficoNivelesEvaluaciones(filas);
-      renderizarTablaCategoriasEvaluaciones(evaluaciones);
+      renderizarTablaCategoriasEvaluaciones(evaluaciones, filas);
     }
 
     function renderizarRankingTutoria(evaluaciones) {
@@ -11291,7 +11291,7 @@ function cerrarModal() {
       }, 'chart-ranking-tutoria', 'chart-ranking-tutoria-wrap', filas);
       renderizarGraficoCategoriasTutoria(evaluaciones);
       renderizarGraficoNivelesTutoria(filas);
-      renderizarTablaCategoriasTutoria(evaluaciones);
+      renderizarTablaCategoriasTutoria(evaluaciones, filas);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -11459,7 +11459,7 @@ function cerrarModal() {
     // en cada apartado — ordenada de mayor a menor promedio general.
     // ══════════════════════════════════════════════════════════════════
 
-    function calcularMatrizPorDocente(registros, categorias) {
+    function calcularMatrizPorDocente(registros, categorias, filasRanking) {
       const porDocente = {};
       (registros || []).forEach(r => {
         const nombre = r.docente_nombre;
@@ -11467,6 +11467,18 @@ function cerrarModal() {
         if (!porDocente[nombre]) porDocente[nombre] = [];
         porDocente[nombre].push(r);
       });
+      // El promedio "real" de cada docente (el mismo que ya se muestra en
+      // la tabla principal, el podio y el gráfico de ranking) viene del
+      // puntaje_total guardado, que pesa cada indicador por separado — NO
+      // es lo mismo que promediar las 6 columnas A-F con el mismo peso
+      // cada una (esas secciones no valen lo mismo: B vale 20, E vale 12,
+      // etc., y el puntaje_total además incluye un par de indicadores que
+      // no entran en ninguna de las columnas A-F). Por eso esta tabla usa
+      // el promedio que ya trae filasRanking en vez de recalcularlo desde
+      // las categorías, para que coincida siempre con lo que se ve arriba.
+      const promedioPorNombre = {};
+      (filasRanking || []).forEach(f => { promedioPorNombre[f.nombre] = f.promedio; });
+
       const filas = Object.keys(porDocente).map(nombre => {
         const regs = porDocente[nombre];
         const cats = categorias.map(cat => {
@@ -11477,14 +11489,16 @@ function cerrarModal() {
           const prom = pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : 0;
           return { clave: cat.clave, promedio: parseFloat(prom.toFixed(1)) };
         });
-        const promedioGeneral = cats.length ? cats.reduce((a, c) => a + c.promedio, 0) / cats.length : 0;
-        return { nombre, categorias: cats, promedioGeneral: parseFloat(promedioGeneral.toFixed(1)) };
+        const promedioGeneral = promedioPorNombre[nombre] != null
+          ? promedioPorNombre[nombre]
+          : (cats.length ? parseFloat((cats.reduce((a, c) => a + c.promedio, 0) / cats.length).toFixed(1)) : 0);
+        return { nombre, categorias: cats, promedioGeneral };
       });
       filas.sort((a, b) => b.promedioGeneral - a.promedioGeneral);
       return filas;
     }
 
-    function renderizarTablaCategoriasPorDocente(headId, bodyId, registros, categorias) {
+    function renderizarTablaCategoriasPorDocente(headId, bodyId, registros, categorias, filasRanking) {
       const thead = document.getElementById(headId);
       const tbody = document.getElementById(bodyId);
       if (!thead || !tbody) return;
@@ -11494,7 +11508,7 @@ function cerrarModal() {
         categorias.map(c => `<th style="text-align:center">${c.clave}</th>`).join('') +
         '<th style="text-align:center">Promedio</th>';
 
-      const filas = calcularMatrizPorDocente(registros, categorias);
+      const filas = calcularMatrizPorDocente(registros, categorias, filasRanking);
       const totalCols = categorias.length + 3;
       if (!filas.length) {
         tbody.innerHTML = `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>`;
@@ -11526,12 +11540,12 @@ function cerrarModal() {
       }).join('');
     }
 
-    function renderizarTablaCategoriasEvaluaciones(evaluaciones) {
-      renderizarTablaCategoriasPorDocente('tabla-cat-doc-evaluaciones-head', 'tabla-cat-doc-evaluaciones', evaluaciones, CATEGORIAS_EVALUACIONES);
+    function renderizarTablaCategoriasEvaluaciones(evaluaciones, filasRanking) {
+      renderizarTablaCategoriasPorDocente('tabla-cat-doc-evaluaciones-head', 'tabla-cat-doc-evaluaciones', evaluaciones, CATEGORIAS_EVALUACIONES, filasRanking);
     }
 
-    function renderizarTablaCategoriasTutoria(evaluaciones) {
-      renderizarTablaCategoriasPorDocente('tabla-cat-doc-tutoria-head', 'tabla-cat-doc-tutoria', evaluaciones, CATEGORIAS_TUTORIA);
+    function renderizarTablaCategoriasTutoria(evaluaciones, filasRanking) {
+      renderizarTablaCategoriasPorDocente('tabla-cat-doc-tutoria-head', 'tabla-cat-doc-tutoria', evaluaciones, CATEGORIAS_TUTORIA, filasRanking);
     }
 
     // Convierte un canvas de Chart.js a un PNG con fondo blanco (para que
