@@ -6,6 +6,11 @@ const { verificarToken } = require('./auth');
 // Mismo criterio que alumnos.js (registro de celular): la auxiliar registra,
 // el director también puede entrar por si acaso.
 const ROLES_EDITAR = ['auxiliar', 'director'];
+// Los directivos (Gerente General, directora, coordinador general) pueden
+// VER el apartado desde su propio panel, aunque solo la auxiliar/el director
+// pueden editarlo — mismos tres roles que ya comparten el resto del panel
+// de Director (ver rolesDirector en frontend/index.html).
+const ROLES_VER = ['auxiliar', 'director', 'directora', 'coordinador_general'];
 
 function permitirRoles(...rolesPermitidos) {
   return (req, res, next) => {
@@ -18,7 +23,7 @@ function permitirRoles(...rolesPermitidos) {
 
 // GET /api/talla-peso?salon_id=5 — alumnos activos del salón con su talla/peso/edad
 // actuales, más un resumen de avance (para el dashboard de ese salón).
-router.get('/', verificarToken, permitirRoles(...ROLES_EDITAR), async (req, res) => {
+router.get('/', verificarToken, permitirRoles(...ROLES_VER), async (req, res) => {
   try {
     const { salon_id } = req.query;
     if (!salon_id) return res.status(400).json({ error: 'salon_id es requerido' });
