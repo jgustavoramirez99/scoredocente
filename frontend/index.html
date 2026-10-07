@@ -2278,6 +2278,23 @@
             </div>
           </div>
         </div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:1.5rem;margin-top:1.5rem;align-items:stretch">
+          <div class="table-card" style="padding:1.5rem">
+            <div class="page-title" style="font-size:16px;margin-bottom:.25rem">📐 Promedio por apartado (A – F)</div>
+            <div class="page-subtitle" style="margin-bottom:1rem">Promedio general de todas las evaluaciones, por cada sección de la ficha</div>
+            <div style="position:relative;height:380px">
+              <canvas id="chart-categorias-evaluaciones"></canvas>
+            </div>
+          </div>
+          <div class="table-card" style="padding:1.5rem">
+            <div class="page-title" style="font-size:16px;margin-bottom:.25rem">🎯 Distribución por nivel</div>
+            <div class="page-subtitle" style="margin-bottom:1rem">Cuántos docentes están en cada nivel de valoración</div>
+            <div style="position:relative;height:380px">
+              <canvas id="chart-niveles-evaluaciones"></canvas>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="section" id="section-tutoria">
@@ -2310,6 +2327,23 @@
           <div style="overflow-x:auto">
             <div id="chart-ranking-tutoria-wrap" style="position:relative;height:520px;min-width:100%">
               <canvas id="chart-ranking-tutoria"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:1.5rem;margin-top:1.5rem;align-items:stretch">
+          <div class="table-card" style="padding:1.5rem">
+            <div class="page-title" style="font-size:16px;margin-bottom:.25rem">📐 Promedio por apartado (1 – 5)</div>
+            <div class="page-subtitle" style="margin-bottom:1rem">Promedio general de todas las evaluaciones de tutoría, por cada sección de la ficha</div>
+            <div style="position:relative;height:380px">
+              <canvas id="chart-categorias-tutoria"></canvas>
+            </div>
+          </div>
+          <div class="table-card" style="padding:1.5rem">
+            <div class="page-title" style="font-size:16px;margin-bottom:.25rem">🎯 Distribución por nivel</div>
+            <div class="page-subtitle" style="margin-bottom:1rem">Cuántos docentes tutores están en cada nivel de valoración</div>
+            <div style="position:relative;height:380px">
+              <canvas id="chart-niveles-tutoria"></canvas>
             </div>
           </div>
         </div>
@@ -10980,6 +11014,10 @@ function cerrarModal() {
     let chartDistribucion = null;
     let chartRankingEvaluaciones = null;
     let chartRankingTutoria = null;
+    let chartCategoriasEvaluaciones = null;
+    let chartCategoriasTutoria = null;
+    let chartNivelesEvaluaciones = null;
+    let chartNivelesTutoria = null;
     let chartDirDetalleSalon = null;
     let ultimoDetalleAsistenciaDirector = []; // guarda el detalle cargado del salón seleccionado, para filtrar sin re-pedir a la API
     let chartAuxDetalleSalon = null;
@@ -11216,6 +11254,8 @@ function cerrarModal() {
         if (leer) return chartRankingEvaluaciones;
         chartRankingEvaluaciones = val;
       }, 'chart-ranking-evaluaciones', 'chart-ranking-evaluaciones-wrap', filas);
+      renderizarGraficoCategoriasEvaluaciones(evaluaciones);
+      renderizarGraficoNivelesEvaluaciones(filas);
     }
 
     function renderizarRankingTutoria(evaluaciones) {
@@ -11226,6 +11266,164 @@ function cerrarModal() {
         if (leer) return chartRankingTutoria;
         chartRankingTutoria = val;
       }, 'chart-ranking-tutoria', 'chart-ranking-tutoria-wrap', filas);
+      renderizarGraficoCategoriasTutoria(evaluaciones);
+      renderizarGraficoNivelesTutoria(filas);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Gráfico "por apartado" — promedio general (de TODAS las
+    // evaluaciones, no por docente) en cada sección de la ficha de
+    // evaluación, y gráfico de "distribución por nivel" — cuántos
+    // docentes caen en cada nivel de valoración (Destacado/Logrado/
+    // En proceso/Inicio), igual que la escala que usa la ficha.
+    // ══════════════════════════════════════════════════════════════════
+
+    // Letra/nombre corto, campos que la componen (ind1, ind2…) y el
+    // puntaje máximo de la sección — igual que en verFormularioDirector().
+    const CATEGORIAS_EVALUACIONES = [
+      { clave: 'A', nombre: 'A. Planificación', campos: ['plan_ind1', 'plan_ind2', 'plan_ind3', 'plan_ind4'], max: 16 },
+      { clave: 'B', nombre: 'B. Desarrollo de la sesión', campos: ['des_ind1', 'des_ind2', 'des_ind3', 'des_ind4', 'des_ind5'], max: 20 },
+      { clave: 'C', nombre: 'C. Materiales didácticos', campos: ['mat_ind1', 'mat_ind2', 'mat_ind3', 'mat_ind4'], max: 16 },
+      { clave: 'D', nombre: 'D. Evaluación del aprendizaje', campos: ['eval_ind1', 'eval_ind2', 'eval_ind3', 'eval_ind4'], max: 16 },
+      { clave: 'E', nombre: 'E. Clima del aula', campos: ['clima_ind1', 'clima_ind2', 'clima_ind3'], max: 12 },
+      { clave: 'F', nombre: 'F. Responsabilidad profesional', campos: ['resp_ind1', 'resp_ind2', 'resp_ind3', 'resp_ind4'], max: 16 }
+    ];
+
+    // Igual que LABELS_TUTOR / los títulos "1. ... 5. ..." de
+    // verFormularioTutorDirector(), cada sección vale 20 puntos.
+    const CATEGORIAS_TUTORIA = [
+      { clave: '1', nombre: '1. Planificación bimestral', campos: ['planif_ind1', 'planif_ind2', 'planif_ind3', 'planif_ind4', 'planif_ind5'], max: 20 },
+      { clave: '2', nombre: '2. Desarrollo de la sesión', campos: ['sesion_ind1', 'sesion_ind2', 'sesion_ind3', 'sesion_ind4', 'sesion_ind5'], max: 20 },
+      { clave: '3', nombre: '3. Acompañamiento tutorial', campos: ['acomp_ind1', 'acomp_ind2', 'acomp_ind3', 'acomp_ind4', 'acomp_ind5'], max: 20 },
+      { clave: '4', nombre: '4. Entrevista con padres', campos: ['padres_ind1', 'padres_ind2', 'padres_ind3', 'padres_ind4', 'padres_ind5'], max: 20 },
+      { clave: '5', nombre: '5. Presentación y ambientación', campos: ['present_ind1', 'present_ind2', 'present_ind3', 'present_ind4', 'present_ind5'], max: 20 }
+    ];
+
+    function colorPorNivel(pct, alpha) {
+      const a = alpha == null ? 0.85 : alpha;
+      if (pct >= 90) return `rgba(212,175,55,${a})`;   // Destacado (dorado)
+      if (pct >= 80) return `rgba(46,204,113,${a})`;    // Logrado (verde)
+      if (pct >= 70) return `rgba(243,156,18,${a})`;    // En proceso (ámbar)
+      return `rgba(230,57,70,${a})`;                    // Inicio (rojo)
+    }
+
+    // Promedio general (sobre todas las evaluaciones del apartado, no por
+    // docente) de cada sección de la ficha, como % de su puntaje máximo.
+    function calcularPromedioPorCategoria(registros, categorias) {
+      return categorias.map(cat => {
+        const porcentajes = (registros || []).map(r => {
+          const subtotal = cat.campos.reduce((a, c) => a + (parseInt(r[c]) || 0), 0);
+          return subtotal / cat.max * 100;
+        });
+        const prom = porcentajes.length ? porcentajes.reduce((a, b) => a + b, 0) / porcentajes.length : 0;
+        return { ...cat, promedio: parseFloat(prom.toFixed(1)) };
+      });
+    }
+
+    function dibujarGraficoCategorias(chartVarSetter, canvasId, categoriasConPromedio) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const anterior = chartVarSetter(null, true);
+      if (anterior) anterior.destroy();
+      const nueva = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: categoriasConPromedio.map(c => c.nombre),
+          datasets: [{
+            label: 'Promedio',
+            data: categoriasConPromedio.map(c => c.promedio),
+            backgroundColor: categoriasConPromedio.map(c => colorPorNivel(c.promedio, 0.85)),
+            borderColor: categoriasConPromedio.map(c => colorPorNivel(c.promedio, 1)),
+            borderWidth: 1.5,
+            borderRadius: 8,
+            maxBarThickness: 60
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 26 } },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => 'Promedio: ' + ctx.parsed.y.toFixed(1) + '%' } },
+            datalabels: {
+              anchor: 'end', align: 'top',
+              color: chartTickColor(),
+              font: { weight: 'bold', size: 11 },
+              formatter: v => v.toFixed(1) + '%'
+            }
+          },
+          scales: {
+            y: { min: 0, max: 100, ticks: { color: chartTickColor(), callback: v => v + '%' }, grid: { color: chartGridColor() } },
+            x: { ticks: { color: chartTickColor(), font: { size: 11 }, maxRotation: 25, minRotation: 0 }, grid: { display: false } }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+      chartVarSetter(nueva, false);
+    }
+
+    function dibujarGraficoNiveles(chartVarSetter, canvasId, filasRanking) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const destacado = filasRanking.filter(f => f.promedio >= 90).length;
+      const logrado = filasRanking.filter(f => f.promedio >= 80 && f.promedio < 90).length;
+      const proceso = filasRanking.filter(f => f.promedio >= 70 && f.promedio < 80).length;
+      const inicio = filasRanking.filter(f => f.promedio < 70).length;
+
+      const anterior = chartVarSetter(null, true);
+      if (anterior) anterior.destroy();
+      const nueva = new Chart(canvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Destacado (90-100%)', 'Logrado (80-89%)', 'En proceso (70-79%)', 'Inicio (<70%)'],
+          datasets: [{
+            data: [destacado, logrado, proceso, inicio],
+            backgroundColor: [colorPorNivel(95), colorPorNivel(85), colorPorNivel(75), colorPorNivel(50)],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: chartTickColor(), padding: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' docente(s)' } }
+          },
+          cutout: '60%'
+        }
+      });
+      chartVarSetter(nueva, false);
+    }
+
+    function renderizarGraficoCategoriasEvaluaciones(evaluaciones) {
+      const categorias = calcularPromedioPorCategoria(evaluaciones, CATEGORIAS_EVALUACIONES);
+      dibujarGraficoCategorias((val, leer) => {
+        if (leer) return chartCategoriasEvaluaciones;
+        chartCategoriasEvaluaciones = val;
+      }, 'chart-categorias-evaluaciones', categorias);
+    }
+
+    function renderizarGraficoCategoriasTutoria(evaluaciones) {
+      const categorias = calcularPromedioPorCategoria(evaluaciones, CATEGORIAS_TUTORIA);
+      dibujarGraficoCategorias((val, leer) => {
+        if (leer) return chartCategoriasTutoria;
+        chartCategoriasTutoria = val;
+      }, 'chart-categorias-tutoria', categorias);
+    }
+
+    function renderizarGraficoNivelesEvaluaciones(filas) {
+      dibujarGraficoNiveles((val, leer) => {
+        if (leer) return chartNivelesEvaluaciones;
+        chartNivelesEvaluaciones = val;
+      }, 'chart-niveles-evaluaciones', filas);
+    }
+
+    function renderizarGraficoNivelesTutoria(filas) {
+      dibujarGraficoNiveles((val, leer) => {
+        if (leer) return chartNivelesTutoria;
+        chartNivelesTutoria = val;
+      }, 'chart-niveles-tutoria', filas);
     }
 
     // Convierte un canvas de Chart.js a un PNG con fondo blanco (para que
