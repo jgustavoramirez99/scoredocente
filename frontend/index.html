@@ -2290,9 +2290,10 @@
           <div class="table-card" style="padding:1.5rem">
             <div class="page-title" style="font-size:16px;margin-bottom:.25rem">🎯 Distribución por nivel</div>
             <div class="page-subtitle" style="margin-bottom:1rem">Cuántos docentes están en cada nivel de valoración</div>
-            <div style="position:relative;height:380px">
+            <div style="position:relative;height:300px">
               <canvas id="chart-niveles-evaluaciones"></canvas>
             </div>
+            <div id="niveles-evaluaciones-listas" style="margin-top:.6rem;display:flex;flex-direction:column;gap:.4rem;font-size:11px;max-height:150px;overflow-y:auto;padding-right:4px"></div>
           </div>
         </div>
 
@@ -2353,9 +2354,10 @@
           <div class="table-card" style="padding:1.5rem">
             <div class="page-title" style="font-size:16px;margin-bottom:.25rem">🎯 Distribución por nivel</div>
             <div class="page-subtitle" style="margin-bottom:1rem">Cuántos docentes tutores están en cada nivel de valoración</div>
-            <div style="position:relative;height:380px">
+            <div style="position:relative;height:300px">
               <canvas id="chart-niveles-tutoria"></canvas>
             </div>
+            <div id="niveles-tutoria-listas" style="margin-top:.6rem;display:flex;flex-direction:column;gap:.4rem;font-size:11px;max-height:150px;overflow-y:auto;padding-right:4px"></div>
           </div>
         </div>
 
@@ -11412,12 +11414,44 @@ function cerrarModal() {
           maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom', labels: { color: chartTickColor(), padding: 12, font: { size: 11 } } },
-            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' docente(s)' } }
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' docente(s)' } },
+            datalabels: {
+              color: '#fff',
+              textStrokeColor: 'rgba(0,0,0,0.5)',
+              textStrokeWidth: 3,
+              font: { weight: 'bold', size: 14 },
+              formatter: v => v > 0 ? v : ''
+            }
           },
           cutout: '60%'
-        }
+        },
+        plugins: [ChartDataLabels]
       });
       chartVarSetter(nueva, false);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Lista de docentes por nivel, debajo de la leyenda del gráfico de
+    // "Distribución por nivel" — a pedido de Gustavo, para ver sin pasar
+    // el mouse quiénes están en cada color (rojo = Inicio, naranja = En
+    // proceso, verde = Logrado, dorado = Destacado).
+    // ══════════════════════════════════════════════════════════════════
+    function renderizarListaPorNivel(contenedorId, filasRanking) {
+      const cont = document.getElementById(contenedorId);
+      if (!cont) return;
+      const grupos = [
+        { label: 'Destacado', pct: 95, lista: (filasRanking || []).filter(f => f.promedio >= 90) },
+        { label: 'Logrado', pct: 85, lista: (filasRanking || []).filter(f => f.promedio >= 80 && f.promedio < 90) },
+        { label: 'En proceso', pct: 75, lista: (filasRanking || []).filter(f => f.promedio >= 70 && f.promedio < 80) },
+        { label: 'Inicio', pct: 50, lista: (filasRanking || []).filter(f => f.promedio < 70) }
+      ];
+      cont.innerHTML = grupos.map(g => {
+        const nombres = g.lista.length ? g.lista.map(f => f.nombre).join(', ') : '—';
+        return `<div style="display:flex;gap:.4rem;align-items:flex-start">` +
+          `<span style="flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:${colorPorNivel(g.pct, 1)};margin-top:3px"></span>` +
+          `<span style="line-height:1.4;color:var(--text2)"><strong style="color:var(--text)">${g.label} (${g.lista.length}):</strong> ${nombres}</span>` +
+        `</div>`;
+      }).join('');
     }
 
     function renderizarGraficoCategoriasEvaluaciones(evaluaciones) {
@@ -11441,6 +11475,7 @@ function cerrarModal() {
         if (leer) return chartNivelesEvaluaciones;
         chartNivelesEvaluaciones = val;
       }, 'chart-niveles-evaluaciones', filas);
+      renderizarListaPorNivel('niveles-evaluaciones-listas', filas);
     }
 
     function renderizarGraficoNivelesTutoria(filas) {
@@ -11448,6 +11483,7 @@ function cerrarModal() {
         if (leer) return chartNivelesTutoria;
         chartNivelesTutoria = val;
       }, 'chart-niveles-tutoria', filas);
+      renderizarListaPorNivel('niveles-tutoria-listas', filas);
     }
 
     // ══════════════════════════════════════════════════════════════════
