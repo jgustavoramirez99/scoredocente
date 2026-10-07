@@ -11436,15 +11436,22 @@ function cerrarModal() {
     // el mouse quiénes están en cada color (rojo = Inicio, naranja = En
     // proceso, verde = Logrado, dorado = Destacado).
     // ══════════════════════════════════════════════════════════════════
-    function renderizarListaPorNivel(contenedorId, filasRanking) {
-      const cont = document.getElementById(contenedorId);
-      if (!cont) return;
-      const grupos = [
+    // Agrupa el ranking en los 4 niveles de valoración — usada tanto por la
+    // lista en pantalla (renderizarListaPorNivel) como por el PDF, para que
+    // ambas coincidan siempre.
+    function agruparPorNivel(filasRanking) {
+      return [
         { label: 'Destacado', pct: 95, lista: (filasRanking || []).filter(f => f.promedio >= 90) },
         { label: 'Logrado', pct: 85, lista: (filasRanking || []).filter(f => f.promedio >= 80 && f.promedio < 90) },
         { label: 'En proceso', pct: 75, lista: (filasRanking || []).filter(f => f.promedio >= 70 && f.promedio < 80) },
         { label: 'Inicio', pct: 50, lista: (filasRanking || []).filter(f => f.promedio < 70) }
       ];
+    }
+
+    function renderizarListaPorNivel(contenedorId, filasRanking) {
+      const cont = document.getElementById(contenedorId);
+      if (!cont) return;
+      const grupos = agruparPorNivel(filasRanking);
       cont.innerHTML = grupos.map(g => {
         const nombres = g.lista.length ? g.lista.map(f => f.nombre).join(', ') : '—';
         return `<div style="display:flex;gap:.4rem;align-items:flex-start">` +
@@ -11605,7 +11612,12 @@ function cerrarModal() {
         titulo: 'RANKING GENERAL DE EVALUACIONES DOCENTES',
         subtitulo: 'Promedio de todas las evaluaciones por docente',
         colDatos: 'Evaluaciones',
-        nombreArchivo: 'ranking_evaluaciones'
+        nombreArchivo: 'ranking_evaluaciones',
+        categoriasChartId: 'chart-categorias-evaluaciones',
+        nivelesChartId: 'chart-niveles-evaluaciones',
+        categorias: CATEGORIAS_EVALUACIONES,
+        registros: window._ultimasEvaluaciones || [],
+        etiquetaApartados: 'A – F'
       });
     }
 
@@ -11616,16 +11628,40 @@ function cerrarModal() {
         titulo: 'RANKING GENERAL DE TUTORÍA',
         subtitulo: 'Promedio de evaluaciones de tutoría por docente',
         colDatos: 'Evaluaciones de tutoría',
-        nombreArchivo: 'ranking_tutoria'
+        nombreArchivo: 'ranking_tutoria',
+        categoriasChartId: 'chart-categorias-tutoria',
+        nivelesChartId: 'chart-niveles-tutoria',
+        categorias: CATEGORIAS_TUTORIA,
+        registros: window._ultimasTutorias || [],
+        etiquetaApartados: '1 – 5'
       });
     }
 
-    async function descargarPDFRankingGenerico({ canvasId, datos, titulo, subtitulo, colDatos, nombreArchivo }) {
+    async function descargarPDFRankingGenerico({ canvasId, datos, titulo, subtitulo, colDatos, nombreArchivo, categoriasChartId, nivelesChartId, categorias, registros, etiquetaApartados }) {
       if (!datos.length) { alert('Aún no hay datos para generar este reporte.'); return; }
       const { jsPDF } = window.jspdf;
       const fecha = new Date().toLocaleDateString('es-PE');
       const { dataUrl: imgChart, ratio } = canvasRankingAFondoBlanco(canvasId);
+
+      // Gráficos de la segunda página (si existen en el DOM — por las dudas,
+      // ya que este mismo generador podría reusarse en algún panel sin ellos).
+      let imgCategorias = null, ratioCategorias = 1, imgNiveles = null, ratioNiveles = 1;
+      if (categoriasChartId && document.getElementById(categoriasChartId)) {
+        const r = canvasRankingAFondoBlanco(categoriasChartId);
+        imgCategorias = r.dataUrl; ratioCategorias = r.ratio;
+      }
+      if (nivelesChartId && document.getElementById(nivelesChartId)) {
+        const r = canvasRankingAFondoBlanco(nivelesChartId);
+        imgNiveles = r.dataUrl; ratioNiveles = r.ratio;
+      }
+
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      const opts = {
+        datos, imgChart, ratio, titulo, subtitulo, colDatos, fecha, nombreArchivo,
+        imgCategorias, ratioCategorias, imgNiveles, ratioNiveles,
+        categorias: categorias || [], registros: registros || [], etiquetaApartados: etiquetaApartados || ''
+      };
 
       const logoImg = new Image();
       logoImg.crossOrigin = 'anonymous';
@@ -11634,12 +11670,14 @@ function cerrarModal() {
         const c = document.createElement('canvas');
         c.width = logoImg.width; c.height = logoImg.height;
         c.getContext('2d').drawImage(logoImg, 0, 0);
-        _generarPDFRankingConLogo(doc, datos, imgChart, ratio, titulo, subtitulo, colDatos, fecha, c.toDataURL('image/png'), nombreArchivo);
+        _generarPDFRankingConLogo(doc, opts, c.toDataURL('image/png'));
       };
-      logoImg.onerror = () => _generarPDFRankingConLogo(doc, datos, imgChart, ratio, titulo, subtitulo, colDatos, fecha, null, nombreArchivo);
+      logoImg.onerror = () => _generarPDFRankingConLogo(doc, opts, null);
     }
 
-    function _generarPDFRankingConLogo(doc, datos, imgChart, ratio, titulo, subtitulo, colDatos, fecha, logoData, nombreArchivo) {
+    // Encabezado compartido por cada página del reporte (logo + título +
+    // subtítulo + línea roja), para no repetirlo en cada bloque.
+    function _dibujarEncabezadoPDF(doc, titulo, subtitulo, fecha, logoData) {
       const anchoPag = 297;
       doc.setFillColor(180, 0, 30);
       doc.rect(0, 0, anchoPag, 2, 'F');
@@ -11656,6 +11694,28 @@ function cerrarModal() {
       doc.setDrawColor(180, 0, 30);
       doc.setLineWidth(0.5);
       doc.line(10, 23, anchoPag - 10, 23);
+    }
+
+    // Colores de fondo/texto para una celda de tabla del PDF, según el mismo
+    // escalafón de color que se usa en pantalla (colorPorNivel) — aquí en
+    // formato [r,g,b] porque jsPDF-autoTable no acepta rgba().
+    function _pdfColorPorNivel(pct) {
+      let base;
+      if (pct >= 90) base = [170, 136, 32];       // dorado (oscurecido para que el texto se lea sobre fondo claro)
+      else if (pct >= 80) base = [27, 142, 78];    // verde
+      else if (pct >= 70) base = [185, 115, 10];   // ámbar
+      else base = [196, 38, 50];                   // rojo
+      const fondo = base.map(c => Math.round(c * 0.18 + 255 * 0.82));
+      return { texto: base, fondo };
+    }
+
+    function _generarPDFRankingConLogo(doc, opts, logoData) {
+      const { datos, imgChart, ratio, titulo, subtitulo, colDatos, fecha, nombreArchivo,
+        imgCategorias, ratioCategorias, imgNiveles, ratioNiveles, categorias, registros, etiquetaApartados } = opts;
+      const anchoPag = 297;
+
+      // ── Página 1: ranking (gráfico de barras + tabla) ──────────────────
+      _dibujarEncabezadoPDF(doc, titulo, subtitulo, fecha, logoData);
 
       const anchoImg = anchoPag - 40;
       let altoImg = anchoImg * ratio;
@@ -11673,6 +11733,96 @@ function cerrarModal() {
         styles: { fontSize: 9 },
         margin: { left: 15, right: 15 }
       });
+
+      // ── Página 2: promedio por apartado + distribución por nivel ──────
+      if (imgCategorias || imgNiveles) {
+        doc.addPage('a4', 'landscape');
+        _dibujarEncabezadoPDF(doc, titulo, 'Promedio por apartado y distribución por nivel', fecha, logoData);
+
+        const gap = 10;
+        const mitadAncho = (anchoPag - 30 - gap) / 2;
+        const maxAltoImgs = 92;
+        let altoMax = 0;
+
+        if (imgCategorias) {
+          let altoCat = mitadAncho * ratioCategorias;
+          if (altoCat > maxAltoImgs) altoCat = maxAltoImgs;
+          doc.addImage(imgCategorias, 'PNG', 15, 28, mitadAncho, altoCat);
+          altoMax = Math.max(altoMax, altoCat);
+        }
+        if (imgNiveles) {
+          let altoNiv = mitadAncho * ratioNiveles;
+          if (altoNiv > maxAltoImgs) altoNiv = maxAltoImgs;
+          doc.addImage(imgNiveles, 'PNG', 15 + mitadAncho + gap, 28, mitadAncho, altoNiv);
+          altoMax = Math.max(altoMax, altoNiv);
+        }
+
+        const gruposNivel = agruparPorNivel(datos);
+        let yListaNiveles = 28 + altoMax + 8;
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 20, 80);
+        doc.text('Docentes por nivel de valoración', 15, yListaNiveles);
+        doc.autoTable({
+          startY: yListaNiveles + 3,
+          head: [['Nivel', 'Cant.', 'Docentes']],
+          body: gruposNivel.map(g => [g.label, g.lista.length, g.lista.map(f => f.nombre).join(', ') || '—']),
+          theme: 'grid',
+          headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold' },
+          styles: { fontSize: 8, cellPadding: 2 },
+          columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 14, halign: 'center' }, 2: { cellWidth: 'auto' } },
+          margin: { left: 15, right: 15 },
+          didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 0) {
+              const { texto, fondo } = _pdfColorPorNivel(gruposNivel[data.row.index].pct);
+              data.cell.styles.textColor = texto;
+              data.cell.styles.fillColor = fondo;
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+        });
+      }
+
+      // ── Página 3: detalle por docente y apartado ───────────────────────
+      if (categorias.length && registros.length) {
+        const filasDetalle = calcularMatrizPorDocente(registros, categorias, datos);
+        if (filasDetalle.length) {
+          doc.addPage('a4', 'landscape');
+          _dibujarEncabezadoPDF(doc, titulo, 'Detalle por docente y apartado (' + etiquetaApartados + ')', fecha, logoData);
+
+          const maxPorColumna = categorias.map((_, idx) =>
+            Math.max(...filasDetalle.map(f => f.categorias[idx].promedio))
+          );
+
+          doc.autoTable({
+            startY: 28,
+            head: [['#', 'Docente', ...categorias.map(c => c.clave), 'Promedio']],
+            body: filasDetalle.map((f, i) => [
+              i + 1, f.nombre,
+              ...f.categorias.map(c => c.promedio.toFixed(1) + '%'),
+              f.promedioGeneral.toFixed(1) + '%'
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold' },
+            styles: { fontSize: 8, cellPadding: 2 },
+            margin: { left: 15, right: 15 },
+            didParseCell: (data) => {
+              if (data.section !== 'body') return;
+              const catIdx = data.column.index - 2;
+              if (catIdx < 0 || catIdx >= categorias.length) return;
+              const fila = filasDetalle[data.row.index];
+              const val = fila.categorias[catIdx].promedio;
+              const { texto, fondo } = _pdfColorPorNivel(val);
+              data.cell.styles.textColor = texto;
+              data.cell.styles.fillColor = fondo;
+              if (val > 0 && val === maxPorColumna[catIdx]) {
+                data.cell.styles.fontStyle = 'bold';
+              }
+            }
+          });
+
+          doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 120, 120);
+          doc.text('En negrita: la nota más alta de cada columna.', 15, doc.lastAutoTable.finalY + 6);
+        }
+      }
 
       doc.save(nombreArchivo + '_' + fecha.replace(/\//g, '-') + '.pdf');
     }
