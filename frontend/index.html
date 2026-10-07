@@ -3015,6 +3015,8 @@
       <div class="nav-section">Evaluaciones</div>
       <div class="nav-item" onclick="showSectionAux('aux-censal', this)">📝 Evaluación Censal</div>
       <div class="nav-item" onclick="showSectionAux('aux-examenes', this)">🧮 Exámenes Diagnósticos</div>
+      <div class="nav-section">Salud escolar</div>
+      <div class="nav-item" onclick="showSectionAux('aux-talla-peso', this)">📏 Talla y Peso</div>
       <div class="nav-section" id="nav-aux-psico-section" style="display:none">Psicología</div>
       <div class="nav-item" id="nav-aux-psico" style="display:none" onclick="abrirPanelPsicoDesdeAuxiliar()">🧠 Panel Psicología</div>
       <div class="sidebar-footer">
@@ -3336,6 +3338,61 @@
             <div class="table-header"><h3>Nivel Avanzado<br><span style="color:var(--text2);font-size:12px;font-weight:500">Aprueba con 1 de 5 (20%)</span></h3></div>
             <div style="position:relative;height:240px;padding:1rem 1.2rem"><canvas id="chart-examenes-avanzado"></canvas></div>
           </div>
+        </div>
+      </div>
+
+      <div class="section" id="section-aux-talla-peso">
+        <div class="page-header">
+          <div class="page-title">Talla y Peso del Alumnado</div>
+          <div class="page-subtitle">Selecciona un salón y registra la talla y el peso de cada alumno (la edad es opcional). Se guarda automáticamente mientras digitas.</div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end">
+          <div class="form-group" style="max-width:280px;margin-bottom:0">
+            <label>Salón</label>
+            <select id="tp-salon-select" onchange="cargarTablaTallaPeso()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;padding-bottom:0">
+            <button type="button" id="tp-btn-pdf" onclick="descargarPDFTallaPeso()" disabled style="padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;opacity:1">📄 Descargar PDF</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="tp-dashboard" style="display:none;margin-bottom:1.25rem">
+          <div class="stat-card">
+            <div class="stat-icon">🧒</div>
+            <div class="stat-number" id="tp-stat-total">—</div>
+            <div class="stat-label">Alumnos del salón</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="tp-stat-completos">—</div>
+            <div class="stat-label">Con talla y peso</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-number" id="tp-stat-pendientes">—</div>
+            <div class="stat-label">Pendientes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-number" id="tp-stat-pct">—</div>
+            <div class="stat-label">% completado</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:0.9rem">
+          <input type="text" id="tp-buscador" placeholder="🔍 Buscar alumno por nombre..." oninput="filtrarTablaTallaPeso()"
+            style="width:100%;max-width:320px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+        </div>
+
+        <div class="table-card" style="overflow-x:auto">
+          <div class="table-header"><h3>Registro de talla y peso</h3></div>
+          <table id="tabla-tp-wrap">
+            <thead><tr><th>N°</th><th>Apellidos y Nombres</th><th>Talla (cm) *</th><th>Peso (kg) *</th><th>Edad</th></tr></thead>
+            <tbody id="tabla-tp-alumnos"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📏</div><p>Selecciona un salón</p></div></td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -6012,6 +6069,7 @@
       if (id === 'aux-censal') cargarSalonesCensalAuxiliar();
       if (id === 'aux-examenes') cargarSelectsExamenes();
       if (id === 'aux-reportes') inicializarReporteAuxiliar();
+      if (id === 'aux-talla-peso') cargarSelectSalonesTallaPeso();
     }
 
     window.addEventListener('pagehide', () => {
@@ -8879,6 +8937,246 @@ async function guardarEvaluacionTutor() {
       } catch (err) {
         console.error('Error refrescando fila/gráficos de exámenes:', err);
       }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  TALLA Y PESO DEL ALUMNADO — panel de la auxiliar
+    //  Lista de alumnos por salón con talla/peso (obligatorios) y edad
+    //  (opcional). Se autoguarda por campo con un pequeño debounce para
+    //  no disparar una petición por cada tecla. El dashboard y el PDF
+    //  están siempre referidos al salón que esté filtrado.
+    // ══════════════════════════════════════════════════════════════
+    let tpAlumnosActuales = [];
+    let tpSalonNombreActual = '';
+    const tpTimers = {}; // debounce por alumno+campo
+
+    async function cargarSelectSalonesTallaPeso() {
+      const sel = document.getElementById('tp-salon-select');
+      if (sel.dataset.cargado) return;
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch('/api/alumnos/salones', { headers });
+        const salones = await res.json();
+        sel.innerHTML = '<option value="">Selecciona un salón...</option>' +
+          salones.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+        sel.dataset.cargado = '1';
+      } catch (err) {
+        console.error('Error cargando salones (talla/peso):', err);
+      }
+    }
+
+    async function cargarTablaTallaPeso() {
+      const sel = document.getElementById('tp-salon-select');
+      const salonId = sel.value;
+      const tbody = document.getElementById('tabla-tp-alumnos');
+      const dashboard = document.getElementById('tp-dashboard');
+      const btnPdf = document.getElementById('tp-btn-pdf');
+      document.getElementById('tp-buscador').value = '';
+
+      if (!salonId) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📏</div><p>Selecciona un salón</p></div></td></tr>';
+        dashboard.style.display = 'none';
+        btnPdf.disabled = true;
+        tpAlumnosActuales = [];
+        return;
+      }
+
+      tpSalonNombreActual = sel.options[sel.selectedIndex].textContent;
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
+
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`/api/talla-peso?salon_id=${salonId}`, { headers });
+        if (!res.ok) throw new Error('No se pudo cargar la lista');
+        const data = await res.json();
+        tpAlumnosActuales = data.alumnos || [];
+        renderTablaTallaPeso(tpAlumnosActuales);
+        actualizarDashboardTallaPeso(data.resumen);
+        dashboard.style.display = 'grid';
+        btnPdf.disabled = tpAlumnosActuales.length === 0;
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la lista. Intenta de nuevo.</p></div></td></tr>';
+        dashboard.style.display = 'none';
+        btnPdf.disabled = true;
+        console.error('Error cargando talla/peso:', err);
+      }
+    }
+
+    function renderTablaTallaPeso(alumnos) {
+      const tbody = document.getElementById('tabla-tp-alumnos');
+      if (!alumnos.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📏</div><p>Este salón no tiene alumnos activos</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = alumnos.map(a => `
+        <tr data-row data-nombre="${(a.apellidos_nombres || '').toLowerCase()}">
+          <td>${a.numero}</td>
+          <td>${a.apellidos_nombres}</td>
+          <td><input type="number" step="0.1" min="30" max="250" id="tp-talla-${a.id}" value="${a.talla !== null && a.talla !== undefined ? a.talla : ''}"
+            placeholder="Ej: 120.5" oninput="onInputTallaPeso(${a.id}, 'talla', this)"
+            style="width:100px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-family:'DM Sans',sans-serif;color:var(--text)"></td>
+          <td><input type="number" step="0.1" min="5" max="200" id="tp-peso-${a.id}" value="${a.peso !== null && a.peso !== undefined ? a.peso : ''}"
+            placeholder="Ej: 25.0" oninput="onInputTallaPeso(${a.id}, 'peso', this)"
+            style="width:100px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-family:'DM Sans',sans-serif;color:var(--text)"></td>
+          <td><input type="number" step="1" min="0" max="25" id="tp-edad-${a.id}" value="${a.edad !== null && a.edad !== undefined ? a.edad : ''}"
+            placeholder="Opcional" oninput="onInputTallaPeso(${a.id}, 'edad', this)"
+            style="width:90px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-family:'DM Sans',sans-serif;color:var(--text)"></td>
+        </tr>
+      `).join('');
+    }
+
+    function filtrarTablaTallaPeso() {
+      const q = document.getElementById('tp-buscador').value.trim().toLowerCase();
+      document.querySelectorAll('#tabla-tp-alumnos tr[data-row]').forEach(tr => {
+        tr.style.display = !q || tr.dataset.nombre.includes(q) ? '' : 'none';
+      });
+    }
+
+    function actualizarDashboardTallaPeso(resumen) {
+      const total = resumen.total || 0;
+      const completos = resumen.completos || 0;
+      const pendientes = resumen.pendientes != null ? resumen.pendientes : (total - completos);
+      const pct = total > 0 ? Math.round((completos / total) * 100) : 0;
+      document.getElementById('tp-stat-total').textContent = total;
+      document.getElementById('tp-stat-completos').textContent = completos;
+      document.getElementById('tp-stat-pendientes').textContent = pendientes;
+      document.getElementById('tp-stat-pct').textContent = pct + '%';
+    }
+
+    // Recalcula el dashboard en el cliente a partir de lo que hay ahora
+    // mismo en memoria, sin tener que volver a pedir la lista al servidor
+    // cada vez que se guarda un campo.
+    function recalcularDashboardLocalTallaPeso() {
+      const total = tpAlumnosActuales.length;
+      const completos = tpAlumnosActuales.filter(a =>
+        a.talla !== null && a.talla !== undefined && a.talla !== '' &&
+        a.peso !== null && a.peso !== undefined && a.peso !== ''
+      ).length;
+      actualizarDashboardTallaPeso({ total, completos, pendientes: total - completos });
+    }
+
+    function onInputTallaPeso(alumnoId, campo, inputEl) {
+      const timerKey = alumnoId + '-' + campo;
+      clearTimeout(tpTimers[timerKey]);
+      inputEl.style.borderColor = 'var(--border2)';
+      tpTimers[timerKey] = setTimeout(() => guardarTallaPeso(alumnoId, campo, inputEl), 600);
+    }
+
+    async function guardarTallaPeso(alumnoId, campo, inputEl) {
+      const valorRaw = inputEl.value.trim();
+      const body = {};
+      body[campo] = valorRaw === '' ? '' : Number(valorRaw);
+
+      if (valorRaw !== '' && Number.isNaN(body[campo])) {
+        inputEl.style.borderColor = 'var(--red)';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/talla-peso/' + alumnoId, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          inputEl.style.borderColor = 'var(--red)';
+          console.error('Error al guardar talla/peso:', data.error);
+          return;
+        }
+        inputEl.style.borderColor = 'var(--green)';
+        setTimeout(() => { inputEl.style.borderColor = 'var(--border2)'; }, 900);
+
+        // Mantiene en memoria lo que acaba de quedar guardado, para el dashboard
+        const alumno = tpAlumnosActuales.find(a => a.id === alumnoId);
+        if (alumno) alumno[campo] = data[campo];
+        recalcularDashboardLocalTallaPeso();
+      } catch (err) {
+        inputEl.style.borderColor = 'var(--red)';
+        console.error('Error de red al guardar talla/peso:', err);
+      }
+    }
+
+    async function descargarPDFTallaPeso() {
+      if (!tpAlumnosActuales.length) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = logoImg.width; c.height = logoImg.height;
+        c.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarPDFTallaPesoConLogo(doc, c.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarPDFTallaPesoConLogo(doc, null);
+    }
+
+    function _generarPDFTallaPesoConLogo(doc, logoData) {
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 10;
+
+      const dibujarEncabezado = () => {
+        doc.setFillColor(180, 0, 30);
+        doc.rect(0, 0, pageW, 2, 'F');
+        if (logoData) doc.addImage(logoData, 'PNG', margin, 3, 26, 18);
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 80);
+        doc.text('TALLA Y PESO DEL ALUMNADO', pageW / 2 + 8, 10, { align: 'center' });
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('I.E.P. Cervantes School  —  ' + tpSalonNombreActual, pageW / 2 + 8, 16, { align: 'center' });
+        doc.setDrawColor(180, 0, 30);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 24, pageW - margin, 24);
+      };
+      dibujarEncabezado();
+
+      const total = tpAlumnosActuales.length;
+      const completos = tpAlumnosActuales.filter(a =>
+        a.talla !== null && a.talla !== undefined && a.talla !== '' &&
+        a.peso !== null && a.peso !== undefined && a.peso !== ''
+      ).length;
+      const stats = [
+        { label: 'Total alumnos', valor: total, color: [52, 73, 94] },
+        { label: 'Con talla y peso', valor: completos, color: [46, 204, 113] },
+        { label: 'Pendientes', valor: total - completos, color: [230, 57, 70] }
+      ];
+      let y = 30;
+      stats.forEach((s, i) => {
+        const x = margin + i * 62;
+        doc.setFillColor(...s.color);
+        doc.roundedRect(x, y, 58, 18, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(String(s.valor), x + 29, y + 8, { align: 'center' });
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text(s.label, x + 29, y + 14, { align: 'center' });
+      });
+      y += 26;
+
+      const head = [['N°', 'Apellidos y Nombres', 'Talla (cm)', 'Peso (kg)', 'Edad']];
+      const body = tpAlumnosActuales.map(a => [
+        String(a.numero),
+        a.apellidos_nombres,
+        (a.talla !== null && a.talla !== undefined && a.talla !== '') ? String(a.talla) : '—',
+        (a.peso !== null && a.peso !== undefined && a.peso !== '') ? String(a.peso) : '—',
+        (a.edad !== null && a.edad !== undefined && a.edad !== '') ? String(a.edad) : '—'
+      ]);
+
+      doc.autoTable({
+        head, body,
+        startY: y,
+        margin: { left: margin, right: margin },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.5, lineColor: [220, 220, 230], lineWidth: 0.1 },
+        headStyles: { fillColor: [180, 0, 30], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+        alternateRowStyles: { fillColor: [246, 246, 250] },
+        didDrawPage: () => { dibujarEncabezado(); }
+      });
+
+      const nombreArchivo = 'talla-peso_' + tpSalonNombreActual.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase() + '.pdf';
+      doc.save(nombreArchivo);
     }
 
     // ══════════════════════════════════════════════════════════════

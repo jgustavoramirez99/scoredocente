@@ -53,6 +53,8 @@ const reporteTotalRouter = require('./routes/reporteTotal');
 app.use('/api/reporte-total', reporteTotalRouter);
 const reporteCubicolRouter = require('./routes/reporteCubicol');
 app.use('/api/reporte-cubicol', reporteCubicolRouter);
+const tallaPesoRouter = require('./routes/tallaPeso');
+app.use('/api/talla-peso', tallaPesoRouter);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));

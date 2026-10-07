@@ -268,4 +268,13 @@ pool.query(`CREATE TABLE IF NOT EXISTS reporte_cubicol_pdfs (
   .then(() => console.log('✅ Tabla "reporte_cubicol_pdfs" verificada'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "reporte_cubicol_pdfs":', err.message));
 
+// Migración idempotente: agrega las columnas "talla", "peso" y "edad" a
+// alumnos para el apartado "Talla y Peso del Alumnado" del panel de la
+// auxiliar. talla (cm) y peso (kg) admiten un decimal; edad es opcional.
+pool.query('ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS talla NUMERIC(5,1)')
+  .then(() => pool.query('ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS peso NUMERIC(5,1)'))
+  .then(() => pool.query('ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS edad INTEGER'))
+  .then(() => console.log('✅ Columnas "talla", "peso" y "edad" verificadas en alumnos'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear las columnas de talla y peso:', err.message));
+
 module.exports = pool;
