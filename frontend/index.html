@@ -2295,6 +2295,17 @@
             </div>
           </div>
         </div>
+
+        <div class="table-card" style="margin-top:1.5rem;overflow-x:auto">
+          <div class="table-header">
+            <h3>🏅 Detalle por docente y apartado</h3>
+            <div class="page-subtitle" style="margin:0">Quién tiene la mejor nota en cada sección — la celda con 🏅 es la más alta de esa columna</div>
+          </div>
+          <table>
+            <thead><tr id="tabla-cat-doc-evaluaciones-head"><th>N°</th><th>Docente</th></tr></thead>
+            <tbody id="tabla-cat-doc-evaluaciones"><tr><td colspan="9"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="section" id="section-tutoria">
@@ -2346,6 +2357,17 @@
               <canvas id="chart-niveles-tutoria"></canvas>
             </div>
           </div>
+        </div>
+
+        <div class="table-card" style="margin-top:1.5rem;overflow-x:auto">
+          <div class="table-header">
+            <h3>🏅 Detalle por docente y apartado</h3>
+            <div class="page-subtitle" style="margin:0">Quién tiene la mejor nota en cada sección — la celda con 🏅 es la más alta de esa columna</div>
+          </div>
+          <table>
+            <thead><tr id="tabla-cat-doc-tutoria-head"><th>N°</th><th>Docente</th></tr></thead>
+            <tbody id="tabla-cat-doc-tutoria"><tr><td colspan="8"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -11256,6 +11278,7 @@ function cerrarModal() {
       }, 'chart-ranking-evaluaciones', 'chart-ranking-evaluaciones-wrap', filas);
       renderizarGraficoCategoriasEvaluaciones(evaluaciones);
       renderizarGraficoNivelesEvaluaciones(filas);
+      renderizarTablaCategoriasEvaluaciones(evaluaciones);
     }
 
     function renderizarRankingTutoria(evaluaciones) {
@@ -11268,6 +11291,7 @@ function cerrarModal() {
       }, 'chart-ranking-tutoria', 'chart-ranking-tutoria-wrap', filas);
       renderizarGraficoCategoriasTutoria(evaluaciones);
       renderizarGraficoNivelesTutoria(filas);
+      renderizarTablaCategoriasTutoria(evaluaciones);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -11424,6 +11448,90 @@ function cerrarModal() {
         if (leer) return chartNivelesTutoria;
         chartNivelesTutoria = val;
       }, 'chart-niveles-tutoria', filas);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Tabla "Detalle por docente y apartado" — a pedido de Gustavo tras
+    // ver el gráfico de promedios: ahí solo se ve el promedio GENERAL de
+    // cada sección (A, B, C…), pero no quién lo logró. Esta tabla muestra,
+    // por cada docente, su promedio en cada sección, y marca con 🏅 la
+    // nota más alta de cada columna para ver de un vistazo quién destaca
+    // en cada apartado — ordenada de mayor a menor promedio general.
+    // ══════════════════════════════════════════════════════════════════
+
+    function calcularMatrizPorDocente(registros, categorias) {
+      const porDocente = {};
+      (registros || []).forEach(r => {
+        const nombre = r.docente_nombre;
+        if (!nombre) return;
+        if (!porDocente[nombre]) porDocente[nombre] = [];
+        porDocente[nombre].push(r);
+      });
+      const filas = Object.keys(porDocente).map(nombre => {
+        const regs = porDocente[nombre];
+        const cats = categorias.map(cat => {
+          const pcts = regs.map(r => {
+            const subtotal = cat.campos.reduce((a, c) => a + (parseInt(r[c]) || 0), 0);
+            return subtotal / cat.max * 100;
+          });
+          const prom = pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : 0;
+          return { clave: cat.clave, promedio: parseFloat(prom.toFixed(1)) };
+        });
+        const promedioGeneral = cats.length ? cats.reduce((a, c) => a + c.promedio, 0) / cats.length : 0;
+        return { nombre, categorias: cats, promedioGeneral: parseFloat(promedioGeneral.toFixed(1)) };
+      });
+      filas.sort((a, b) => b.promedioGeneral - a.promedioGeneral);
+      return filas;
+    }
+
+    function renderizarTablaCategoriasPorDocente(headId, bodyId, registros, categorias) {
+      const thead = document.getElementById(headId);
+      const tbody = document.getElementById(bodyId);
+      if (!thead || !tbody) return;
+
+      // Encabezado dinámico: N°, Docente, una columna por cada sección, Promedio.
+      thead.innerHTML = '<th>N°</th><th>Docente</th>' +
+        categorias.map(c => `<th style="text-align:center">${c.clave}</th>`).join('') +
+        '<th style="text-align:center">Promedio</th>';
+
+      const filas = calcularMatrizPorDocente(registros, categorias);
+      const totalCols = categorias.length + 3;
+      if (!filas.length) {
+        tbody.innerHTML = `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin evaluaciones aún</p></div></td></tr>`;
+        return;
+      }
+
+      // La nota más alta de cada columna, para marcarla con 🏅.
+      const maxPorColumna = categorias.map((_, idx) =>
+        Math.max(...filas.map(f => f.categorias[idx].promedio))
+      );
+
+      tbody.innerHTML = filas.map((f, i) => {
+        const celdas = f.categorias.map((c, idx) => {
+          const esMax = c.promedio > 0 && c.promedio === maxPorColumna[idx];
+          const color = colorPorNivel(c.promedio, 1);
+          const fondo = colorPorNivel(c.promedio, 0.15);
+          return `<td style="text-align:center">
+            <span style="display:inline-block;padding:3px 8px;border-radius:6px;background:${fondo};color:${color};font-weight:${esMax ? '800' : '600'};font-size:12.5px;white-space:nowrap">
+              ${c.promedio.toFixed(1)}%${esMax ? ' 🏅' : ''}
+            </span>
+          </td>`;
+        }).join('');
+        return `<tr>
+          <td>${i + 1}</td>
+          <td style="color:var(--text);font-weight:500">${f.nombre}</td>
+          ${celdas}
+          <td style="text-align:center;font-weight:700;color:var(--text)">${f.promedioGeneral.toFixed(1)}%</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderizarTablaCategoriasEvaluaciones(evaluaciones) {
+      renderizarTablaCategoriasPorDocente('tabla-cat-doc-evaluaciones-head', 'tabla-cat-doc-evaluaciones', evaluaciones, CATEGORIAS_EVALUACIONES);
+    }
+
+    function renderizarTablaCategoriasTutoria(evaluaciones) {
+      renderizarTablaCategoriasPorDocente('tabla-cat-doc-tutoria-head', 'tabla-cat-doc-tutoria', evaluaciones, CATEGORIAS_TUTORIA);
     }
 
     // Convierte un canvas de Chart.js a un PNG con fondo blanco (para que
