@@ -1273,6 +1273,17 @@
       0%   { transform: translate(0, 0) scale(1); opacity: 1; }
       100% { transform: translate(var(--bx), var(--by)) scale(0.4); opacity: 0; }
     }
+    /* ✨ Chispitas al abrir un panel del menú lateral (solo cuenta de Laura) */
+    .laura-nav-chispa {
+      position: fixed;
+      z-index: 10050;
+      pointer-events: none;
+      animation: laura-nav-chispa-fly 0.8s ease-out forwards;
+    }
+    @keyframes laura-nav-chispa-fly {
+      0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--nx)), calc(-50% + var(--ny))) scale(1.15); opacity: 0; }
+    }
 
     /* ══════════════════════════════
        BIENVENIDA PERSONALIZADA (Psicóloga)
@@ -6236,6 +6247,30 @@
       el.classList.add('active');
     }
 
+    // ✨ Ráfaga sutil de chispitas junto al ítem del menú que se acaba de abrir
+    // (solo para la cuenta de Laura, vía la clase 'laura-theme' en <body>)
+    function laura_chispitasNav(el) {
+      if (!document.body.classList.contains('laura-theme')) return;
+      const emojis = ['✨', '🌟', '💫'];
+      const rect = el ? el.getBoundingClientRect() : null;
+      const originX = rect ? rect.left + 18 : window.innerWidth / 2;
+      const originY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+      for (let i = 0; i < 6; i++) {
+        const s = document.createElement('span');
+        s.className = 'laura-nav-chispa';
+        s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 45;
+        s.style.setProperty('--nx', (Math.cos(ang) * dist) + 'px');
+        s.style.setProperty('--ny', (Math.sin(ang) * dist - 16) + 'px');
+        s.style.left = originX + 'px';
+        s.style.top = originY + 'px';
+        s.style.fontSize = (13 + Math.random() * 9) + 'px';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 850);
+      }
+    }
+
     function showSectionAux(id, el) {
       // si salimos de "Evaluación Censal" hacia otra pestaña, soltamos el bloqueo del salón
       if (id !== 'aux-censal' && censalSalonActual) {
@@ -6247,6 +6282,7 @@
       document.querySelectorAll('#auxiliar-page .nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById('section-' + id).classList.add('active');
       el.classList.add('active');
+      laura_chispitasNav(el);
       if (id === 'aux-resumen') cargarResumenSemanalAuxiliar();
       if (id === 'aux-censal') cargarSalonesCensalAuxiliar();
       if (id === 'aux-examenes') cargarSelectsExamenes();
