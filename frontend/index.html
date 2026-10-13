@@ -2753,6 +2753,13 @@
               <option value="">Selecciona un salón...</option>
             </select>
           </div>
+          <div class="form-group" style="max-width:170px;margin-bottom:0">
+            <label>Período</label>
+            <select id="dir-censal-periodo-select" onchange="cargarEvaluacionCensalDirector()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="I">I Evaluación</option>
+              <option value="II">II Evaluación</option>
+            </select>
+          </div>
           <div class="form-group" style="max-width:220px;margin-bottom:0">
             <label>Profesor(a) Tutor(a)</label>
             <input type="text" id="dir-censal-profesor" disabled placeholder="—"
@@ -3443,6 +3450,13 @@
             <label>Salón</label>
             <select id="censal-salon-select" onchange="cargarEvaluacionCensal()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
               <option value="">Selecciona un salón...</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:170px;margin-bottom:0">
+            <label>Período</label>
+            <select id="censal-periodo-select" onchange="cargarEvaluacionCensal()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+              <option value="I">I Evaluación</option>
+              <option value="II">II Evaluación</option>
             </select>
           </div>
           <div class="form-group" style="max-width:220px;margin-bottom:0">
@@ -5780,7 +5794,7 @@
     }
 
     function logout() {
-      if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual);
+      if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual, censalPeriodoActual);
       if (pollingInterval) clearInterval(pollingInterval);
       detenerPollingMensajes();
       localStorage.clear();
@@ -6307,9 +6321,10 @@
     function showSectionAux(id, el) {
       // si salimos de "Evaluación Censal" hacia otra pestaña, soltamos el bloqueo del salón
       if (id !== 'aux-censal' && censalSalonActual) {
-        liberarBloqueoCensal(censalSalonActual);
+        liberarBloqueoCensal(censalSalonActual, censalPeriodoActual);
         detenerHeartbeatCensal();
         censalSalonActual = null;
+        censalPeriodoActual = null;
       }
       document.querySelectorAll('#auxiliar-page .section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('#auxiliar-page .nav-item').forEach(n => n.classList.remove('active'));
@@ -6324,7 +6339,7 @@
     }
 
     window.addEventListener('pagehide', () => {
-      if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual);
+      if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual, censalPeriodoActual);
     });
 
     async function cargarDatosDirector() {
@@ -8611,22 +8626,26 @@ async function guardarEvaluacionTutor() {
       }
     }
 
-    // Estado del bloqueo por salón en el panel de la auxiliar
+    // Estado del bloqueo por salón (+ período) en el panel de la auxiliar
     let censalSalonActual = null;     // salón cuyo bloqueo tiene esta sesión ahora mismo
+    let censalPeriodoActual = null;   // período (I/II) de ese bloqueo
     let censalHeartbeatInterval = null;
 
     async function cargarEvaluacionCensal() {
       const salonId = document.getElementById('censal-salon-select').value;
+      const periodo = document.getElementById('censal-periodo-select').value || 'I';
       const thead = document.getElementById('censal-thead-row');
       const tbody = document.getElementById('tabla-censal-alumnos');
       const banner = document.getElementById('censal-bloqueo-banner');
 
-      // Si veníamos con el bloqueo de otro salón, lo soltamos antes de continuar
-      if (censalSalonActual && censalSalonActual !== salonId) {
-        liberarBloqueoCensal(censalSalonActual);
+      // Si veníamos con el bloqueo de otro salón o de otro período del mismo
+      // salón, lo soltamos antes de continuar
+      if (censalSalonActual && (censalSalonActual !== salonId || censalPeriodoActual !== periodo)) {
+        liberarBloqueoCensal(censalSalonActual, censalPeriodoActual);
       }
       detenerHeartbeatCensal();
       censalSalonActual = null;
+      censalPeriodoActual = null;
       banner.style.display = 'none';
       document.getElementById('censal-n-evaluados').textContent = '';
 
@@ -8645,8 +8664,8 @@ async function guardarEvaluacionTutor() {
 
       tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr>';
 
-      // Intentamos tomar el bloqueo del salón antes de mostrar nada editable
-      const bloqueo = await tomarBloqueoCensal(salonId);
+      // Intentamos tomar el bloqueo del salón (en este período) antes de mostrar nada editable
+      const bloqueo = await tomarBloqueoCensal(salonId, periodo);
       if (bloqueo.ocupado) {
         banner.textContent = `🔒 Este salón está siendo editado por ${bloqueo.usuario_nombre} en este momento. Elige otro salón o intenta en unos minutos.`;
         banner.style.display = 'block';
@@ -8663,13 +8682,14 @@ async function guardarEvaluacionTutor() {
       }
 
       censalSalonActual = salonId;
-      iniciarHeartbeatCensal(salonId);
+      censalPeriodoActual = periodo;
+      iniciarHeartbeatCensal(salonId, periodo);
 
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
         const [metaRes, gridRes] = await Promise.all([
-          fetch('/api/evaluacion-censal/meta?salon_id=' + salonId, { headers }),
-          fetch('/api/evaluacion-censal?salon_id=' + salonId, { headers })
+          fetch('/api/evaluacion-censal/meta?salon_id=' + salonId + '&periodo=' + periodo, { headers }),
+          fetch('/api/evaluacion-censal?salon_id=' + salonId + '&periodo=' + periodo, { headers })
         ]);
         const meta = await metaRes.json();
         const grid = await gridRes.json();
@@ -8730,13 +8750,14 @@ async function guardarEvaluacionTutor() {
     async function guardarMetaCensal() {
       const salonId = document.getElementById('censal-salon-select').value;
       if (!salonId) return;
+      const periodo = document.getElementById('censal-periodo-select').value || 'I';
       const profesor_tutor = document.getElementById('censal-profesor').value.trim();
       const fecha_aplicacion = document.getElementById('censal-fecha').value || null;
       try {
         await fetch('/api/evaluacion-censal/meta', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ salon_id: salonId, profesor_tutor, fecha_aplicacion })
+          body: JSON.stringify({ salon_id: salonId, periodo, profesor_tutor, fecha_aplicacion })
         });
       } catch (err) {
         console.error('Error guardando datos generales de la evaluación censal:', err);
@@ -8766,11 +8787,12 @@ async function guardarEvaluacionTutor() {
     async function guardarRespuestaCensal(alumnoId, itemNumero) {
       const select = document.getElementById(`censal-${alumnoId}-${itemNumero}`);
       const estado = select.value || null;
+      const periodo = document.getElementById('censal-periodo-select').value || 'I';
       try {
         await fetch('/api/evaluacion-censal/respuesta', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ alumno_id: alumnoId, item_numero: itemNumero, estado })
+          body: JSON.stringify({ alumno_id: alumnoId, item_numero: itemNumero, periodo, estado })
         });
         select.style.borderColor = 'var(--green)';
         setTimeout(() => select.style.borderColor = 'var(--border2)', 900);
@@ -8784,9 +8806,10 @@ async function guardarEvaluacionTutor() {
     async function refrescarFilaYChartsCensal(alumnoIdEditado) {
       const salonId = document.getElementById('censal-salon-select').value;
       if (!salonId) return;
+      const periodo = document.getElementById('censal-periodo-select').value || 'I';
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
-        const res = await fetch('/api/evaluacion-censal?salon_id=' + salonId, { headers });
+        const res = await fetch('/api/evaluacion-censal?salon_id=' + salonId + '&periodo=' + periodo, { headers });
         const grid = await res.json();
         const alumnos = grid.alumnos || [];
         censalAlumnosActuales = alumnos;
@@ -10307,6 +10330,7 @@ async function guardarEvaluacionTutor() {
 
     async function cargarEvaluacionCensalDirector() {
       const salonId = document.getElementById('dir-censal-salon-select').value;
+      const periodo = document.getElementById('dir-censal-periodo-select').value || 'I';
       const thead = document.getElementById('dir-censal-thead-row');
       const tbody = document.getElementById('tabla-dir-censal-alumnos');
       document.getElementById('dir-censal-n-evaluados').textContent = '';
@@ -10326,8 +10350,8 @@ async function guardarEvaluacionTutor() {
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
         const [metaRes, gridRes] = await Promise.all([
-          fetch('/api/evaluacion-censal/meta?salon_id=' + salonId, { headers }),
-          fetch('/api/evaluacion-censal?salon_id=' + salonId, { headers })
+          fetch('/api/evaluacion-censal/meta?salon_id=' + salonId + '&periodo=' + periodo, { headers }),
+          fetch('/api/evaluacion-censal?salon_id=' + salonId + '&periodo=' + periodo, { headers })
         ]);
         const meta = await metaRes.json();
         const grid = await gridRes.json();
@@ -10797,12 +10821,12 @@ async function guardarEvaluacionTutor() {
       doc.save('Evaluacion_Estudiantes_' + nombreDocente.replace(/\s+/g, '_') + '_' + fecha + '.pdf');
     }
 
-    async function tomarBloqueoCensal(salonId) {
+    async function tomarBloqueoCensal(salonId, periodo) {
       try {
         const res = await fetch('/api/evaluacion-censal/bloqueo/tomar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ salon_id: salonId })
+          body: JSON.stringify({ salon_id: salonId, periodo })
         });
         if (res.status === 409) {
           const data = await res.json();
@@ -10815,12 +10839,12 @@ async function guardarEvaluacionTutor() {
       }
     }
 
-    function iniciarHeartbeatCensal(salonId) {
+    function iniciarHeartbeatCensal(salonId, periodo) {
       censalHeartbeatInterval = setInterval(() => {
         fetch('/api/evaluacion-censal/bloqueo/tomar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ salon_id: salonId })
+          body: JSON.stringify({ salon_id: salonId, periodo })
         }).catch(() => {});
       }, 45000); // renueva cada 45s (el bloqueo vence a los 2 min sin renovar)
     }
@@ -10829,12 +10853,12 @@ async function guardarEvaluacionTutor() {
       if (censalHeartbeatInterval) { clearInterval(censalHeartbeatInterval); censalHeartbeatInterval = null; }
     }
 
-    function liberarBloqueoCensal(salonId) {
+    function liberarBloqueoCensal(salonId, periodo) {
       if (!salonId) return;
       fetch('/api/evaluacion-censal/bloqueo/liberar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ salon_id: salonId }),
+        body: JSON.stringify({ salon_id: salonId, periodo }),
         keepalive: true
       }).catch(() => {});
     }
@@ -13462,6 +13486,9 @@ async function descargarPDFCensal(prefix) {
   const salonId = salonSelect.value;
   if (!salonId) { alert('Selecciona un salón antes de descargar el PDF.'); return; }
   const salonNombre = salonSelect.options[salonSelect.selectedIndex].text;
+  const periodoSelect = document.getElementById(prefix + 'censal-periodo-select');
+  const periodo = periodoSelect ? periodoSelect.value : 'I';
+  const periodoTexto = periodo === 'II' ? 'II Evaluación' : 'I Evaluación';
 
   const items = prefix === 'dir-' ? dirCensalItemsActuales : censalItemsActuales;
   const alumnos = prefix === 'dir-' ? dirCensalAlumnosActuales : censalAlumnosActuales;
@@ -13486,7 +13513,7 @@ async function descargarPDFCensal(prefix) {
   const orientacion = items.length > 8 ? 'landscape' : 'portrait';
   const doc = new jsPDF({ orientation: orientacion, unit: 'mm', format: 'a4' });
 
-  const datosPDF = { salonNombre, profesor, fechaTexto, items, alumnos, imgBarras, imgTorta, imgLiteral, imgInferencial, imgCritico };
+  const datosPDF = { salonNombre, periodoTexto, profesor, fechaTexto, items, alumnos, imgBarras, imgTorta, imgLiteral, imgInferencial, imgCritico };
 
   const logoImg = new Image();
   logoImg.crossOrigin = 'anonymous';
@@ -13514,7 +13541,7 @@ function _generarPDFCensalConLogo(doc, d, logoData) {
     doc.text('EVALUACIÓN CENSAL DE COMPRENSIÓN LECTORA', pageW / 2 + 8, 10, { align: 'center' });
     doc.setFontSize(9); doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 100, 100);
-    doc.text('I.E.P. Cervantes School  —  Salón: ' + d.salonNombre, pageW / 2 + 8, 16, { align: 'center' });
+    doc.text('I.E.P. Cervantes School  —  Salón: ' + d.salonNombre + '  —  ' + d.periodoTexto, pageW / 2 + 8, 16, { align: 'center' });
     doc.setDrawColor(180, 0, 30);
     doc.setLineWidth(0.5);
     doc.line(margin, 24, pageW - margin, 24);
@@ -13611,7 +13638,8 @@ function _generarPDFCensalConLogo(doc, d, logoData) {
     doc.text('EduScore CS  |  I.E.P. Cervantes School  |  Evaluación Censal — ' + d.salonNombre + '  |  Página ' + i + ' de ' + totalPags, pageW / 2, pageH - 3, { align: 'center' });
   }
 
-  const nombreArchivo = 'Evaluacion_Censal_' + d.salonNombre.replace(/[^a-zA-Z0-9]+/g, '_') + '.pdf';
+  const periodoArchivo = d.periodoTexto && d.periodoTexto.startsWith('II') ? 'II' : 'I';
+  const nombreArchivo = 'Evaluacion_Censal_' + d.salonNombre.replace(/[^a-zA-Z0-9]+/g, '_') + '_' + periodoArchivo + '.pdf';
   doc.save(nombreArchivo);
 }
   </script>

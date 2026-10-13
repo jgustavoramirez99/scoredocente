@@ -277,4 +277,65 @@ pool.query('ALTER TABLE alumnos ADD COLUMN IF NOT EXISTS talla NUMERIC(5,1)')
   .then(() => console.log('✅ Columnas "talla", "peso" y "edad" verificadas en alumnos'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear las columnas de talla y peso:', err.message));
 
+
+// Migración idempotente: agrega el soporte de "periodo" (I Evaluación / II
+// Evaluación) a la Evaluación Censal, para poder conservar el historial de
+// ambas evaluaciones del año sin que la segunda sobrescriba a la primera.
+// Antes no existía esta columna, así que cada salón solo podía tener una
+// evaluación censal "viva": cargar los ítems de la "II Evaluación" pisaba
+// los de la "I" porque ambos usan el mismo item_numero (1, 2, 3...). Con
+// "periodo" cada fila queda etiquetada y las dos evaluaciones conviven.
+//
+// No se puede inspeccionar la base de datos real desde aquí, así que esto
+// busca el nombre real de cada restricción UNIQUE existente (en vez de
+// asumir un nombre fijo, que podría no coincidir) y la reemplaza por una que
+// incluya "periodo". Si una tabla no tenía restricción única (como podría
+// pasar en evaluacion_censal_items, cuyos ítems siempre se insertaron a mano
+// directo en la base), simplemente se crea una nueva.
+async function migrarPeriodoCensal() {
+  const especificaciones = [
+    { tabla: 'evaluacion_censal_items',      columnas: ['item_numero', 'salon_id'] },
+    { tabla: 'evaluacion_censal_meta',       columnas: ['salon_id'] },
+    { tabla: 'evaluacion_censal_respuestas', columnas: ['alumno_id', 'item_numero'] },
+    { tabla: 'evaluacion_censal_bloqueos',   columnas: ['salon_id'] },
+  ];
+
+  for (const { tabla, columnas } of especificaciones) {
+    try {
+      await pool.query(`ALTER TABLE ${tabla} ADD COLUMN IF NOT EXISTS periodo VARCHAR(5) NOT NULL DEFAULT 'I'`);
+
+      // Todas las restricciones UNIQUE de la tabla, con sus columnas reales
+      const { rows } = await pool.query(`
+        SELECT con.conname, array_agg(attr.attname ORDER BY attr.attname) AS cols
+        FROM pg_constraint con
+        JOIN pg_class rel ON rel.oid = con.conrelid
+        JOIN unnest(con.conkey) AS k(attnum) ON true
+        JOIN pg_attribute attr ON attr.attrelid = con.conrelid AND attr.attnum = k.attnum
+        WHERE rel.relname = $1 AND con.contype = 'u'
+        GROUP BY con.conname
+      `, [tabla]);
+
+      const clave = (cols) => [...cols].sort().join(',');
+      const esperadaVieja = clave(columnas);
+      const esperadaNueva = clave([...columnas, 'periodo']);
+
+      const vieja = rows.find(r => clave(r.cols) === esperadaVieja);
+      if (vieja) {
+        await pool.query(`ALTER TABLE ${tabla} DROP CONSTRAINT "${vieja.conname}"`);
+      }
+
+      const yaExisteNueva = rows.some(r => clave(r.cols) === esperadaNueva) && !vieja;
+      if (!yaExisteNueva) {
+        await pool.query(`ALTER TABLE ${tabla} ADD CONSTRAINT ${tabla}_periodo_unq UNIQUE (${columnas.join(', ')}, periodo)`);
+      }
+
+      console.log(`✅ Columna "periodo" y restricción única verificadas en ${tabla}`);
+    } catch (err) {
+      console.error(`⚠️  No se pudo verificar/crear "periodo" en ${tabla}:`, err.message);
+    }
+  }
+}
+
+migrarPeriodoCensal();
+
 module.exports = pool;
