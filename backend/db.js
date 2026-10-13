@@ -304,30 +304,35 @@ async function migrarPeriodoCensal() {
     try {
       await pool.query(`ALTER TABLE ${tabla} ADD COLUMN IF NOT EXISTS periodo VARCHAR(5) NOT NULL DEFAULT 'I'`);
 
-      // Todas las restricciones UNIQUE de la tabla, con sus columnas reales
-      const { rows } = await pool.query(`
-        SELECT con.conname, array_agg(attr.attname ORDER BY attr.attname) AS cols
+      // Cualquier restricción UNIQUE de esta tabla que NO incluya la columna
+      // "periodo" es la restricción vieja (de antes de este cambio) y hay que
+      // quitarla, sin importar su nombre exacto ni qué otras columnas tenga
+      // (antes se comparaba la lista de columnas exacta contra lo esperado,
+      // pero eso resultó frágil: en producción se quedó una restricción vieja
+      // sin detectar y bloqueó los primeros INSERT de la "II Evaluación").
+      const { rows: viejas } = await pool.query(`
+        SELECT con.conname
         FROM pg_constraint con
         JOIN pg_class rel ON rel.oid = con.conrelid
-        JOIN unnest(con.conkey) AS k(attnum) ON true
-        JOIN pg_attribute attr ON attr.attrelid = con.conrelid AND attr.attnum = k.attnum
         WHERE rel.relname = $1 AND con.contype = 'u'
-        GROUP BY con.conname
+          AND NOT EXISTS (
+            SELECT 1 FROM unnest(con.conkey) k(attnum)
+            JOIN pg_attribute attr ON attr.attrelid = con.conrelid AND attr.attnum = k.attnum
+            WHERE attr.attname = 'periodo'
+          )
       `, [tabla]);
-
-      const clave = (cols) => [...cols].sort().join(',');
-      const esperadaVieja = clave(columnas);
-      const esperadaNueva = clave([...columnas, 'periodo']);
-
-      const vieja = rows.find(r => clave(r.cols) === esperadaVieja);
-      if (vieja) {
-        await pool.query(`ALTER TABLE ${tabla} DROP CONSTRAINT "${vieja.conname}"`);
+      for (const { conname } of viejas) {
+        await pool.query(`ALTER TABLE ${tabla} DROP CONSTRAINT "${conname}"`);
       }
 
-      const yaExisteNueva = rows.some(r => clave(r.cols) === esperadaNueva) && !vieja;
-      if (!yaExisteNueva) {
-        await pool.query(`ALTER TABLE ${tabla} ADD CONSTRAINT ${tabla}_periodo_unq UNIQUE (${columnas.join(', ')}, periodo)`);
-      }
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${tabla}_periodo_unq') THEN
+            ALTER TABLE ${tabla} ADD CONSTRAINT ${tabla}_periodo_unq UNIQUE (${columnas.join(', ')}, periodo);
+          END IF;
+        END $$;
+      `);
 
       console.log(`✅ Columna "periodo" y restricción única verificadas en ${tabla}`);
     } catch (err) {
