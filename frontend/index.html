@@ -3469,6 +3469,11 @@
             <input type="date" id="censal-fecha" onchange="guardarMetaCensal()"
               style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
           </div>
+                    <div class="form-group" id="censal-buscador-wrap" style="display:none;max-width:240px;margin-bottom:0">
+            <label>🔍 Buscar alumno</label>
+            <input type="text" id="censal-buscador" placeholder="Nombre o apellido..." oninput="filtrarAlumnosCensal()"
+              style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none">
+          </div>
           <div style="color:var(--text2);font-size:13px;padding-bottom:9px" id="censal-n-evaluados"></div>
           <div style="margin-left:auto;display:flex;align-items:center;gap:12px;padding-bottom:0">
             <span id="censal-guardar-status" style="font-size:12px;font-weight:600;opacity:0;transition:opacity 0.3s"></span>
@@ -8647,6 +8652,7 @@ async function guardarEvaluacionTutor() {
       censalSalonActual = null;
       censalPeriodoActual = null;
       banner.style.display = 'none';
+      banner.style.display = 'none';
       document.getElementById('censal-n-evaluados').textContent = '';
 
       if (!salonId) {
@@ -8701,6 +8707,7 @@ async function guardarEvaluacionTutor() {
         censalAlumnosActuales = grid.alumnos || [];
         renderTablaCensal(censalItemsActuales, censalAlumnosActuales);
         renderChartsCensal(censalAlumnosActuales);
+        mostrarBuscadorCensal(true);
       } catch (err) {
         console.error('Error cargando evaluación censal:', err);
         tbody.innerHTML = '<tr><td colspan="2"><div class="empty-state"><div class="empty-icon">⚠️</div><p>No se pudo cargar la evaluación</p></div></td></tr>';
@@ -8720,7 +8727,7 @@ async function guardarEvaluacionTutor() {
         alumnos.length ? (alumnos.filter(a => a.total_correctas !== null).length + ' de ' + alumnos.length + ' evaluados') : '';
 
       tbody.innerHTML = alumnos.length ? alumnos.map(a => `
-        <tr>
+                <tr data-row data-nombre="${(a.apellidos_nombres || '').toLowerCase().replace(/"/g, '&quot;')}">
           <td>${a.numero ?? '—'}</td>
           <td style="color:var(--text);font-weight:500">${a.apellidos_nombres}</td>
           ${items.map(it => `
@@ -8731,6 +8738,41 @@ async function guardarEvaluacionTutor() {
           <td id="censal-total-${a.alumno_id}" style="color:var(--text);font-weight:600">${a.total_correctas ?? '—'}</td>
           <td id="censal-nivel-${a.alumno_id}">${badgeNivelLogro(a.nivel_logro)}</td>
         </tr>`).join('') : `<tr><td colspan="${totalCols}"><div class="empty-state"><div class="empty-icon">🧒</div><p>Este salón no tiene alumnos registrados</p></div></td></tr>`;
+    }
+        // 🔍 Buscar alumno dentro del salón seleccionado (Evaluación Censal - auxiliar)
+    function filtrarAlumnosCensal() {
+      const input = document.getElementById('censal-buscador');
+      const q = normalizarTextoExamen(input ? input.value : '');
+      const tbody = document.getElementById('tabla-censal-alumnos');
+      const filas = tbody.querySelectorAll('tr[data-row]');
+      let visibles = 0;
+
+      filas.forEach(tr => {
+        const coincide = !q || normalizarTextoExamen(tr.dataset.nombre || '').includes(q);
+        tr.style.display = coincide ? '' : 'none';
+        if (coincide) visibles++;
+      });
+
+      // Aviso cuando no hay coincidencias
+      let aviso = document.getElementById('censal-sin-resultados');
+      if (filas.length && visibles === 0) {
+        if (!aviso) {
+          const cols = document.querySelectorAll('#censal-thead-row th').length || 2;
+          aviso = document.createElement('tr');
+          aviso.id = 'censal-sin-resultados';
+          aviso.innerHTML = `<td colspan="${cols}"><div class="empty-state"><div class="empty-icon">🔍</div><p>Ningún alumno coincide con la búsqueda</p></div></td>`;
+          tbody.appendChild(aviso);
+        }
+      } else if (aviso) {
+        aviso.remove();
+      }
+    }
+
+    function mostrarBuscadorCensal(mostrar) {
+      const wrap = document.getElementById('censal-buscador-wrap');
+      const input = document.getElementById('censal-buscador');
+      if (input) input.value = '';
+      if (wrap) wrap.style.display = mostrar ? 'block' : 'none';
     }
 
     function opcionesCensal(seleccionado) {
