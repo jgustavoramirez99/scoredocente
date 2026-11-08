@@ -1058,6 +1058,19 @@
     .laura-card-a { rotate: 0deg; }
     .laura-card-b { rotate: 0deg; }
     .laura-card-c { rotate: 0deg; }
+    /* 📸 Tarjeta A con foto grande */
+    .laura-welcome-card.laura-card-con-foto { max-width: 560px; width: 94%; }
+    .laura-welcome-photo.laura-welcome-photo-panel {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      border-radius: 22px;
+      border: 4px solid #ffd27a;
+      margin: 0 auto 1.1rem;
+      animation: laura-photo-pop 0.5s 0.15s both cubic-bezier(.34,1.56,.64,1),
+                 laura-portal-glow 2.2s ease-in-out infinite;
+    }
+    .laura-welcome-photo.laura-welcome-photo-panel:hover { rotate: -1.5deg; }
     /* Modo atrapame: el panel se mueve solo y esquiva el mouse un rato */
     .laura-card-movil {
       position: fixed !important;
@@ -2083,9 +2096,10 @@
             <div class="laura-welcome-heart-icon">💛</div>
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
+            <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
             <div class="laura-welcome-note">Tu chico gustavo ❤️</div>
-            <div class="laura-welcome-sub">Que tengas un lindo fin de semana 🌤️</div>
+            <div class="laura-welcome-sub">Que tengas un lindo lunes 💛</div>
             <div class="laura-pastel-cumple" id="laura-pastel-cumple" style="display:none">
               <div class="laura-pastel-emoji">🎂</div>
               <div class="laura-velitas" id="laura-velitas"></div>
@@ -4992,7 +5006,9 @@
       boton: "Gracias ❤️"
     } : {
       badge: "💌 tu Mensajito de tu niño Gustavo❤️",
-      titulo: "Alerta!! Llego el dia en que terminas tus estudios, ERES LA MEJOR DE TODAS❤️"
+      titulo: "Contigo hasta el parque de noche se ve de película ✨",
+      foto: "laura-noche-osito.jpg",
+      boton: "Gracias ❤️"
     };
     const LAURA_MINI_PANELES = [
       "Hoy tus desvelos tienen frutos💕",
@@ -5047,6 +5063,8 @@
       if (fotoEl) {
         if (panel.foto) { fotoEl.src = panel.foto; fotoEl.style.display = ''; }
         else { fotoEl.style.display = 'none'; }
+        const cardEl = fotoEl.closest('.laura-welcome-card');
+        if (cardEl) cardEl.classList.toggle('laura-card-con-foto', !!panel.foto);
       }
       if (badgeEl) {
         if (panel.badge) {
