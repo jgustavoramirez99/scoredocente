@@ -55,6 +55,8 @@ const reporteCubicolRouter = require('./routes/reporteCubicol');
 app.use('/api/reporte-cubicol', reporteCubicolRouter);
 const tallaPesoRouter = require('./routes/tallaPeso');
 app.use('/api/talla-peso', tallaPesoRouter);
+const perfilDocenteRouter = require('./routes/perfilDocente');
+app.use('/api/perfil-docente', perfilDocenteRouter);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));

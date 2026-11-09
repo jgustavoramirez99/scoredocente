@@ -2066,6 +2066,96 @@
       border-radius: 7px; font-size: 11.5px; cursor: pointer; font-family: 'DM Sans', sans-serif;
     }
     .rc-visor-iframe { width: 100%; height: 80vh; border: none; display: block; background: #525659; }
+
+    /* ══════════════════════════════
+       PERFIL 360° DEL DOCENTE
+       Usa las variables del tema (--surface, --text, --accent…), así que
+       se ve bien tanto en modo oscuro como en modo claro.
+    ══════════════════════════════ */
+    #section-perfil-docente { width: calc(100vw - var(--sidebar-w) - 5rem - 4px); max-width: 1320px; }
+    .p360 {
+      --p-dest: #d4af37; --p-logr: #2ecc71; --p-proc: #f39c12; --p-ini: #e63946;
+      --p-dest-ink: #f0cf6a; --p-logr-ink: #4ade80; --p-proc-ink: #fbad4a; --p-ini-ink: #ff7b85;
+      --p-tut: #5b8def;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    :root[data-theme="light"] .p360 {
+      --p-dest-ink: #7a5200; --p-logr-ink: #166534; --p-proc-ink: #9a3412; --p-ini-ink: #991b1b;
+      --p-tut: #2f5fd0;
+    }
+    .p360-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .p360-back, .p360-pdf {
+      display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 16px;
+      border-radius: 10px; font: 600 13px 'DM Sans', sans-serif; cursor: pointer;
+    }
+    .p360-back { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+    .p360-back:hover { color: var(--text); }
+    .p360-pdf { background: var(--accent); color: #fff; border: 0; }
+    .p360-pdf:hover { filter: brightness(1.08); }
+    .p360-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; }
+    .p360-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .p360-head { position: relative; overflow: hidden; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; padding: 26px 28px; }
+    .p360-head::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--accent); }
+    .p360-who { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+    .p360-avatar {
+      width: 88px; height: 88px; border-radius: 50%; background: var(--navy); color: #fff; flex: none;
+      display: flex; align-items: center; justify-content: center; font: 800 30px 'Syne', sans-serif; letter-spacing: 1px; overflow: hidden;
+    }
+    .p360-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .p360-name { font: 800 26px 'Syne', sans-serif; color: var(--text); line-height: 1.15; }
+    .p360-sub { font-size: 14px; color: var(--text2); margin-top: 4px; }
+    .p360-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .p360-chip { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+    .p360-score { display: flex; align-items: center; gap: 18px; }
+    .p360-ring { position: relative; width: 124px; height: 124px; }
+    .p360-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .p360-ring-num b { font: 800 30px 'Syne', sans-serif; color: var(--text); line-height: 1; }
+    .p360-ring-num span { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .p360-lbl { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .8px; }
+    .p360-nivel { display: inline-block; border-radius: 999px; padding: 5px 14px; font-size: 13px; font-weight: 800; margin-top: 6px; }
+    .p360-nivel.dest, .p360-tag.dest { background: rgba(212,175,55,.16); color: var(--p-dest-ink); }
+    .p360-nivel.logr, .p360-tag.logr { background: rgba(46,204,113,.14); color: var(--p-logr-ink); }
+    .p360-nivel.proc, .p360-tag.proc { background: rgba(243,156,18,.15); color: var(--p-proc-ink); }
+    .p360-nivel.ini, .p360-tag.ini { background: rgba(230,57,70,.14); color: var(--p-ini-ink); }
+    .p360-pesos { font-size: 11px; color: var(--text2); margin-top: 6px; max-width: 200px; }
+    .p360-row { display: flex; flex-wrap: wrap; gap: 18px; }
+    .p360-stat { flex: 1 1 240px; display: flex; flex-direction: column; gap: 10px; }
+    .p360-stat-t { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--text); }
+    .p360-stat-t i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .p360-stat-v { display: flex; align-items: baseline; gap: 10px; }
+    .p360-stat-v b { font: 800 34px 'Syne', sans-serif; color: var(--text); line-height: 1; }
+    .p360-delta { font-size: 12px; font-weight: 700; }
+    .p360-delta.up { color: var(--p-logr-ink); }
+    .p360-delta.down { color: var(--p-ini-ink); }
+    .p360-track { height: 8px; background: var(--surface3); border-radius: 999px; overflow: hidden; }
+    .p360-track > div { height: 100%; border-radius: 999px; }
+    .p360-note { font-size: 12px; color: var(--text2); }
+    .p360-radar-wrap { flex: 1 1 520px; display: flex; flex-direction: column; gap: 8px; justify-content: space-between; }
+    .p360-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: 12px; color: var(--text2); font-weight: 600; }
+    .p360-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .p360-legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .p360-legend i.dash { width: 14px; height: 0; border-radius: 0; border-top: 2px dashed var(--text3); }
+    .p360-side { flex: 1 1 300px; display: flex; flex-direction: column; gap: 18px; }
+    .p360-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; }
+    .p360-item.good { background: rgba(46,204,113,.09); border: 1px solid rgba(46,204,113,.22); }
+    .p360-item.warn { background: rgba(243,156,18,.09); border: 1px solid rgba(243,156,18,.25); }
+    .p360-item-ico { width: 38px; height: 38px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .p360-item.good .p360-item-ico { background: var(--green); }
+    .p360-item.warn .p360-item-ico { background: var(--amber); }
+    .p360-item-t { font-size: 13px; font-weight: 700; color: var(--text); }
+    .p360-item-s { font-size: 11.5px; color: var(--text2); margin-top: 1px; }
+    .p360-item-v { margin-left: auto; font: 800 18px 'Syne', sans-serif; color: var(--text); }
+    .p360-bars { flex: 1 1 420px; }
+    .p360-bar { margin-bottom: 12px; }
+    .p360-bar-h { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+    .p360-tag { border-radius: 999px; padding: 1px 9px; font-size: 11px; font-weight: 700; margin-left: 6px; }
+    .p360-vida { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .p360-vida > div { background: var(--surface2); border-radius: 12px; padding: 14px 16px; }
+    .p360-vida b { display: block; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+    .p360-vida p { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .p360-vida p span { display: block; font-size: 12px; font-weight: 400; color: var(--text2); }
+    .p360-empty { text-align: center; padding: 60px 20px; color: var(--text2); }
+    .p360-btn-fila { padding: 6px 12px; font-size: 12px; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -2290,12 +2380,20 @@
         <div class="table-card">
           <div class="table-header"><h3>Lista de docentes</h3></div>
           <table>
-            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Tipo</th><th>Tutor</th><th>Acción</th></tr></thead>
-            <tbody id="tabla-docentes"><tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
+            <thead><tr><th>Nombre</th><th>Curso</th><th>Nivel</th><th>Tipo</th><th>Tutor</th><th>Perfil</th><th>Acción</th></tr></thead>
+            <tbody id="tabla-docentes"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Cargando...</p></div></td></tr></tbody>
           </table>
         </div>
       </div>
       
+      <div class="section" id="section-perfil-docente">
+        <div class="page-header">
+          <div class="page-title">Perfil 360° del docente</div>
+          <div class="page-subtitle">Hoja de vida, evaluación de clases, tutoría y encuesta de estudiantes en un solo lugar</div>
+        </div>
+        <div id="p360-contenedor"><div class="p360-empty">Elige un docente desde la lista de Docentes.</div></div>
+      </div>
+
       <div class="section" id="section-historial">
         <div class="page-header">
           <div class="page-title">Historial de Docentes</div>
@@ -6364,6 +6462,416 @@
       if (typeof censalSalonActual !== 'undefined' && censalSalonActual) liberarBloqueoCensal(censalSalonActual, censalPeriodoActual);
     });
 
+    // ══════════════════════════════════════════════════════════════════
+    //  PERFIL 360° DEL DOCENTE
+    //  Junta, por docente: evaluación de clases (A–F), tutoría (1–5),
+    //  encuesta de estudiantes y hoja de vida, comparado con el promedio
+    //  del colegio. Datos desde GET /api/perfil-docente/:id (solo
+    //  Director/Directora y Gerente General). Los colores salen de las
+    //  variables del tema, así que funciona en modo claro y oscuro.
+    // ══════════════════════════════════════════════════════════════════
+    const P360_EMAIL_GERENTE = 'gerentegeneralcervantino@cervantesschool.edu.pe';
+    const P360_CORTOS = {
+      A: 'Planif.', B: 'Sesión', C: 'Materiales', D: 'Evaluación', E: 'Clima', F: 'Responsab.',
+      '1': 'Planif. tutoría', '2': 'Sesión tutoría', '3': 'Acompañam.', '4': 'Padres', '5': 'Present.'
+    };
+    let _p360Datos = null;
+    let _p360Docentes = null;
+
+    function p360PuedeVer() {
+      return !!usuario && (['director', 'directora'].includes(usuario.rol) ||
+        (usuario.email || '').trim().toLowerCase() === P360_EMAIL_GERENTE);
+    }
+    function p360Esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function p360Nivel(pct) {
+      if (pct == null) return { cls: '', txt: 'Sin datos', fill: 'var(--text3)' };
+      if (pct >= 90) return { cls: 'dest', txt: 'Destacado', fill: 'var(--p-dest)' };
+      if (pct >= 80) return { cls: 'logr', txt: 'Logrado', fill: 'var(--p-logr)' };
+      if (pct >= 70) return { cls: 'proc', txt: 'En proceso', fill: 'var(--p-proc)' };
+      return { cls: 'ini', txt: 'Inicio', fill: 'var(--p-ini)' };
+    }
+    function p360Fmt(v) { return v == null ? '—' : (Math.round(v * 10) / 10).toFixed(1); }
+    function p360Delta(v, base) {
+      if (v == null || base == null) return null;
+      return Math.round((v - base) * 10) / 10;
+    }
+    function p360DeltaTxt(d) { return d == null ? '' : (d >= 0 ? '+' : '') + d.toFixed(1); }
+
+    async function abrirPerfil360(docenteId) {
+      if (!p360PuedeVer()) { alert('El Perfil 360° solo lo ven el Director y el Gerente General.'); return; }
+      document.querySelectorAll('#director-page .section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-perfil-docente').classList.add('active');
+      const cont = document.getElementById('p360-contenedor');
+      cont.innerHTML = '<div class="p360-empty">⏳ Armando el perfil…</div>';
+      try {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        if (!_p360Docentes) {
+          const rd = await fetch('/api/docentes', { headers });
+          _p360Docentes = rd.ok ? await rd.json() : [];
+        }
+        const res = await fetch('/api/perfil-docente/' + encodeURIComponent(docenteId), { headers });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Error');
+        _p360Datos = await res.json();
+        renderPerfil360(_p360Datos);
+      } catch (err) {
+        console.error('Error cargando Perfil 360°:', err);
+        cont.innerHTML = '<div class="p360-empty">⚠️ No se pudo cargar el perfil. ' + p360Esc(err.message || '') + '</div>' +
+          '<div style="text-align:center"><button class="p360-back" onclick="cerrarPerfil360()">← Volver a Docentes</button></div>';
+      }
+    }
+
+    function cerrarPerfil360() {
+      const nav = document.querySelector("#director-page .nav-item[onclick*=\"showSection('docentes'\"]");
+      showSection('docentes', nav);
+    }
+
+    // Apartados con dato, de clases y de tutoría, en el orden A–F, 1–5
+    function p360Apartados(d) {
+      const out = [];
+      (d.clases.categorias || []).forEach(c => { if (c.promedio != null) out.push({ ...c, grupo: 'c', grupoTxt: 'Clases' }); });
+      if (d.tutoria) (d.tutoria.categorias || []).forEach(c => { if (c.promedio != null) out.push({ ...c, grupo: 't', grupoTxt: 'Tutoría' }); });
+      return out;
+    }
+
+    // Gráfico de radar en SVG. Escala 40–100 para que se note la forma.
+    function p360RadarSVG(items) {
+      const n = items.length, cx = 320, cy = 270, R = 160, LR = 184;
+      const ang = i => (-90 + i * 360 / n) * Math.PI / 180;
+      const sc = v => Math.max(0, (Math.min(100, v) - 40) / 60);
+      const P = (i, v) => [cx + R * sc(v) * Math.cos(ang(i)), cy + R * sc(v) * Math.sin(ang(i))];
+      const pts = arr => arr.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+      const rings = [55, 70, 85, 100].map(l =>
+        `<polygon points="${pts(items.map((_, i) => P(i, l)))}" style="fill:none;stroke:var(--border2);stroke-width:1"/>`).join('');
+      const spokes = items.map((_, i) => { const p = P(i, 100);
+        return `<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" style="stroke:var(--border2);stroke-width:1"/>`; }).join('');
+      const colegio = items.map((it, i) => P(i, it.colegio != null ? it.colegio : it.promedio));
+      const datos = items.map((it, i) => P(i, it.promedio));
+      const dots = items.map((it, i) => { const p = datos[i];
+        return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="5.5" style="fill:${it.grupo === 'c' ? 'var(--accent)' : 'var(--p-tut)'};stroke:var(--surface);stroke-width:2"/>`; }).join('');
+      const labels = items.map((it, i) => {
+        const c = Math.cos(ang(i)), s = Math.sin(ang(i));
+        const anchor = c > 0.25 ? 'start' : (c < -0.25 ? 'end' : 'middle');
+        return `<text x="${(cx + LR * c).toFixed(1)}" y="${(cy + LR * s + 4).toFixed(1)}" text-anchor="${anchor}" font-size="14" font-weight="700" style="fill:var(--text)">${p360Esc(it.clave + ' ' + (P360_CORTOS[it.clave] || it.nombre))}</text>`;
+      }).join('');
+      return `<svg viewBox="20 62 600 420" style="width:100%;max-width:700px;height:auto;margin:auto;display:block" role="img" aria-label="Gráfico de radar por apartado">
+        ${rings}${spokes}
+        <polygon points="${pts(colegio)}" style="fill:none;stroke:var(--text3);stroke-width:2;stroke-dasharray:6 5"/>
+        <polygon points="${pts(datos)}" style="fill:var(--accent-glow);stroke:var(--accent);stroke-width:3;stroke-linejoin:round"/>
+        ${dots}${labels}</svg>`;
+    }
+
+    function p360Iniciales(d) {
+      const a = (d.docente.nombre || '').trim()[0] || '', b = (d.docente.apellido || '').trim()[0] || '';
+      return (a + b).toUpperCase();
+    }
+
+    function p360Stat(titulo, colorPunto, valor, colegio, nota) {
+      const niv = p360Nivel(valor);
+      const dl = p360Delta(valor, colegio);
+      return `<div class="p360-card p360-stat">
+        <div class="p360-stat-t"><i style="background:${colorPunto}"></i>${p360Esc(titulo)}</div>
+        <div class="p360-stat-v"><b>${p360Fmt(valor)}</b>${dl != null ? `<span class="p360-delta ${dl >= 0 ? 'up' : 'down'}">${p360DeltaTxt(dl)} vs. colegio</span>` : ''}</div>
+        <div class="p360-track"><div style="width:${valor == null ? 0 : Math.min(100, valor)}%;background:${niv.fill}"></div></div>
+        <div class="p360-note">${p360Esc(nota)}</div>
+      </div>`;
+    }
+
+    function p360Items(lista, tipo) {
+      if (!lista.length) return `<p class="p360-note">${tipo === 'good' ? 'Aún no hay apartados destacados.' : 'Ningún apartado por debajo de 90.'}</p>`;
+      const icono = tipo === 'good'
+        ? '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>'
+        : '<path d="M12 19V5"/><path d="M6 11l6-6 6 6"/>';
+      return lista.map(a => {
+        const dl = p360Delta(a.promedio, a.colegio);
+        return `<div class="p360-item ${tipo}">
+          <div class="p360-item-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icono}</svg></div>
+          <div><div class="p360-item-t">${p360Esc(a.clave + '. ' + a.nombre)}</div>
+          <div class="p360-item-s">${a.grupoTxt}${dl != null ? ' · ' + p360DeltaTxt(dl) + ' pts vs. colegio' : ''}</div></div>
+          <div class="p360-item-v">${p360Fmt(a.promedio)}</div></div>`;
+      }).join('');
+    }
+
+    function p360Barras(titulo, bloque) {
+      if (!bloque) return `<div class="p360-card p360-bars"><h3>${titulo}</h3><p class="p360-note">Este docente no tiene evaluaciones de este tipo todavía.</p></div>`;
+      const filas = bloque.categorias.map(c => {
+        const niv = p360Nivel(c.promedio);
+        return `<div class="p360-bar"><div class="p360-bar-h"><span>${p360Esc(c.clave + '. ' + c.nombre)}</span>
+          <span>${p360Fmt(c.promedio)}<span class="p360-tag ${niv.cls}">${niv.txt}</span></span></div>
+          <div class="p360-track" style="height:10px"><div style="width:${c.promedio == null ? 0 : Math.min(100, c.promedio)}%;background:${niv.fill}"></div></div></div>`;
+      }).join('');
+      return `<div class="p360-card p360-bars"><h3>${titulo} <span class="p360-note" style="font-weight:400">· ${bloque.cantidad} evaluación(es)</span></h3>${filas}</div>`;
+    }
+
+    function p360HojaVida(d) {
+      const h = d.hoja_vida || {};
+      const celdas = [];
+      celdas.push(`<div><b>Cursos a cargo</b><p>${p360Esc(h.curso || '—')}<span>${p360Esc(h.nivel || '')}${h.tipo ? ' · ' + p360Esc(h.tipo) : ''}</span></p></div>`);
+      celdas.push(`<div><b>Tutoría</b><p>${h.es_tutor ? 'Es tutor/a' : 'No es tutor/a'}</p></div>`);
+      if (h.ficha_vinculada) {
+        const form = (h.formacion || []);
+        celdas.push(`<div><b>Formación</b><p>${form.length ? form.map(f => p360Esc(f)).join('<span></span>') : '—'}<span>${p360Esc(h.nivel_educativo || '')}</span></p></div>`);
+        if (h.ingles) celdas.push(`<div><b>Inglés</b><p>${p360Esc(h.ingles)}</p></div>`);
+      } else {
+        celdas.push(`<div><b>Formación</b><p class="p360-note" style="font-weight:400">${h.ficha_visible ? 'No se encontró la ficha de este docente.' : 'La formación detallada la ve solo el Gerente General.'}</p></div>`);
+      }
+      return `<div class="p360-card"><h3>Hoja de vida <span class="p360-note" style="font-weight:400">· solo trayectoria profesional, sin datos personales</span></h3><div class="p360-vida">${celdas.join('')}</div></div>`;
+    }
+
+    function renderPerfil360(d) {
+      const cont = document.getElementById('p360-contenedor');
+      const g = d.global || {};
+      const niv = p360Nivel(g.puntaje);
+      const nombreCompleto = `${d.docente.nombre} ${d.docente.apellido}`;
+      const h = d.hoja_vida || {};
+      const circ = 2 * Math.PI * 54;
+      const dash = g.puntaje == null ? 0 : (Math.min(100, g.puntaje) / 100) * circ;
+      const pesosTxt = g.pesos ? Object.keys(g.pesos).map(k => `${g.pesos[k]}% ${k === 'clases' ? 'clases' : k === 'tutoria' ? 'tutoría' : 'estudiantes'}`).join(' · ') : '';
+
+      const apartados = p360Apartados(d);
+      const orden = apartados.slice().sort((a, b) => b.promedio - a.promedio);
+      const nTop = Math.min(3, Math.ceil(orden.length / 2));
+      const fuertes = orden.slice(0, nTop).filter(a => a.promedio >= 80);
+      const refuerzo = orden.slice(nTop).slice(-3).reverse().filter(a => a.promedio < 90);
+
+      const selector = (_p360Docentes || []).length
+        ? `<select onchange="abrirPerfil360(this.value)" aria-label="Cambiar de docente" style="min-height:40px;padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;color:var(--text);font:600 13px 'DM Sans',sans-serif">` +
+          _p360Docentes.map(x => `<option value="${x.id}" ${x.id === d.docente.id ? 'selected' : ''}>${p360Esc(x.nombre + ' ' + x.apellido)}</option>`).join('') + '</select>'
+        : '';
+
+      const radar = apartados.length >= 3
+        ? `<div class="p360-card p360-radar-wrap"><h3>Perfil de competencias</h3>${p360RadarSVG(apartados)}
+            <div class="p360-legend"><span><i style="background:var(--accent)"></i>Clases (A–F)</span>${d.tutoria ? '<span><i style="background:var(--p-tut)"></i>Tutoría (1–5)</span>' : ''}<span><i class="dash"></i>Promedio del colegio</span><span>Escala: 40 a 100</span></div></div>`
+        : `<div class="p360-card p360-radar-wrap"><h3>Perfil de competencias</h3><p class="p360-note">Se necesitan al menos 3 apartados evaluados para dibujar el gráfico.</p></div>`;
+
+      cont.innerHTML = `<div class="p360">
+        <div class="p360-top">
+          <button class="p360-back" onclick="cerrarPerfil360()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Volver a Docentes</button>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">${selector}
+            <button class="p360-pdf" onclick="descargarPDFPerfil360()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>Descargar PDF</button></div>
+        </div>
+
+        <div class="p360-card p360-head">
+          <div class="p360-who">
+            <div class="p360-avatar">${h.foto ? `<img src="${p360Esc(h.foto)}" alt="Foto de ${p360Esc(nombreCompleto)}">` : p360Esc(p360Iniciales(d))}</div>
+            <div>
+              <div class="p360-name">${p360Esc(nombreCompleto)}</div>
+              <div class="p360-sub">${p360Esc(h.curso || 'Sin curso')}${h.nivel ? ' · ' + p360Esc(h.nivel) : ''}</div>
+              <div class="p360-chips">
+                ${h.es_tutor ? '<span class="p360-chip">Tutor/a</span>' : ''}
+                ${g.puesto ? `<span class="p360-chip">Puesto ${g.puesto} de ${g.total_docentes}</span>` : ''}
+                <span class="p360-chip">${d.clases.cantidad} eval. de clases</span>
+              </div>
+            </div>
+          </div>
+          <div class="p360-score">
+            <div class="p360-ring">
+              <svg width="124" height="124" viewBox="0 0 124 124" role="img" aria-label="Puntaje global ${p360Fmt(g.puntaje)} sobre 100">
+                <circle cx="62" cy="62" r="54" style="fill:none;stroke:var(--surface3);stroke-width:12"/>
+                <circle cx="62" cy="62" r="54" transform="rotate(-90 62 62)" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" style="fill:none;stroke:${niv.fill};stroke-width:12"/>
+              </svg>
+              <div class="p360-ring-num"><b>${p360Fmt(g.puntaje)}</b><span>de 100</span></div>
+            </div>
+            <div><div class="p360-lbl">Puntaje global</div><span class="p360-nivel ${niv.cls}">${niv.txt}</span>
+              ${pesosTxt ? `<div class="p360-pesos">${pesosTxt}</div>` : ''}</div>
+          </div>
+        </div>
+
+        <div class="p360-row">
+          ${p360Stat('Evaluación de clases', 'var(--accent)', d.clases.promedio, d.clases.colegio, d.clases.cantidad + ' evaluación(es) · apartados A a F')}
+          ${p360Stat('Evaluación de tutoría', 'var(--p-tut)', d.tutoria ? d.tutoria.promedio : null, d.tutoria ? d.tutoria.colegio : null, d.tutoria ? d.tutoria.cantidad + ' evaluación(es) · apartados 1 a 5' : 'Sin evaluaciones de tutoría')}
+          ${p360Stat('Encuesta de estudiantes', 'var(--green)', d.estudiantes ? d.estudiantes.promedio : null, d.estudiantes ? d.estudiantes.colegio : null, d.estudiantes ? d.estudiantes.cantidad + ' respuesta(s)' : 'Sin respuestas todavía')}
+        </div>
+
+        <div class="p360-row">
+          ${radar}
+          <div class="p360-side">
+            <div class="p360-card"><h3>En qué destaca</h3>${p360Items(fuertes, 'good')}</div>
+            <div class="p360-card"><h3>Por reforzar</h3>${p360Items(refuerzo, 'warn')}</div>
+          </div>
+        </div>
+
+        <div class="p360-row">
+          ${p360Barras('Evaluación de clases', d.clases.cantidad ? d.clases : null)}
+          ${p360Barras('Evaluación de tutoría', d.tutoria)}
+        </div>
+
+        ${p360HojaVida(d)}
+      </div>`;
+    }
+
+    // ── PDF del Perfil 360° (siempre en claro, para imprimir) ──
+    function p360RadarImagen(items) {
+      const c = document.createElement('canvas');
+      c.width = 900; c.height = 720;
+      const chart = new Chart(c.getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: items.map(it => it.clave + ' ' + (P360_CORTOS[it.clave] || it.nombre)),
+          datasets: [
+            { label: 'Docente', data: items.map(it => it.promedio), borderColor: '#b4001e', backgroundColor: 'rgba(180,0,30,0.15)', borderWidth: 3,
+              pointBackgroundColor: items.map(it => it.grupo === 'c' ? '#b4001e' : '#2f5fd0'), pointRadius: 5 },
+            { label: 'Promedio del colegio', data: items.map(it => it.colegio != null ? it.colegio : it.promedio), borderColor: '#7b86ab', borderDash: [6, 5], borderWidth: 2, backgroundColor: 'transparent', pointRadius: 0 }
+          ]
+        },
+        options: {
+          animation: false, responsive: false, devicePixelRatio: 1,
+          scales: { r: { min: 40, max: 100, ticks: { stepSize: 15, backdropColor: 'transparent', color: '#555', font: { size: 12 } },
+            pointLabels: { font: { size: 15, weight: 'bold' }, color: '#1b2340' }, grid: { color: '#d5d9e6' }, angleLines: { color: '#d5d9e6' } } },
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 14 }, color: '#1b2340' } }, datalabels: { display: false } }
+        },
+        plugins: [{ id: 'fondoBlanco', beforeDraw(ch) { const x = ch.ctx; x.save(); x.fillStyle = '#ffffff'; x.fillRect(0, 0, ch.width, ch.height); x.restore(); } }]
+      });
+      const url = c.toDataURL('image/png');
+      chart.destroy();
+      return url;
+    }
+
+    function descargarPDFPerfil360() {
+      const d = _p360Datos;
+      if (!d) return;
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      logoImg.src = '/Cervantes1.png';
+      logoImg.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = logoImg.width; c.height = logoImg.height;
+        c.getContext('2d').drawImage(logoImg, 0, 0);
+        _generarPDFPerfil360(d, c.toDataURL('image/png'));
+      };
+      logoImg.onerror = () => _generarPDFPerfil360(d, null);
+    }
+
+    function _generarPDFPerfil360(d, logoData) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const fecha = new Date().toLocaleDateString('es-PE');
+      const nombre = `${d.docente.nombre} ${d.docente.apellido}`;
+      const g = d.global || {};
+      const h = d.hoja_vida || {};
+      const anchoPag = 297;
+
+      _dibujarEncabezadoPDF(doc, 'PERFIL 360° DEL DOCENTE', nombre, fecha, logoData);
+
+      // Nombre y datos
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(20, 20, 80);
+      doc.text(nombre, 10, 33);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90, 90, 90);
+      const linea2 = [h.curso, h.nivel, h.es_tutor ? 'Tutor/a' : null, g.puesto ? `Puesto ${g.puesto} de ${g.total_docentes}` : null].filter(Boolean).join('  ·  ');
+      doc.text(linea2, 10, 39);
+
+      // Puntaje global (caja a la derecha)
+      const nivG = _pdfColorPorNivel(g.puntaje == null ? 0 : g.puntaje);
+      doc.setFillColor(...nivG.fondo); doc.setDrawColor(...nivG.texto); doc.setLineWidth(0.6);
+      doc.roundedRect(215, 28, 72, 18, 3, 3, 'FD');
+      doc.setTextColor(...nivG.texto); doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
+      doc.text(p360Fmt(g.puntaje), 222, 41);
+      doc.setFontSize(10); doc.text((p360Nivel(g.puntaje).txt).toUpperCase(), 250, 36);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+      const pesosPdf = g.pesos ? Object.keys(g.pesos).map(k => `${g.pesos[k]}% ${k === 'tutoria' ? 'tutoría' : k}`).join(' · ') : '';
+      doc.text(pesosPdf, 250, 41, { maxWidth: 36 });
+
+      // Tres tarjetas
+      const tarjetas = [
+        ['Evaluación de clases', d.clases.promedio, d.clases.colegio, d.clases.cantidad + ' evaluación(es)'],
+        ['Evaluación de tutoría', d.tutoria ? d.tutoria.promedio : null, d.tutoria ? d.tutoria.colegio : null, d.tutoria ? d.tutoria.cantidad + ' evaluación(es)' : 'Sin evaluaciones'],
+        ['Encuesta de estudiantes', d.estudiantes ? d.estudiantes.promedio : null, d.estudiantes ? d.estudiantes.colegio : null, d.estudiantes ? d.estudiantes.cantidad + ' respuesta(s)' : 'Sin respuestas']
+      ];
+      tarjetas.forEach((t, i) => {
+        const x = 10 + i * 93, y = 52, w = 88;
+        const col = _pdfColorPorNivel(t[1] == null ? 0 : t[1]);
+        doc.setFillColor(245, 246, 250); doc.setDrawColor(220, 224, 236); doc.setLineWidth(0.3);
+        doc.roundedRect(x, y, w, 20, 2, 2, 'FD');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(20, 20, 80);
+        doc.text(t[0], x + 4, y + 6);
+        doc.setFontSize(18); doc.setTextColor(...(t[1] == null ? [120, 120, 120] : col.texto));
+        doc.text(p360Fmt(t[1]), x + 4, y + 15);
+        const dl = p360Delta(t[1], t[2]);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(90, 90, 90);
+        doc.text((dl != null ? p360DeltaTxt(dl) + ' vs. colegio   ' : '') + t[3], x + 34, y + 14.5);
+      });
+
+      // Radar + fortalezas / por reforzar
+      const apartados = p360Apartados(d);
+      const orden = apartados.slice().sort((a, b) => b.promedio - a.promedio);
+      const nTop = Math.min(3, Math.ceil(orden.length / 2));
+      const fuertes = orden.slice(0, nTop).filter(a => a.promedio >= 80);
+      const refuerzo = orden.slice(nTop).slice(-3).reverse().filter(a => a.promedio < 90);
+      if (apartados.length >= 3) {
+        doc.addImage(p360RadarImagen(apartados), 'PNG', 10, 78, 125, 100);
+      }
+      const filaApartado = a => {
+        const dl = p360Delta(a.promedio, a.colegio);
+        const col = _pdfColorPorNivel(a.promedio);
+        return [a.clave + '. ' + a.nombre, a.grupoTxt, { content: p360Fmt(a.promedio), styles: { fillColor: col.fondo, textColor: col.texto, fontStyle: 'bold', halign: 'center' } }, dl != null ? p360DeltaTxt(dl) : '—'];
+      };
+      doc.autoTable({
+        startY: 78, margin: { left: 142, right: 10 },
+        head: [['En qué destaca', 'Tipo', 'Nota', 'vs. colegio']],
+        body: fuertes.length ? fuertes.map(filaApartado) : [[{ content: 'Aún no hay apartados destacados', colSpan: 4 }]],
+        headStyles: { fillColor: [27, 142, 78], textColor: 255, fontSize: 9 }, styles: { fontSize: 8.5, cellPadding: 2 }, theme: 'grid'
+      });
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 6, margin: { left: 142, right: 10 },
+        head: [['Por reforzar', 'Tipo', 'Nota', 'vs. colegio']],
+        body: refuerzo.length ? refuerzo.map(filaApartado) : [[{ content: 'Ningún apartado por debajo de 90', colSpan: 4 }]],
+        headStyles: { fillColor: [185, 115, 10], textColor: 255, fontSize: 9 }, styles: { fontSize: 8.5, cellPadding: 2 }, theme: 'grid'
+      });
+
+      // Página 2: detalle por apartado + hoja de vida
+      doc.addPage();
+      _dibujarEncabezadoPDF(doc, 'PERFIL 360° DEL DOCENTE', nombre + ' — detalle por apartado', fecha, logoData);
+      const tablaBloque = (titulo, bloque, y0) => {
+        if (!bloque) return y0;
+        doc.autoTable({
+          startY: y0, margin: { left: 10, right: 10 },
+          head: [[titulo + ' (' + bloque.cantidad + ' evaluación(es))', 'Docente', 'Colegio', 'Diferencia', 'Nivel']],
+          body: bloque.categorias.map(c => {
+            const col = _pdfColorPorNivel(c.promedio == null ? 0 : c.promedio);
+            const dl = p360Delta(c.promedio, c.colegio);
+            return [c.clave + '. ' + c.nombre,
+              { content: p360Fmt(c.promedio), styles: c.promedio == null ? { halign: 'center' } : { fillColor: col.fondo, textColor: col.texto, fontStyle: 'bold', halign: 'center' } },
+              { content: p360Fmt(c.colegio), styles: { halign: 'center' } },
+              { content: dl != null ? p360DeltaTxt(dl) : '—', styles: { halign: 'center' } },
+              p360Nivel(c.promedio).txt];
+          }),
+          headStyles: { fillColor: [20, 20, 80], textColor: 255, fontSize: 9 }, styles: { fontSize: 9, cellPadding: 1.8 }, theme: 'grid'
+        });
+        return doc.lastAutoTable.finalY + 6;
+      };
+      let y = 30;
+      y = tablaBloque('Evaluación de clases', d.clases.cantidad ? d.clases : null, y);
+      y = tablaBloque('Evaluación de tutoría', d.tutoria, y);
+
+      const filasVida = [['Cursos a cargo', (h.curso || '—') + (h.nivel ? ' — ' + h.nivel : '')], ['Tutoría', h.es_tutor ? 'Es tutor/a' : 'No es tutor/a']];
+      if (h.ficha_vinculada) {
+        filasVida.push(['Formación', (h.formacion || []).join(' | ') || '—']);
+        const extra = [h.nivel_educativo, h.ingles ? 'Inglés: ' + h.ingles : null].filter(Boolean).join('  ·  ');
+        if (extra) filasVida.push(['Nivel educativo', extra]);
+      }
+      doc.autoTable({
+        startY: y, margin: { left: 10, right: 10 },
+        head: [[{ content: 'Hoja de vida (solo trayectoria profesional)', colSpan: 2 }]], body: filasVida,
+        headStyles: { fillColor: [20, 20, 80], textColor: 255, fontSize: 9 }, styles: { fontSize: 9, cellPadding: 1.8 },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55 } }, theme: 'grid'
+      });
+
+      // Pie de página en todas las hojas
+      const pageH = doc.internal.pageSize.getHeight();
+      const total = doc.getNumberOfPages();
+      for (let i = 1; i <= total; i++) {
+        doc.setPage(i);
+        doc.setFillColor(20, 20, 80);
+        doc.rect(0, pageH - 7, anchoPag, 7, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text('R&C Tech Solutions — Todos los derechos reservados', 14, pageH - 2.6);
+        doc.text('Página ' + i + ' de ' + total, anchoPag - 14, pageH - 2.6, { align: 'right' });
+      }
+      const slug = nombre.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_');
+      doc.save('Perfil360_' + slug + '_' + fecha.replace(/\//g, '-') + '.pdf');
+    }
+
     async function cargarDatosDirector() {
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
@@ -6385,9 +6893,10 @@
           ${d.es_tutor ? '✅ Es tutor' : '☐ Marcar tutor'}
         </button>
       </td>
+      <td>${p360PuedeVer() ? `<button class="eval-btn p360-btn-fila" onclick="abrirPerfil360(${d.id})">📊 Perfil 360°</button>` : '—'}</td>
       <td><button class="eval-btn" style="background:var(--red-bg);color:var(--accent2);border-color:rgba(230,57,70,0.25)" onclick="desactivarDocente(${d.id},'${d.nombre} ${d.apellido}')">Desactivar</button></td>
     </tr>`).join('')
-  : '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
+  : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">👨‍🏫</div><p>Sin docentes registrados</p></div></td></tr>';
         cargarHistorial();
 
         const resEval = await fetch('/api/evaluaciones', { headers });
