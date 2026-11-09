@@ -2156,6 +2156,95 @@
     .p360-vida p span { display: block; font-size: 12px; font-weight: 400; color: var(--text2); }
     .p360-empty { text-align: center; padding: 60px 20px; color: var(--text2); }
     .p360-btn-fila { padding: 6px 12px; font-size: 12px; }
+    /* ── INFORMES (dashboards guardados) ── */
+    #section-informes { width: calc(100vw - var(--sidebar-w) - 5rem - 4px); max-width: 1320px; }
+    .inf {
+      --i-crit: #e63946; --i-bajo: #f39c12; --i-obs: #5b8def; --i-ok: #2ecc71;
+      --i-ad: #5b8def; --i-a: #2ecc71; --i-b: #f39c12; --i-c: #e63946;
+      --i-crit-ink: #ff7b85; --i-bajo-ink: #fbad4a; --i-obs-ink: #8fb0ff; --i-ok-ink: #4ade80;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+    :root[data-theme="light"] .inf {
+      --i-crit-ink: #991b1b; --i-bajo-ink: #9a3412; --i-obs-ink: #1e40af; --i-ok-ink: #166534;
+    }
+    .inf-lista { display: grid; gap: 12px; }
+    .inf-item { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; }
+    .inf-item h4 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .inf-item small { color: var(--text3); font-size: 12px; }
+    .inf-mini { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .inf-acciones { display: flex; gap: 8px; }
+    .inf-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+    .inf-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 16px; border-radius: 10px;
+      font: 600 13px 'DM Sans', sans-serif; cursor: pointer; background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+    .inf-btn:hover { color: var(--text); }
+    .inf-btn.prim { background: var(--accent); color: #fff; border: 0; }
+    .inf-btn.peligro:hover { color: var(--red); border-color: var(--red); }
+    .inf-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 26px; }
+    .inf-hero h2 { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .inf-hero p { color: var(--text2); font-size: 13.5px; line-height: 1.55; max-width: 900px; }
+    .inf-meta { color: var(--text3); font-size: 12px; margin-bottom: 8px; }
+    .inf-tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--border); }
+    .inf-tab { padding: 10px 16px; font: 600 13px 'DM Sans', sans-serif; color: var(--text3); background: none; border: 0;
+      border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; }
+    .inf-tab:hover { color: var(--text); }
+    .inf-tab.act { color: var(--text); border-bottom-color: var(--accent); }
+    .inf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    .inf-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; border-left: 4px solid var(--c); }
+    .inf-kpi b { display: block; font-size: 32px; font-weight: 800; color: var(--c-ink); line-height: 1.1; }
+    .inf-kpi span { font-size: 12.5px; color: var(--text2); }
+    .inf-kpi small { display: block; font-size: 11.5px; color: var(--text3); margin-top: 2px; }
+    .inf-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+    .inf-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; min-width: 0; }
+    .inf-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .inf-card p, .inf-card li { font-size: 13px; color: var(--text2); line-height: 1.55; }
+    .inf-card ul { padding-left: 18px; display: grid; gap: 6px; }
+    .inf-donut { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+    .inf-leyenda { display: grid; gap: 8px; font-size: 13px; color: var(--text2); }
+    .inf-leyenda i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 8px; background: var(--c); }
+    .inf-fila { display: grid; grid-template-columns: 150px 1fr auto; gap: 12px; align-items: center; margin-bottom: 10px; font-size: 13px; color: var(--text2); }
+    .inf-barra { display: flex; height: 18px; border-radius: 6px; overflow: hidden; background: var(--surface3); }
+    .inf-barra span { height: 100%; background: var(--c); }
+    .inf-barra.fina { height: 12px; }
+    .inf-num { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 700; min-width: 54px; text-align: right; }
+    .inf-tag { display: inline-block; border-radius: 999px; padding: 3px 10px; font-size: 11.5px; font-weight: 700; }
+    .inf-tag.critico { background: rgba(230,57,70,.15); color: var(--i-crit-ink); }
+    .inf-tag.bajo { background: rgba(243,156,18,.16); color: var(--i-bajo-ink); }
+    .inf-tag.observacion { background: rgba(91,141,239,.16); color: var(--i-obs-ink); }
+    .inf-tag.sin_alerta { background: rgba(46,204,113,.14); color: var(--i-ok-ink); }
+    .inf-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .inf-chip { border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); border-radius: 999px; padding: 6px 14px;
+      font: 600 12.5px 'DM Sans', sans-serif; cursor: pointer; }
+    .inf-chip.act { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .inf-buscar { min-height: 38px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font: 13px 'DM Sans', sans-serif; min-width: 220px; }
+    .inf-tabla-wrap { overflow-x: auto; }
+    .inf-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .inf-tabla th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text3); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .inf-tabla td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+    .inf-tabla tr.clic { cursor: pointer; }
+    .inf-tabla tr.clic:hover td { background: var(--surface2); }
+    .inf-tabla td.n { font-weight: 600; color: var(--text); }
+    .inf-detalle td { background: var(--surface2); }
+    .inf-det { display: grid; gap: 10px; font-size: 12.5px; }
+    .inf-notas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .inf-nota { display: inline-block; min-width: 30px; text-align: center; border-radius: 6px; padding: 2px 7px; font-weight: 800; font-size: 11.5px; }
+    .inf-nota.AD { background: rgba(91,141,239,.2); color: var(--i-obs-ink); }
+    .inf-nota.A { background: rgba(46,204,113,.18); color: var(--i-ok-ink); }
+    .inf-nota.B { background: rgba(243,156,18,.18); color: var(--i-bajo-ink); }
+    .inf-nota.C { background: rgba(230,57,70,.18); color: var(--i-crit-ink); }
+    .inf-heat { width: 100%; border-collapse: separate; border-spacing: 4px; font-size: 12.5px; }
+    .inf-heat th { font-size: 11.5px; color: var(--text3); text-align: center; padding: 4px; }
+    .inf-heat th:first-child, .inf-heat td:first-child { text-align: left; color: var(--text2); white-space: nowrap; }
+    .inf-heat td.h { text-align: center; border-radius: 8px; padding: 9px 6px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .inf-heat td.h small { display: block; font-weight: 500; font-size: 10.5px; color: var(--text2); }
+    .inf-heat td.h.r { background: rgba(230,57,70,.22); } .inf-heat td.h.a { background: rgba(243,156,18,.2); }
+    .inf-heat td.h.v { background: rgba(46,204,113,.18); } .inf-heat td.h.x { background: var(--surface3); color: var(--text3); }
+    .inf-reco { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; color: var(--text2); line-height: 1.5; cursor: pointer; }
+    .inf-reco input { margin-top: 4px; width: 17px; height: 17px; accent-color: var(--accent); }
+    .inf-reco.hecho span { text-decoration: line-through; color: var(--text3); }
+    .inf-vacio { color: var(--text3); font-size: 13px; padding: 24px; text-align: center; }
+    .inf-nota-pie { font-size: 12px; color: var(--text3); line-height: 1.5; margin-top: 10px; }
+    @media (max-width: 720px) { .inf-fila { grid-template-columns: 90px 1fr auto; } }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -2273,6 +2362,7 @@
         <div class="nav-group-items">
           <div class="nav-item" id="nav-reporte-total" onclick="showSection('reporte-total', this)">📈 Reporte Total <span class="rt-badge-nuevo">NUEVO</span></div>
           <div class="nav-item" id="nav-reporte-cubicol" onclick="showSection('reporte-cubicol', this)">🗂️ Reporte Cubicol <span class="rt-badge-nuevo">NUEVO</span></div>
+          <div class="nav-item" id="nav-informes" onclick="showSection('informes', this)">📑 Informes <span class="rt-badge-nuevo">NUEVO</span></div>
           <div class="nav-item" onclick="showSection('reportes', this)">📈 Reportes</div>
           <div class="nav-item" onclick="showSection('historial', this)">🗂️ Historial</div>
           <div class="nav-item" id="nav-resultados-examenes" onclick="showSection('resultados-examenes', this)">📊 Resultados de Exámenes</div>
@@ -2392,6 +2482,15 @@
           <div class="page-subtitle">Hoja de vida, evaluación de clases, tutoría y encuesta de estudiantes en un solo lugar</div>
         </div>
         <div id="p360-contenedor"><div class="p360-empty">Elige un docente desde la lista de Docentes.</div></div>
+      </div>
+
+      <div class="section" id="section-informes">
+        <div class="page-header">
+          <div class="page-title">Informes</div>
+          <div class="page-subtitle">Informes guardados con su dashboard · solo Director y Gerente General</div>
+        </div>
+        <div id="inf-contenedor"><div class="inf-vacio">Cargando...</div></div>
+        <input type="file" id="inf-archivo" accept=".json,application/json" style="display:none" onchange="infSubirArchivo(this)">
       </div>
 
       <div class="section" id="section-historial">
@@ -5955,6 +6054,7 @@
       if (id === 'fichas') { cargarFichasDocentes(); cargarFichasNivelEducativo(); }
       if (id === 'reporte-total') cargarSalonesReporteTotal();
       if (id === 'reporte-cubicol') cargarReporteCubicol();
+      if (id === 'informes') cargarInformes();
       if (id === 'talla-peso-dir') cargarSelectSalonesTPDirector();
     }
 
@@ -6872,7 +6972,255 @@
       doc.save('Perfil360_' + slug + '_' + fecha.replace(/\//g, '-') + '.pdf');
     }
 
+    // ══════════════════════════════
+    //  INFORMES (dashboards guardados) — Director / Directora / Gerente General
+    // ══════════════════════════════
+    let _infActual = null, _infTab = 'resumen', _infFiltro = { nivel: 'todos', grado: 'todos', q: '' }, _infAbierto = -1;
+    const INF_NIVELES = { critico: 'Crítico', bajo: 'Bajo', observacion: 'En observación', sin_alerta: 'Sin alerta' };
+    const INF_COLOR = { critico: 'var(--i-crit)', bajo: 'var(--i-bajo)', observacion: 'var(--i-obs)', sin_alerta: 'var(--i-ok)' };
+    const INF_INK = { critico: 'var(--i-crit-ink)', bajo: 'var(--i-bajo-ink)', observacion: 'var(--i-obs-ink)', sin_alerta: 'var(--i-ok-ink)' };
+
+    function infNavVisible() {
+      const n = document.getElementById('nav-informes');
+      if (n) n.style.display = p360PuedeVer() ? '' : 'none';
+    }
+    const infE = p360Esc;
+    function infFechaLarga(f) {
+      if (!f) return '';
+      const m = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      const p = String(f).slice(0, 10).split('-');
+      return p.length === 3 ? `${parseInt(p[2], 10)} de ${m[parseInt(p[1], 10) - 1]} de ${p[0]}` : f;
+    }
+    async function infFetch(url, opts) {
+      const res = await fetch(url, Object.assign({ headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } }, opts || {}));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error ' + res.status);
+      return data;
+    }
+
+    async function cargarInformes() {
+      _infActual = null;
+      const cont = document.getElementById('inf-contenedor');
+      if (!p360PuedeVer()) { cont.innerHTML = '<div class="inf-vacio">Los informes solo los ven el Director y el Gerente General.</div>'; return; }
+      cont.innerHTML = '<div class="inf-vacio">Cargando...</div>';
+      try {
+        const lista = await infFetch('/api/informes');
+        const mini = c => !c ? '' : ['critico', 'bajo', 'observacion', 'sin_alerta'].map(k =>
+          `<span class="inf-tag ${k}">${c[k] != null ? c[k] : 0} ${INF_NIVELES[k].toLowerCase()}</span>`).join('');
+        cont.innerHTML = `<div class="inf">
+          <div class="inf-top"><div class="inf-meta">${lista.length} informe(s) guardado(s)</div>
+            <button class="inf-btn prim" onclick="document.getElementById('inf-archivo').click()">⬆️ Subir informe (.json)</button></div>
+          <div class="inf-lista">${lista.length ? lista.map(r => `
+            <div class="inf-item"><div>
+              <h4>${infE(r.titulo)}</h4>
+              <small>${infFechaLarga(r.fecha_informe)}${r.subido_por_nombre ? ' · subido por ' + infE(r.subido_por_nombre) : ''}</small>
+              <div class="inf-mini">${mini(r.conteos)}</div></div>
+              <div class="inf-acciones">
+                <button class="inf-btn prim" onclick="abrirInforme(${r.id})">📑 Abrir dashboard</button>
+                <button class="inf-btn peligro" onclick="eliminarInforme(${r.id})" title="Eliminar">🗑️</button></div>
+            </div>`).join('') : '<div class="inf-vacio">Todavía no hay informes guardados. Sube el primero con el botón de arriba.</div>'}</div></div>`;
+      } catch (err) {
+        console.error('Error cargando informes:', err);
+        cont.innerHTML = `<div class="inf-vacio">No se pudo cargar la lista (${infE(err.message)}).</div>`;
+      }
+    }
+
+    async function infSubirArchivo(input) {
+      const f = input.files && input.files[0];
+      input.value = '';
+      if (!f) return;
+      try {
+        const datos = JSON.parse(await f.text());
+        await infFetch('/api/informes', { method: 'POST', body: JSON.stringify(datos) });
+        await cargarInformes();
+      } catch (err) { alert('No se pudo subir el informe: ' + err.message); }
+    }
+    async function eliminarInforme(id) {
+      if (!confirm('¿Eliminar este informe? Esta acción no se puede deshacer.')) return;
+      try { await infFetch('/api/informes/' + id, { method: 'DELETE' }); await cargarInformes(); }
+      catch (err) { alert('No se pudo eliminar: ' + err.message); }
+    }
+    async function abrirInforme(id) {
+      const cont = document.getElementById('inf-contenedor');
+      cont.innerHTML = '<div class="inf-vacio">Abriendo informe...</div>';
+      try {
+        const r = await infFetch('/api/informes/' + id);
+        _infActual = r; _infTab = 'resumen'; _infFiltro = { nivel: 'todos', grado: 'todos', q: '' }; _infAbierto = -1;
+        renderInforme();
+      } catch (err) { cont.innerHTML = `<div class="inf-vacio">No se pudo abrir el informe (${infE(err.message)}).</div>`; }
+    }
+    function infTab(t) { _infTab = t; renderInforme(); }
+
+    function infDonut(c, total) {
+      const R = 54, C = 2 * Math.PI * R; let off = 0;
+      const arcs = ['critico', 'bajo', 'observacion', 'sin_alerta'].map(k => {
+        const len = total ? (c[k] || 0) / total * C : 0;
+        const s = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${INF_COLOR[k]}" stroke-width="18" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"/>`;
+        off += len; return s;
+      }).join('');
+      return `<svg width="150" height="150" viewBox="0 0 140 140" role="img" aria-label="Distribución de alumnos por nivel de alerta">
+        <circle cx="70" cy="70" r="${R}" fill="none" stroke="var(--surface3)" stroke-width="18"/>${arcs}
+        <text x="70" y="68" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text)">${total}</text>
+        <text x="70" y="86" text-anchor="middle" font-size="11" fill="var(--text3)">alumnos</text></svg>`;
+    }
+    function infBarraApilada(partes, total, cls) {
+      return `<div class="inf-barra ${cls || ''}">${partes.map(([n, col]) => n ? `<span style="width:${total ? n / total * 100 : 0}%;--c:${col}" title="${n}"></span>` : '').join('')}</div>`;
+    }
+    function infTablaGenerica(t) {
+      if (!t || !t.filas || !t.filas.length) return '<div class="inf-vacio">Sin datos.</div>';
+      return `<div class="inf-tabla-wrap"><table class="inf-tabla"><thead><tr>${t.columnas.map(c => `<th>${infE(c)}</th>`).join('')}</tr></thead><tbody>
+        ${t.filas.map(f => `<tr>${f.map((c, i) => `<td class="${i === 0 || i === 1 ? 'n' : ''}">${infE(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+    const infNotaChip = v => v ? `<span class="inf-nota ${infE(v)}">${infE(v)}</span>` : '';
+
+    function renderInforme() {
+      const cont = document.getElementById('inf-contenedor');
+      const d = _infActual.datos;
+      const tabs = [['resumen', 'Resumen'], ['alumnos', 'Alumnos en riesgo'], ['diagnostico', 'Diagnóstico EduScore'], ['cubicol', 'Notas CUBICOL'], ['comparativo', 'Comparativo'], ['reco', 'Recomendaciones']];
+      const cuerpo = ({ resumen: infTabResumen, alumnos: infTabAlumnos, diagnostico: infTabDiagnostico, cubicol: infTabCubicol, comparativo: infTabComparativo, reco: infTabReco }[_infTab])(d);
+      cont.innerHTML = `<div class="inf">
+        <div class="inf-top"><button class="inf-btn" onclick="cargarInformes()">← Volver a la lista</button></div>
+        <div class="inf-hero"><div class="inf-meta">${infFechaLarga(_infActual.fecha_informe)}${d.autor ? ' · ' + infE(d.autor) : ''}${d.fuentes ? ' · Fuentes: ' + d.fuentes.map(infE).join(' + ') : ''}</div>
+          <h2>${infE(d.titulo)}</h2><p>${infE(d.introduccion || '')}</p></div>
+        <div class="inf-tabs">${tabs.map(([k, n]) => `<button class="inf-tab ${k === _infTab ? 'act' : ''}" onclick="infTab('${k}')">${n}</button>`).join('')}</div>
+        ${cuerpo}</div>`;
+    }
+
+    function infTabResumen(d) {
+      const c = d.resumen.conteos, tot = d.resumen.total_alumnos;
+      const kpi = k => `<div class="inf-kpi" style="--c:${INF_COLOR[k]};--c-ink:${INF_INK[k]}"><b>${c[k] || 0}</b><span>${INF_NIVELES[k]}</span><small>${tot ? Math.round((c[k] || 0) / tot * 100) : 0} % de ${tot} alumnos</small></div>`;
+      return `<div class="inf-kpis">${['critico', 'bajo', 'observacion', 'sin_alerta'].map(kpi).join('')}</div>
+        <div class="inf-grid2">
+          <div class="inf-card"><h3>Distribución por nivel de alerta</h3><div class="inf-donut">${infDonut(c, tot)}
+            <div class="inf-leyenda">${['critico', 'bajo', 'observacion', 'sin_alerta'].map(k => `<div><i style="--c:${INF_COLOR[k]}"></i>${INF_NIVELES[k]} · <b>${c[k] || 0}</b></div>`).join('')}</div></div></div>
+          <div class="inf-card"><h3>Por grado</h3>${(d.resumen.por_grado || []).map(g => `
+            <div class="inf-fila"><div>${infE(g.grado)} de secundaria</div>
+              ${infBarraApilada([[g.criticos, INF_COLOR.critico], [g.bajos, INF_COLOR.bajo], [g.observacion, INF_COLOR.observacion], [g.sin_alerta, INF_COLOR.sin_alerta]], g.total)}
+              <div class="inf-num">${g.criticos}·${g.bajos}</div></div>`).join('')}
+            <div class="inf-nota-pie">Cada fila: críticos · bajos. Barra: crítico, bajo, en observación y sin alerta sobre el total del grado.</div></div>
+        </div>
+        <div class="inf-grid2">
+          <div class="inf-card"><h3>Lo principal</h3><p>${infE(d.resumen.descripcion || '')}</p><ul style="margin-top:10px">${(d.resumen.puntos || []).map(p => `<li>${infE(p)}</li>`).join('')}</ul></div>
+          <div class="inf-card"><h3>Cómo se clasifican</h3><p>${infE(d.resumen.clasificacion || '')}</p></div>
+        </div>`;
+    }
+
+    function infAlumnosFiltrados() {
+      const q = _infFiltro.q.trim().toLowerCase();
+      const orden = { critico: 0, bajo: 1, observacion: 2, sin_alerta: 3 };
+      return _infActual.datos.alumnos.map((a, i) => Object.assign({ _i: i }, a)).filter(a =>
+        (_infFiltro.nivel === 'todos' || a.nivel === _infFiltro.nivel) &&
+        (_infFiltro.grado === 'todos' || a.grado === _infFiltro.grado) &&
+        (!q || a.nombre.toLowerCase().includes(q))
+      ).sort((x, y) => orden[x.nivel] - orden[y.nivel] || (x.eduscore == null) - (y.eduscore == null) || (x.eduscore || 0) - (y.eduscore || 0));
+    }
+    function infFiltrar(campo, valor) { _infFiltro[campo] = valor; _infAbierto = -1; infRefrescarAlumnos(); }
+    function infRefrescarAlumnos() {
+      const el = document.getElementById('inf-alumnos-cuerpo');
+      if (el) el.innerHTML = infAlumnosHTML();
+    }
+    function infToggleAlumno(i) { _infAbierto = _infAbierto === i ? -1 : i; infRefrescarAlumnos(); }
+    function infDetalleAlumno(a) {
+      const cursos = a.cursos ? Object.entries(a.cursos).map(([n, v]) => `${infE(n)}: ${v.b != null ? v.b : '—'} básico · ${v.i != null ? v.i : '—'} intermedio`).join(' &nbsp;|&nbsp; ') : '';
+      const com = a.com ? `<div class="inf-notas"><b>Comunicación:</b> Oral ${infNotaChip(a.com.oral)} Lectura ${infNotaChip(a.com.lect)} Escritura ${infNotaChip(a.com.escr)} · Área ${infNotaChip(a.com.area)}</div>` : '';
+      const mat = a.mat ? `<div class="inf-notas"><b>Matemática:</b> Cantidad ${infNotaChip(a.mat.cant)} Regularidad ${infNotaChip(a.mat.regul)} Forma ${infNotaChip(a.mat.forma)} Datos ${infNotaChip(a.mat.datos)} · Área ${infNotaChip(a.mat.area)}</div>` : '';
+      return `<div class="inf-det">
+        ${a.detalle ? `<div><b>Motivo / detalle:</b> ${infE(a.detalle)}</div>` : ''}
+        ${cursos ? `<div><b>Aciertos por curso (nivel):</b> ${cursos}</div>` : ''}
+        ${a.cursos_sin_respuestas && a.cursos_sin_respuestas.length ? `<div><b>Cursos sin respuestas registradas:</b> ${a.cursos_sin_respuestas.map(infE).join(', ')}</div>` : ''}
+        ${com}${mat}</div>`;
+    }
+    function infAlumnosHTML() {
+      const lista = infAlumnosFiltrados();
+      if (!lista.length) return '<div class="inf-vacio">Ningún alumno coincide con el filtro.</div>';
+      return `<div class="inf-tabla-wrap"><table class="inf-tabla"><thead><tr><th>Grado</th><th>Alumno</th><th>Nivel</th><th>EduScore</th><th>Com.</th><th>Mat.</th></tr></thead><tbody>
+        ${lista.map(a => `<tr class="clic" onclick="infToggleAlumno(${a._i})"><td>${infE(a.grado)}</td><td class="n">${infE(a.nombre)}</td>
+          <td><span class="inf-tag ${a.nivel}">${INF_NIVELES[a.nivel]}</span></td>
+          <td>${a.eduscore != null ? a.eduscore + ' %' : '—'}</td><td>${infNotaChip(a.com && a.com.area)}</td><td>${infNotaChip(a.mat && a.mat.area)}</td></tr>
+          ${_infAbierto === a._i ? `<tr class="inf-detalle"><td colspan="6">${infDetalleAlumno(a)}</td></tr>` : ''}`).join('')}</tbody></table></div>
+        <div class="inf-nota-pie">${lista.length} alumno(s). Toca una fila para ver el detalle.</div>`;
+    }
+    function infTabAlumnos(d) {
+      const chip = (campo, v, txt) => `<button class="inf-chip ${_infFiltro[campo] === v ? 'act' : ''}" onclick="infFiltrar('${campo}','${v}');infRepintarChips()">${txt}</button>`;
+      return `<div class="inf-card"><div class="inf-filtros" id="inf-chips">${infChipsHTML()}
+        <input class="inf-buscar" type="search" placeholder="Buscar alumno..." value="${infE(_infFiltro.q)}" oninput="infFiltrar('q',this.value)"></div>
+        <div id="inf-alumnos-cuerpo" style="margin-top:14px">${infAlumnosHTML()}</div></div>`;
+    }
+    function infChipsHTML() {
+      const chip = (campo, v, txt) => `<button class="inf-chip ${_infFiltro[campo] === v ? 'act' : ''}" onclick="infFiltrar('${campo}','${v}');infRepintarChips()">${txt}</button>`;
+      const grados = [...new Set(_infActual.datos.alumnos.map(a => a.grado))];
+      return chip('nivel', 'todos', 'Todos') + Object.keys(INF_NIVELES).map(k => chip('nivel', k, INF_NIVELES[k])).join('') +
+        '<span style="width:10px"></span>' + chip('grado', 'todos', 'Todos los grados') + grados.map(g => chip('grado', g, g)).join('');
+    }
+    function infRepintarChips() {
+      const el = document.getElementById('inf-chips'); if (!el) return;
+      const inp = el.querySelector('input'); const v = inp ? inp.value : '';
+      el.innerHTML = infChipsHTML() + `<input class="inf-buscar" type="search" placeholder="Buscar alumno..." value="${infE(v)}" oninput="infFiltrar('q',this.value)">`;
+    }
+
+    function infTabDiagnostico(d) {
+      const dg = d.diagnostico, ap = dg.aprobacion;
+      const niv = [['basico', 'Básico', 'var(--i-obs)'], ['intermedio', 'Intermedio', 'var(--i-bajo)'], ['avanzado', 'Avanzado', 'var(--i-ok)']];
+      const clase = p => p == null ? 'x' : p < 50 ? 'r' : p < 70 ? 'a' : 'v';
+      const celda = x => x ? `<td class="h ${clase(x.pct)}">${x.pct} %<small>${x.ap} de ${x.n}</small></td>` : '<td class="h x">—</td>';
+      const filas = dg.cursos.map(c => `<tr><td>${infE(c.grado)} · ${infE(c.curso)}</td>${celda(c.basico)}${celda(c.intermedio)}${celda(c.avanzado)}</tr>`).join('');
+      const pend = dg.pendientes || [];
+      return `<div class="inf-grid2">
+        <div class="inf-card"><h3>Aprobación por nivel de dificultad</h3>${niv.map(([k, n, col]) => ap[k] ? `
+          <div class="inf-fila"><div>${n}</div><div class="inf-barra"><span style="width:${ap[k].pct}%;--c:${col}"></span></div><div class="inf-num">${ap[k].pct} %</div></div>
+          <div class="inf-nota-pie" style="margin:-6px 0 10px 162px">${ap[k].ap} de ${ap[k].n} exámenes aprobados</div>` : '').join('')}
+          <ul style="margin-top:6px">${(dg.puntos || []).map(p => `<li>${infE(p)}</li>`).join('')}</ul></div>
+        <div class="inf-card"><h3>Qué mide</h3><p>${infE(dg.descripcion || '')}</p><p style="margin-top:8px">${infE(dg.nota_cursos || '')}</p></div></div>
+        <div class="inf-card"><h3>Mapa de aprobación por curso</h3><div class="inf-tabla-wrap"><table class="inf-heat"><thead><tr><th>Grado · Curso</th><th>Básico</th><th>Intermedio</th><th>Avanzado</th></tr></thead><tbody>${filas}</tbody></table></div>
+          <div class="inf-nota-pie">Rojo: menos de 50 % · Ámbar: 50–69 % · Verde: 70 % o más.</div></div>
+        ${pend.length ? `<div class="inf-card"><h3>Pendientes de rendir (${pend.length})</h3><div class="inf-tabla-wrap"><table class="inf-tabla"><thead><tr><th>Grado</th><th>Alumno</th><th>Cursos sin respuestas</th></tr></thead><tbody>
+          ${pend.map(p => `<tr><td>${infE(p.grado)}</td><td class="n">${infE(p.alumno)}</td><td>${p.cursos.map(infE).join(', ')}</td></tr>`).join('')}</tbody></table></div></div>` : ''}`;
+    }
+
+    function infTabCubicol(d) {
+      const cb = d.cubicol;
+      const cols = [['AD', 'var(--i-ad)'], ['A', 'var(--i-a)'], ['B', 'var(--i-b)'], ['C', 'var(--i-c)']];
+      const leyenda = `<div class="inf-leyenda" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">${cols.map(([k, c]) => `<div><i style="--c:${c}"></i>${k}</div>`).join('')}</div>`;
+      const dist = cb.distribucion_area.map(r => `<div class="inf-fila"><div>${infE(r.grado)} · ${infE(r.area)}</div>
+        ${infBarraApilada(cols.map(([k, c]) => [r[k], c]), r.alumnos)}<div class="inf-num">${r.C} en C</div></div>`).join('');
+      const comp = cb.por_competencia.map(r => `<div class="inf-fila"><div>${infE(r.competencia)}</div>
+        ${infBarraApilada(cols.map(([k, c]) => [r[k], c]), r.con_nota, 'fina')}<div class="inf-num">${r.C} en C</div></div>`).join('');
+      const conC = cb.alumnos_con_c || [];
+      return `<div class="inf-grid2">
+        <div class="inf-card"><h3>Notas de área por grado</h3>${leyenda}${dist}</div>
+        <div class="inf-card"><h3>Por competencia</h3>${leyenda}${comp}</div></div>
+        <div class="inf-card"><h3>Alumnos con alguna competencia en C (${conC.length})</h3><div class="inf-tabla-wrap"><table class="inf-tabla"><thead><tr><th>Grado</th><th>Alumno</th><th>Competencias en C</th><th>Área en C</th></tr></thead><tbody>
+          ${conC.map(r => `<tr><td>${infE(r.grado)}</td><td class="n">${infE(r.alumno)}</td><td>${infE(r.competencias)}</td><td>${infE(r.area_en_c)}</td></tr>`).join('')}</tbody></table></div></div>
+        <div class="inf-card"><h3>Cómo leer las notas</h3><ul>${(cb.como_leer || []).map(p => `<li>${infE(p)}</li>`).join('')}</ul><div class="inf-nota-pie">${infE(cb.corte || '')}</div></div>`;
+    }
+
+    function infTabComparativo(d) {
+      const c = d.comparativo;
+      return `<div class="inf-grid2"><div class="inf-card"><h3>Lo principal</h3><ul>${(c.puntos || []).map(p => `<li>${infE(p)}</li>`).join('')}</ul></div>
+        <div class="inf-card"><h3>EduScore frente a CUBICOL</h3>${infTablaGenerica(c.cuadro)}</div></div>
+        <div class="inf-card"><h3>Comparación por grado y área</h3>${infTablaGenerica(c.por_grado)}</div>
+        <div class="inf-card"><h3>Alumnos señalados por grupo</h3>${infTablaGenerica(c.grupos)}</div>
+        <div class="inf-grid2"><div class="inf-card"><h3>Con C en Comunicación</h3>${infTablaGenerica(c.con_c_comunicacion)}</div>
+          <div class="inf-card"><h3>Alumnos con 40 % o menos</h3>${infTablaGenerica(c.ocho_criticos)}</div></div>
+        <div class="inf-card"><h3>Qué sugiere el cruce</h3><ul>${(c.sugiere || []).map(p => `<li>${infE(p)}</li>`).join('')}</ul>${c.nota ? `<div class="inf-nota-pie">${infE(c.nota)}</div>` : ''}</div>`;
+    }
+
+    function infClaveReco() { return 'inf-reco-' + _infActual.id; }
+    function infMarcadas() { try { return JSON.parse(localStorage.getItem(infClaveReco()) || '[]'); } catch (e) { return []; } }
+    function infToggleReco(i) {
+      const m = infMarcadas(); const p = m.indexOf(i); if (p >= 0) m.splice(p, 1); else m.push(i);
+      try { localStorage.setItem(infClaveReco(), JSON.stringify(m)); } catch (e) { /* solo conveniencia local */ }
+      renderInforme();
+    }
+    function infTabReco(d) {
+      const m = infMarcadas(), items = d.recomendaciones.items;
+      return `<div class="inf-card"><h3>Recomendaciones</h3><p>${infE(d.recomendaciones.descripcion || '')}</p><div style="margin-top:8px">
+        ${items.map((r, i) => `<label class="inf-reco ${m.includes(i) ? 'hecho' : ''}"><input type="checkbox" ${m.includes(i) ? 'checked' : ''} onchange="infToggleReco(${i})"><span>${infE(r.texto)}</span></label>`).join('')}</div>
+        <div class="inf-nota-pie">${m.length} de ${items.length} marcadas. La marca se guarda solo en este navegador.</div></div>`;
+    }
+
     async function cargarDatosDirector() {
+      infNavVisible();
       try {
         const headers = { 'Authorization': 'Bearer ' + token };
 

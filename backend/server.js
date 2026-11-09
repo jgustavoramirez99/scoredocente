@@ -57,6 +57,8 @@ const tallaPesoRouter = require('./routes/tallaPeso');
 app.use('/api/talla-peso', tallaPesoRouter);
 const perfilDocenteRouter = require('./routes/perfilDocente');
 app.use('/api/perfil-docente', perfilDocenteRouter);
+const informesRouter = require('./routes/informes');
+app.use('/api/informes', informesRouter);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));

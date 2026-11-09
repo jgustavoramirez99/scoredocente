@@ -268,6 +268,21 @@ pool.query(`CREATE TABLE IF NOT EXISTS reporte_cubicol_pdfs (
   .then(() => console.log('✅ Tabla "reporte_cubicol_pdfs" verificada'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "reporte_cubicol_pdfs":', err.message));
 
+// Informes guardados (snapshots) que se muestran como dashboard en la
+// sección "Informes". Solo Director/Directora/Gerente General.
+pool.query(`CREATE TABLE IF NOT EXISTS informes_guardados (
+  id SERIAL PRIMARY KEY,
+  titulo VARCHAR(255) NOT NULL,
+  tipo VARCHAR(50) NOT NULL DEFAULT 'diagnostico',
+  fecha_informe DATE,
+  datos JSONB NOT NULL,
+  subido_por_id INTEGER,
+  subido_por_nombre VARCHAR(150),
+  creado_en TIMESTAMP NOT NULL DEFAULT NOW()
+)`)
+  .then(() => console.log('✅ Tabla "informes_guardados" verificada'))
+  .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "informes_guardados":', err.message));
+
 // Migración idempotente: agrega las columnas "talla", "peso" y "edad" a
 // alumnos para el apartado "Talla y Peso del Alumnado" del panel de la
 // auxiliar. talla (cm) y peso (kg) admiten un decimal; edad es opcional.
