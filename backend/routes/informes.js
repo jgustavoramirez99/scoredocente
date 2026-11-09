@@ -44,7 +44,7 @@ router.get('/:id', verificarToken, puedeVer, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'ID inválido' });
   try {
-    const r = await db.query('SELECT id, titulo, tipo, to_char(fecha_informe,'YYYY-MM-DD') AS fecha_informe, subido_por_nombre, creado_en, datos FROM informes_guardados WHERE id = $1', [id]);
+    const r = await db.query(`SELECT id, titulo, tipo, to_char(fecha_informe,'YYYY-MM-DD') AS fecha_informe, subido_por_nombre, creado_en, datos FROM informes_guardados WHERE id = $1`, [id]);
     if (!r.rows.length) return res.status(404).json({ error: 'Informe no encontrado' });
     res.json(r.rows[0]);
   } catch (err) {
