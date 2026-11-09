@@ -2156,6 +2156,32 @@
     .p360-vida p span { display: block; font-size: 12px; font-weight: 400; color: var(--text2); }
     .p360-empty { text-align: center; padding: 60px 20px; color: var(--text2); }
     .p360-btn-fila { padding: 6px 12px; font-size: 12px; }
+    /* Trayectoria: formación + experiencia dentro de la hoja de vida */
+    .p360-hvk { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .p360-hvk > div { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 16px; min-width: 150px; }
+    .p360-hvk b { display: block; font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.1; }
+    .p360-hvk span { font-size: 12px; color: var(--text2); }
+    .p360-tray { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; margin-top: 18px; }
+    .p360-tray h4 { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .p360-tl { position: relative; padding-left: 20px; display: grid; gap: 14px; }
+    .p360-tl::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border2); }
+    .p360-tl > div { position: relative; }
+    .p360-tl > div::before { content: ''; position: absolute; left: -20px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--surface); }
+    .p360-tl > div.act::before { background: var(--green); }
+    .p360-tl b { display: block; font-size: 13.5px; color: var(--text); }
+    .p360-tl em { display: block; font-style: normal; font-size: 12.5px; color: var(--text2); margin-top: 2px; }
+    .p360-tl small { display: block; font-size: 11.5px; color: var(--text3); margin-top: 2px; }
+    .p360-exp-btn { font: 600 12px 'DM Sans', sans-serif; padding: 5px 12px; border-radius: 8px; cursor: pointer; background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+    .p360-exp-btn:hover { color: var(--text); }
+    .p360-exp-btn.prim { background: var(--accent); color: #fff; border: 0; }
+    .p360-expf { display: grid; gap: 12px; }
+    .p360-expf-fila { display: grid; grid-template-columns: 1.2fr 1.2fr 80px 80px auto; gap: 8px; align-items: end; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 12px; }
+    .p360-expf-fila label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text3); margin-bottom: 3px; }
+    .p360-expf-fila input { width: 100%; min-height: 34px; padding: 5px 9px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface); color: var(--text); font: 13px 'DM Sans', sans-serif; }
+    .p360-expf-fila .det { grid-column: 1 / -2; }
+    .p360-expf-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .p360-expf-err { color: var(--red); font-size: 12.5px; }
+    @media (max-width: 760px) { .p360-expf-fila { grid-template-columns: 1fr 1fr; } .p360-expf-fila .det { grid-column: 1 / -1; } }
     /* ── INFORMES (dashboards guardados) ── */
     #section-informes { width: calc(100vw - var(--sidebar-w) - 5rem - 4px); max-width: 1320px; }
     .inf {
@@ -6614,6 +6640,7 @@
         const res = await fetch('/api/perfil-docente/' + encodeURIComponent(docenteId), { headers });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Error');
         _p360Datos = await res.json();
+        _p360ExpEdit = null; _p360ExpError = '';
         renderPerfil360(_p360Datos);
       } catch (err) {
         console.error('Error cargando Perfil 360°:', err);
@@ -6704,19 +6731,113 @@
       return `<div class="p360-card p360-bars"><h3>${titulo} <span class="p360-note" style="font-weight:400">· ${bloque.cantidad} evaluación(es)</span></h3>${filas}</div>`;
     }
 
+    let _p360ExpEdit = null, _p360ExpError = '';
+
+    function p360Periodo(desde, hasta) {
+      if (!desde && !hasta) return '';
+      return `${desde || '?'} – ${hasta == null ? 'actualidad' : hasta}`;
+    }
+    function p360Trayectoria(h) {
+      const form = h.formacion_items || [];
+      const exp = h.experiencia || [];
+      const an = h.anios;
+      const kpis = an ? `<div class="p360-hvk">
+        <div><b>${an.total}</b><span>años de experiencia</span></div>
+        <div><b>${an.cervantes}</b><span>años en Cervantes</span></div>
+        <div><b>${an.docencia}</b><span>años en docencia</span></div></div>` : '';
+      const colForm = `<div><h4>🎓 Formación académica</h4>${form.length ? `<div class="p360-tl">${form.map(f => `
+        <div><b>${p360Esc(f.grado || f.nivel)}</b><em>${p360Esc(f.centro)}</em>
+        <small>${p360Esc(f.nivel)}${f.desde || f.hasta ? ' · ' + p360Esc((f.desde || '?') + ' – ' + (f.hasta || '?')) : ''}</small></div>`).join('')}</div>`
+        : '<p class="p360-note">Sin formación detallada en la ficha.</p>'}</div>`;
+      let colExp;
+      if (_p360ExpEdit) {
+        colExp = `<div style="grid-column:1/-1"><h4>💼 Editar experiencia laboral</h4>${p360ExpFormulario()}</div>`;
+      } else {
+        colExp = `<div><h4>💼 Experiencia laboral
+          <button class="p360-exp-btn" onclick="p360EditarExp()">✏️ Editar trayectoria</button></h4>
+          ${exp.length ? `<div class="p360-tl">${exp.map(e => `
+            <div class="${e.hasta == null ? 'act' : ''}"><b>${p360Esc(e.cargo)}</b><em>${p360Esc(e.institucion)}</em>
+            <small>${p360Esc(p360Periodo(e.desde, e.hasta))}${e.detalle ? ' · ' + p360Esc(e.detalle) : ''}</small></div>`).join('')}</div>`
+          : '<p class="p360-note">Sin datos todavía. Se llena desde la ficha del docente o con "Editar trayectoria".</p>'}</div>`;
+      }
+      return kpis + `<div class="p360-tray">${_p360ExpEdit ? colExp : colForm + colExp}</div>` +
+        (an ? '<p class="p360-note" style="margin-top:12px">Los años se cuentan por años calendario según los años indicados; si dos trabajos se cruzan, no se suman dos veces.</p>' : '');
+    }
+
+    function p360ExpFormulario() {
+      const filas = _p360ExpEdit.map((e, i) => `<div class="p360-expf-fila">
+        <div><label>Cargo</label><input data-k="cargo" maxlength="120" value="${p360Esc(e.cargo)}"></div>
+        <div><label>Institución</label><input data-k="institucion" maxlength="150" value="${p360Esc(e.institucion)}"></div>
+        <div><label>Desde</label><input data-k="desde" maxlength="4" inputmode="numeric" value="${p360Esc(e.desde)}"></div>
+        <div><label>Hasta</label><input data-k="hasta" maxlength="4" inputmode="numeric" placeholder="actual" value="${p360Esc(e.hasta)}"></div>
+        <button class="p360-exp-btn" onclick="p360ExpQuitar(${i})" title="Quitar">🗑️</button>
+        <div class="det"><label>Qué hacía (opcional)</label><input data-k="detalle" maxlength="300" value="${p360Esc(e.detalle)}"></div></div>`).join('');
+      return `<div class="p360-expf" id="p360-expf">${filas || '<p class="p360-note">Sin experiencias. Agrega la primera.</p>'}
+        <div class="p360-expf-acciones">
+          <button class="p360-exp-btn" onclick="p360ExpAgregar()">+ Agregar experiencia</button>
+          <button class="p360-exp-btn prim" onclick="p360ExpGuardar()">Guardar</button>
+          <button class="p360-exp-btn" onclick="p360ExpCancelar()">Cancelar</button>
+          <span class="p360-expf-err">${p360Esc(_p360ExpError)}</span></div></div>`;
+    }
+    function p360ExpLeerDOM() {
+      const cont = document.getElementById('p360-expf');
+      if (!cont) return;
+      _p360ExpEdit = [...cont.querySelectorAll('.p360-expf-fila')].map(f => {
+        const o = {}; f.querySelectorAll('input').forEach(i => { o[i.dataset.k] = i.value.trim(); }); return o;
+      });
+    }
+    function p360RefrescarHV() {
+      const el = document.getElementById('p360-hv');
+      if (el && _p360Datos) el.outerHTML = p360HojaVida(_p360Datos);
+    }
+    function p360EditarExp() {
+      const exp = (_p360Datos.hoja_vida && _p360Datos.hoja_vida.experiencia) || [];
+      _p360ExpEdit = exp.map(e => ({ cargo: e.cargo, institucion: e.institucion, desde: e.desde, hasta: e.hasta == null ? '' : e.hasta, detalle: e.detalle || '' }));
+      if (!_p360ExpEdit.length) _p360ExpEdit.push({ cargo: '', institucion: '', desde: '', hasta: '', detalle: '' });
+      _p360ExpError = ''; p360RefrescarHV();
+    }
+    function p360ExpAgregar() {
+      p360ExpLeerDOM(); if (_p360ExpEdit.length >= 15) return;
+      _p360ExpEdit.push({ cargo: '', institucion: '', desde: '', hasta: '', detalle: '' }); p360RefrescarHV();
+    }
+    function p360ExpQuitar(i) { p360ExpLeerDOM(); _p360ExpEdit.splice(i, 1); p360RefrescarHV(); }
+    function p360ExpCancelar() { _p360ExpEdit = null; _p360ExpError = ''; p360RefrescarHV(); }
+    async function p360ExpGuardar() {
+      p360ExpLeerDOM();
+      const hoy = new Date().getFullYear();
+      const items = [];
+      for (const e of _p360ExpEdit) {
+        if (!e.cargo && !e.institucion && !e.desde && !e.hasta && !e.detalle) continue;
+        if (!e.cargo || !e.institucion || !/^\d{4}$/.test(e.desde)) { _p360ExpError = 'Cada fila necesita cargo, institución y año de inicio (4 dígitos).'; p360RefrescarHV(); return; }
+        if (e.hasta && (!/^\d{4}$/.test(e.hasta) || +e.hasta < +e.desde)) { _p360ExpError = 'Revisa el año "Hasta" (debe ser 4 dígitos y no menor que "Desde").'; p360RefrescarHV(); return; }
+        if (+e.desde < 1950 || +e.desde > hoy || (e.hasta && +e.hasta > hoy)) { _p360ExpError = 'Revisa los años: no pueden ser futuros ni anteriores a 1950.'; p360RefrescarHV(); return; }
+        items.push({ cargo: e.cargo, institucion: e.institucion, desde: +e.desde, hasta: e.hasta ? +e.hasta : null, detalle: e.detalle });
+      }
+      try {
+        const res = await fetch('/api/perfil-docente/' + encodeURIComponent(_p360Datos.docente.id) + '/experiencia', {
+          method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ experiencia: items })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Error ' + res.status);
+        Object.assign(_p360Datos.hoja_vida, { formacion_items: data.formacion_items, experiencia: data.experiencia, anios: data.anios });
+        _p360ExpEdit = null; _p360ExpError = ''; p360RefrescarHV();
+      } catch (err) { _p360ExpError = err.message; p360RefrescarHV(); }
+    }
+
     function p360HojaVida(d) {
       const h = d.hoja_vida || {};
       const celdas = [];
       celdas.push(`<div><b>Cursos a cargo</b><p>${p360Esc(h.curso || '—')}<span>${p360Esc(h.nivel || '')}${h.tipo ? ' · ' + p360Esc(h.tipo) : ''}</span></p></div>`);
       celdas.push(`<div><b>Tutoría</b><p>${h.es_tutor ? 'Es tutor/a' : 'No es tutor/a'}</p></div>`);
+      let tray = '';
       if (h.ficha_vinculada) {
-        const form = (h.formacion || []);
-        celdas.push(`<div><b>Formación</b><p>${form.length ? form.map(f => p360Esc(f)).join('<span></span>') : '—'}<span>${p360Esc(h.nivel_educativo || '')}</span></p></div>`);
+        celdas.push(`<div><b>Nivel educativo</b><p>${p360Esc(h.nivel_educativo || '—')}</p></div>`);
         if (h.ingles) celdas.push(`<div><b>Inglés</b><p>${p360Esc(h.ingles)}</p></div>`);
+        tray = p360Trayectoria(h);
       } else {
-        celdas.push(`<div><b>Formación</b><p class="p360-note" style="font-weight:400">${h.ficha_visible ? 'No se encontró la ficha de este docente.' : 'La formación detallada la ve solo el Gerente General.'}</p></div>`);
+        celdas.push(`<div><b>Formación</b><p class="p360-note" style="font-weight:400">${h.ficha_visible ? 'No se encontró la ficha de este docente.' : 'La formación y la experiencia las ve solo el Gerente General.'}</p></div>`);
       }
-      return `<div class="p360-card"><h3>Hoja de vida <span class="p360-note" style="font-weight:400">· solo trayectoria profesional, sin datos personales</span></h3><div class="p360-vida">${celdas.join('')}</div></div>`;
+      return `<div class="p360-card" id="p360-hv"><h3>Hoja de vida <span class="p360-note" style="font-weight:400">· solo trayectoria profesional, sin datos personales</span></h3><div class="p360-vida">${celdas.join('')}</div>${tray}</div>`;
     }
 
     function renderPerfil360(d) {
@@ -6947,6 +7068,9 @@
       const filasVida = [['Cursos a cargo', (h.curso || '—') + (h.nivel ? ' — ' + h.nivel : '')], ['Tutoría', h.es_tutor ? 'Es tutor/a' : 'No es tutor/a']];
       if (h.ficha_vinculada) {
         filasVida.push(['Formación', (h.formacion || []).join(' | ') || '—']);
+        if (h.anios) filasVida.push(['Experiencia', `${h.anios.total} años en total · ${h.anios.cervantes} en Cervantes · ${h.anios.docencia} en docencia`]);
+        const expPdf = (h.experiencia || []);
+        if (expPdf.length) filasVida.push(['Trayectoria', expPdf.slice(0, 5).map(e => `${e.cargo} — ${e.institucion} (${p360Periodo(e.desde, e.hasta)})`).join('\n') + (expPdf.length > 5 ? `\n+ ${expPdf.length - 5} más` : '')]);
         const extra = [h.nivel_educativo, h.ingles ? 'Inglés: ' + h.ingles : null].filter(Boolean).join('  ·  ');
         if (extra) filasVida.push(['Nivel educativo', extra]);
       }

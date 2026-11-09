@@ -16,6 +16,8 @@ const {
   CATEGORIAS_EVALUACIONES, CATEGORIAS_TUTORIA,
   promedioCategoria, promedioSimple, nivelDe
 } = require('../utils/categoriasPerfil');
+const { limpiarExperiencia, calcularAnios, parsearFormacion } = require('../utils/trayectoria');
+const { registrarAuditoria } = require('../utils/auditoria');
 
 const EMAIL_GERENTE_GENERAL = 'gerentegeneralcervantino@cervantesschool.edu.pe';
 const ROLES_PERFIL = ['director', 'directora'];
@@ -73,6 +75,25 @@ function coincideNombre(docenteNombre, fichaNombre) {
   return corto.every(t => largo.includes(t));
 }
 
+// Busca la ficha que corresponde al docente (por nombre). Devuelve el id o null.
+async function buscarFichaId(docente) {
+  const fichas = await db.query('SELECT id, nombres, apellidos FROM fichas_docentes');
+  const nombreDoc = `${docente.nombre} ${docente.apellido}`;
+  const match = fichas.rows.find(f => coincideNombre(nombreDoc, `${f.nombres} ${f.apellidos}`));
+  return match ? match.id : null;
+}
+
+// Trayectoria (formación estructurada + experiencia + años) a partir de la fila de la ficha.
+function armarTrayectoria(f) {
+  const experiencia = Array.isArray(f.experiencia) ? f.experiencia : [];
+  const formacion_items = [
+    parsearFormacion(f.educacion_tecnica, 'Técnico'),
+    parsearFormacion(f.educacion_universitaria, 'Universitario'),
+    parsearFormacion(f.educacion_postgrado, 'Postgrado')
+  ].filter(Boolean);
+  return { formacion_items, experiencia, anios: calcularAnios(experiencia) };
+}
+
 async function buscarHojaDeVida(docente, incluirFicha) {
   const hoja = {
     curso: docente.curso || null,
@@ -83,15 +104,13 @@ async function buscarHojaDeVida(docente, incluirFicha) {
     ficha_vinculada: false
   };
   if (!incluirFicha) return hoja;
-  const fichas = await db.query('SELECT id, nombres, apellidos FROM fichas_docentes');
-  const nombreDoc = `${docente.nombre} ${docente.apellido}`;
-  const match = fichas.rows.find(f => coincideNombre(nombreDoc, `${f.nombres} ${f.apellidos}`));
-  if (!match) return hoja;
+  const fichaId = await buscarFichaId(docente);
+  if (!fichaId) return hoja;
   const det = await db.query(
     `SELECT nivel_educativo, ingles, educacion_tecnica, educacion_universitaria,
-            educacion_postgrado, foto_base64
+            educacion_postgrado, foto_base64, experiencia
      FROM fichas_docentes WHERE id = $1`,
-    [match.id]
+    [fichaId]
   );
   const f = det.rows[0] || {};
   hoja.ficha_vinculada = true;
@@ -99,6 +118,7 @@ async function buscarHojaDeVida(docente, incluirFicha) {
   hoja.ingles = f.ingles || null;
   hoja.formacion = [f.educacion_tecnica, f.educacion_universitaria, f.educacion_postgrado].filter(Boolean);
   hoja.foto = f.foto_base64 || null;
+  Object.assign(hoja, armarTrayectoria(f));
   return hoja;
 }
 
@@ -193,6 +213,33 @@ router.get('/:id', verificarToken, puedeVerPerfil, async (req, res) => {
   } catch (err) {
     console.error('Error en /api/perfil-docente:', err);
     res.status(500).json({ error: 'Error al armar el perfil del docente' });
+  }
+});
+
+// PUT /api/perfil-docente/:id/experiencia — solo el Gerente General (la
+// trayectoria vive en la ficha del docente, que solo él puede ver/editar).
+router.put('/:id/experiencia', verificarToken, async (req, res) => {
+  if (!esGerente(req.usuario)) return res.status(403).json({ error: 'Solo el Gerente General puede editar la trayectoria' });
+  const id = parseInt(req.params.id);
+  if (!id) return res.status(400).json({ error: 'id inválido' });
+  const exp = limpiarExperiencia(req.body && req.body.experiencia);
+  if (exp.error) return res.status(400).json({ error: exp.error });
+  try {
+    const docRes = await db.query('SELECT id, nombre, apellido FROM docentes WHERE id = $1', [id]);
+    const docente = docRes.rows[0];
+    if (!docente) return res.status(404).json({ error: 'Docente no encontrado' });
+    const fichaId = await buscarFichaId(docente);
+    if (!fichaId) return res.status(409).json({ error: 'Este docente aún no tiene ficha registrada; primero debe llenar su ficha.' });
+    const r = await db.query(
+      `UPDATE fichas_docentes SET experiencia = $1, actualizado_en = NOW() WHERE id = $2
+       RETURNING educacion_tecnica, educacion_universitaria, educacion_postgrado, experiencia`,
+      [JSON.stringify(exp.items), fichaId]);
+    await registrarAuditoria({ tabla: 'fichas_docentes', registro_id: fichaId, accion: 'editar', usuario: req.usuario,
+      descripcion: `Actualizó la experiencia laboral de ${docente.nombre} ${docente.apellido} (${exp.items.length} registro(s))` });
+    res.json(armarTrayectoria(r.rows[0]));
+  } catch (err) {
+    console.error('Error en PUT /api/perfil-docente/:id/experiencia:', err);
+    res.status(500).json({ error: 'Error al guardar la experiencia' });
   }
 });
 

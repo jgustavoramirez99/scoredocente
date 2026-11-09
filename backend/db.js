@@ -268,6 +268,13 @@ pool.query(`CREATE TABLE IF NOT EXISTS reporte_cubicol_pdfs (
   .then(() => console.log('✅ Tabla "reporte_cubicol_pdfs" verificada'))
   .catch(err => console.error('⚠️  No se pudo verificar/crear la tabla "reporte_cubicol_pdfs":', err.message));
 
+// Migración idempotente: experiencia laboral del docente (arreglo JSON) para
+// el Perfil 360°. Los docentes que ya llenaron su ficha quedan con [] y no
+// tienen que volver a llenarla: la experiencia se agrega aparte.
+pool.query(`ALTER TABLE fichas_docentes ADD COLUMN IF NOT EXISTS experiencia JSONB NOT NULL DEFAULT '[]'`)
+  .then(() => console.log('✅ Columna "experiencia" de fichas_docentes verificada'))
+  .catch(err => console.error('⚠️  No se pudo agregar "experiencia" a fichas_docentes:', err.message));
+
 // Informes guardados (snapshots) que se muestran como dashboard en la
 // sección "Informes". Solo Director/Directora/Gerente General.
 pool.query(`CREATE TABLE IF NOT EXISTS informes_guardados (

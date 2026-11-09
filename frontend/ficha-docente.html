@@ -219,6 +219,13 @@
             <div class="fg"><label>Hasta (año)</label><input id="edu-pos-hasta" maxlength="4" inputmode="numeric"></div>
           </div>
         </div>
+
+        <div class="edu-block">
+          <div class="edu-label">Experiencia laboral <span class="opt" style="text-transform:none;letter-spacing:0;font-weight:500">(opcional, hasta 15)</span></div>
+          <div class="sec-sub" style="margin:-6px 0 14px">Tus trabajos anteriores y el actual, del más reciente al más antiguo. Si sigues en el cargo, deja "Hasta" vacío.</div>
+          <div id="exp-list"></div>
+          <button type="button" class="add-kid" id="btn-add-exp" onclick="agregarExperiencia()">+ Agregar experiencia</button>
+        </div>
       </div>
 
       <div class="card" id="secC">
@@ -332,9 +339,45 @@
       </div>
       <button type="button" class="fam-quitar" onclick="quitarFamiliar(this)">Quitar</button>`;
     document.getElementById('fam-list').appendChild(div);
-    if (document.querySelectorAll('.fam-item').length >= 3) {
+    if (document.querySelectorAll('.fam-item:not(.exp-item)').length >= 3) {
       document.getElementById('btn-add-fam').style.display = 'none';
     }
+  }
+
+  function agregarExperiencia(){
+    if (document.querySelectorAll('.exp-item').length >= 15) return;
+    const div = document.createElement('div');
+    div.className = 'fam-item exp-item';
+    div.innerHTML = `
+      <div class="grid">
+        <div class="fg"><label>Cargo</label><input class="exp-cargo" maxlength="120" placeholder="Docente de Matemática"></div>
+        <div class="fg"><label>Institución</label><input class="exp-inst" maxlength="150" placeholder="I.E.P. Cervantes School"></div>
+        <div class="fg"><label>Desde (año)</label><input class="exp-desde" maxlength="4" inputmode="numeric" placeholder="2018"></div>
+        <div class="fg"><label>Hasta (año) <span class="opt">(vacío si sigues ahí)</span></label><input class="exp-hasta" maxlength="4" inputmode="numeric"></div>
+      </div>
+      <div class="fg"><label>Qué hacías <span class="opt">(opcional)</span></label><input class="exp-detalle" maxlength="300" placeholder="Cursos, grados, funciones..."></div>
+      <button type="button" class="fam-quitar" onclick="quitarExperiencia(this)">Quitar</button>`;
+    document.getElementById('exp-list').appendChild(div);
+    if (document.querySelectorAll('.exp-item').length >= 15) document.getElementById('btn-add-exp').style.display = 'none';
+  }
+  function quitarExperiencia(btn){
+    btn.closest('.exp-item').remove();
+    document.getElementById('btn-add-exp').style.display = 'block';
+  }
+  // Devuelve { items } o { error } (la experiencia es opcional, pero cada fila usada debe estar completa).
+  function leerExperiencia(){
+    const items = [];
+    const anioActual = new Date().getFullYear();
+    for (const f of document.querySelectorAll('.exp-item')){
+      const v = c => f.querySelector(c).value.trim();
+      const cargo = v('.exp-cargo'), institucion = v('.exp-inst'), desde = v('.exp-desde'), hasta = v('.exp-hasta'), detalle = v('.exp-detalle');
+      if (!cargo && !institucion && !desde && !hasta && !detalle) continue;
+      if (!cargo || !institucion || !/^\d{4}$/.test(desde)) return { error: 'En la experiencia laboral completa cargo, institución y año de inicio (4 dígitos), o quita la fila.' };
+      if (hasta && (!/^\d{4}$/.test(hasta) || +hasta < +desde)) return { error: 'El año "Hasta" de una experiencia no es válido.' };
+      if (+desde < 1950 || +desde > anioActual || (hasta && +hasta > anioActual)) return { error: 'Revisa los años de tu experiencia laboral.' };
+      items.push({ cargo, institucion, desde: +desde, hasta: hasta ? +hasta : null, detalle });
+    }
+    return { items };
   }
 
   function quitarFamiliar(btn){
@@ -434,7 +477,14 @@
       return;
     }
 
-    const familiares = [...document.querySelectorAll('.fam-item')].map(f => ({
+    const exp = leerExperiencia();
+    if (exp.error){
+      document.getElementById('secB').scrollIntoView({ behavior:'smooth', block:'start' });
+      mostrarMensaje(exp.error, true);
+      return;
+    }
+
+    const familiares = [...document.querySelectorAll('.fam-item:not(.exp-item)')].map(f => ({
       vinculo: f.querySelector('.fam-vinculo').value,
       nombre: f.querySelector('.fam-nombre').value.trim(),
       fecha_nacimiento: f.querySelector('.fam-fecha').value || null
@@ -460,7 +510,8 @@
       sistema_pension: esAFP ? 'AFP' : 'ONP',
       entidad_pension: esAFP ? pensionSel.replace('AFP ', '') : '',
       cuspp: val('f-cuspp'), cuenta_bcp: val('f-cuenta-bcp'),
-      foto_base64: fotoBase64
+      foto_base64: fotoBase64,
+      experiencia: exp.items
     };
 
     const btn = document.getElementById('btn-enviar');

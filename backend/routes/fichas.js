@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { verificarToken } = require('./auth');
 const { registrarAuditoria } = require('../utils/auditoria');
+const { limpiarExperiencia } = require('../utils/trayectoria');
 
 // Cuenta exacta del Gerente General (mismo correo usado para "Coordinadores").
 // Solo esta cuenta puede ver el listado, el detalle y exportar las fichas.
@@ -24,12 +25,15 @@ router.post('/', async (req, res) => {
     nivel_educativo, ingles, educacion_secundaria, educacion_tecnica, educacion_universitaria, educacion_postgrado,
     conyuge_nombre, conyuge_dni, hijos,
     sistema_pension, entidad_pension, cuspp, cuenta_bcp,
-    foto_base64
+    foto_base64, experiencia
   } = req.body;
 
   if (!nombres || !apellidos || !dni) {
     return res.status(400).json({ error: 'Nombres, apellidos y DNI son requeridos' });
   }
+
+  const exp = limpiarExperiencia(experiencia);
+  if (exp.error) return res.status(400).json({ error: exp.error });
 
   try {
     const result = await db.query(
@@ -37,8 +41,8 @@ router.post('/', async (req, res) => {
         nombres, apellidos, dni, fecha_nacimiento, genero, estado_civil, celular, correo, direccion,
         nivel_educativo, ingles, educacion_secundaria, educacion_tecnica, educacion_universitaria, educacion_postgrado,
         conyuge_nombre, conyuge_dni, hijos,
-        sistema_pension, entidad_pension, cuspp, cuenta_bcp, foto_base64, actualizado_en
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23, NOW())
+        sistema_pension, entidad_pension, cuspp, cuenta_bcp, foto_base64, experiencia, actualizado_en
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24, NOW())
       ON CONFLICT (dni) DO UPDATE SET
         nombres = EXCLUDED.nombres,
         apellidos = EXCLUDED.apellidos,
@@ -62,6 +66,8 @@ router.post('/', async (req, res) => {
         cuspp = EXCLUDED.cuspp,
         cuenta_bcp = EXCLUDED.cuenta_bcp,
         foto_base64 = COALESCE(EXCLUDED.foto_base64, fichas_docentes.foto_base64),
+        -- si el docente reenvía la ficha sin experiencia, no se borra la que ya se cargó
+        experiencia = CASE WHEN jsonb_array_length(EXCLUDED.experiencia) > 0 THEN EXCLUDED.experiencia ELSE fichas_docentes.experiencia END,
         actualizado_en = NOW()
       RETURNING id`,
       [
@@ -69,7 +75,8 @@ router.post('/', async (req, res) => {
         celular || null, correo || null, direccion || null, nivel_educativo || null, ingles || null,
         educacion_secundaria || null, educacion_tecnica || null, educacion_universitaria || null, educacion_postgrado || null,
         conyuge_nombre || null, conyuge_dni || null, JSON.stringify(Array.isArray(hijos) ? hijos : []),
-        sistema_pension || null, entidad_pension || null, cuspp || null, cuenta_bcp || null, foto_base64 || null
+        sistema_pension || null, entidad_pension || null, cuspp || null, cuenta_bcp || null, foto_base64 || null,
+        JSON.stringify(exp.items)
       ]
     );
     res.json({ mensaje: 'Datos guardados correctamente', id: result.rows[0].id });
