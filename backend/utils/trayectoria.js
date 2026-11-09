@@ -72,4 +72,55 @@ function parsearFormacion(texto, nivel) {
   return { nivel, centro, grado, desde, hasta };
 }
 
-module.exports = { limpiarExperiencia, calcularAnios, parsearFormacion, MAX_ITEMS };
+
+// ─────────────────────────────────────────────────────────────────────────
+// Puntos de trayectoria (hoja de vida) — escala ajustable en un solo lugar.
+//  · puntaje (0–100): formación 50 + experiencia 35 + inglés 15. Si falta un
+//    componente (p. ej. aún no se cargó la experiencia) se deja fuera y el
+//    puntaje se calcula sobre lo que sí hay, para no castigar por datos vacíos.
+//  · bono (0–BONO_MAX): se suma al puntaje global de evaluación.
+// ─────────────────────────────────────────────────────────────────────────
+const MAX_FORMACION = 50, MAX_EXPERIENCIA = 35, MAX_INGLES = 15;
+const ANIOS_TOPE = 10;       // desde 10 años de experiencia ya es el máximo
+const BONO_MAX = 5;
+const PTS_FORMACION = {
+  'Secundaria completa': 10, 'Técnico': 25, 'Universitario — Bachiller': 35,
+  'Universitario — Titulado': 42, 'Postgrado — Maestría': 48, 'Postgrado — Doctorado': 50
+};
+const BONO_FORMACION = {
+  'Secundaria completa': 0, 'Técnico': 0.5, 'Universitario — Bachiller': 0.5,
+  'Universitario — Titulado': 1, 'Postgrado — Maestría': 2, 'Postgrado — Doctorado': 3
+};
+const BONO_EXPERIENCIA_MAX = 2;   // formación (hasta 3) + experiencia (hasta 2) = 5
+const PTS_INGLES = { 'Ninguno': 0, 'Básico': 5, 'Intermedio': 10, 'Avanzado': 15, 'Nativo': 15 };
+
+const redondear1 = v => Math.round(v * 10) / 10;
+
+// ficha: { nivel_educativo, ingles }, anios: resultado de calcularAnios (o null)
+function puntosTrayectoria(ficha, anios) {
+  const f = ficha || {};
+  const partes = {};
+  if (f.nivel_educativo in PTS_FORMACION) partes.formacion = { pts: PTS_FORMACION[f.nivel_educativo], max: MAX_FORMACION };
+  if (anios) partes.experiencia = { pts: redondear1(Math.min(anios.total, ANIOS_TOPE) / ANIOS_TOPE * MAX_EXPERIENCIA), max: MAX_EXPERIENCIA };
+  if (f.ingles in PTS_INGLES) partes.ingles = { pts: PTS_INGLES[f.ingles], max: MAX_INGLES };
+  const lista = Object.values(partes);
+  if (!lista.length) return null;
+  const pts = lista.reduce((a, c) => a + c.pts, 0), max = lista.reduce((a, c) => a + c.max, 0);
+  let bono = 0;
+  if (partes.formacion) bono += BONO_FORMACION[f.nivel_educativo];
+  if (partes.experiencia) bono += Math.min(anios.total, ANIOS_TOPE) / ANIOS_TOPE * BONO_EXPERIENCIA_MAX;
+  return {
+    puntaje: redondear1(pts / max * 100),
+    bono: Math.min(BONO_MAX, redondear1(bono)),
+    partes,
+    completo: !!(partes.formacion && partes.experiencia && partes.ingles)
+  };
+}
+
+// Puntaje global + bono, con tope de 100.
+function aplicarBono(base, bono) {
+  if (base == null) return null;
+  return redondear1(Math.min(100, base + (bono || 0)));
+}
+
+module.exports = { limpiarExperiencia, calcularAnios, parsearFormacion, puntosTrayectoria, aplicarBono, BONO_MAX, MAX_ITEMS };

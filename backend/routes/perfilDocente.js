@@ -16,7 +16,7 @@ const {
   CATEGORIAS_EVALUACIONES, CATEGORIAS_TUTORIA,
   promedioCategoria, promedioSimple, nivelDe
 } = require('../utils/categoriasPerfil');
-const { limpiarExperiencia, calcularAnios, parsearFormacion } = require('../utils/trayectoria');
+const { limpiarExperiencia, calcularAnios, parsearFormacion, puntosTrayectoria, aplicarBono, BONO_MAX } = require('../utils/trayectoria');
 const { registrarAuditoria } = require('../utils/auditoria');
 
 const EMAIL_GERENTE_GENERAL = 'gerentegeneralcervantino@cervantesschool.edu.pe';
@@ -171,7 +171,13 @@ router.get('/:id', verificarToken, puedeVerPerfil, async (req, res) => {
     };
 
     // Puntaje global y puesto entre los docentes activos
-    const activos = await db.query('SELECT id FROM docentes WHERE activo = true');
+    const activos = await db.query('SELECT id, nombre, apellido FROM docentes WHERE activo = true');
+    const fichasAll = (await db.query('SELECT nombres, apellidos, nivel_educativo, ingles, experiencia FROM fichas_docentes')).rows;
+    // Puntos de trayectoria de un docente (por nombre, igual que la hoja de vida); null si no tiene ficha.
+    const trayDe = d => {
+      const f = fichasAll.find(x => coincideNombre(`${d.nombre} ${d.apellido}`, `${x.nombres} ${x.apellidos}`));
+      return f ? puntosTrayectoria(f, calcularAnios(Array.isArray(f.experiencia) ? f.experiencia : [])) : null;
+    };
     const mediaPorDocente = (filas, f) => {
       const m = {};
       filas.forEach(r => {
@@ -187,11 +193,19 @@ router.get('/:id', verificarToken, puedeVerPerfil, async (req, res) => {
     const mTut = mediaPorDocente(tutAll.rows, r => { const n = parseFloat(r.puntaje_total); return isNaN(n) ? null : n; });
     const mEst = mediaPorDocente(estAll.rows, r => estPct(r.puntaje_total));
     const globales = activos.rows
-      .map(d => ({ id: d.id, g: puntajeGlobal(mClases[d.id] ?? null, mTut[d.id] ?? null, mEst[d.id] ?? null) }))
+      .map(d => {
+        const base = puntajeGlobal(mClases[d.id] ?? null, mTut[d.id] ?? null, mEst[d.id] ?? null);
+        const t = trayDe(d);
+        return { id: d.id, g: aplicarBono(base, t ? t.bono : 0) };
+      })
       .filter(x => x.g != null)
       .sort((a, b) => b.g - a.g);
 
-    const global = puntajeGlobal(clases.promedio, tutoria.promedio, estudiantes.promedio);
+    const base = puntajeGlobal(clases.promedio, tutoria.promedio, estudiantes.promedio);
+    const tray = trayDe(docente);
+    const bono = tray ? tray.bono : 0;
+    const global = aplicarBono(base, bono);
+    const verDetalle = esGerente(req.usuario);
     const posicion = globales.findIndex(x => x.id === id);
 
     const hoja_vida = await buscarHojaDeVida(docente, esGerente(req.usuario));
@@ -203,6 +217,11 @@ router.get('/:id', verificarToken, puedeVerPerfil, async (req, res) => {
       estudiantes: estudiantes.cantidad ? estudiantes : null,
       global: {
         puntaje: global,
+        base,
+        bono,
+        bono_max: BONO_MAX,
+        // El puntaje y el bono los ven Director y Gerente; el desglose (formación/experiencia/inglés), solo el Gerente.
+        trayectoria: tray ? { puntaje: tray.puntaje, completo: tray.completo, partes: verDetalle ? tray.partes : null } : null,
         nivel: nivelDe(global),
         pesos: pesosUsados(clases.promedio, tutoria.cantidad ? tutoria.promedio : null, estudiantes.cantidad ? estudiantes.promedio : null),
         puesto: posicion >= 0 ? posicion + 1 : null,

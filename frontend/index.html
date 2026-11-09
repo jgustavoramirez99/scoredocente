@@ -2171,6 +2171,16 @@
     .p360-tl b { display: block; font-size: 13.5px; color: var(--text); }
     .p360-tl em { display: block; font-style: normal; font-size: 12.5px; color: var(--text2); margin-top: 2px; }
     .p360-tl small { display: block; font-size: 11.5px; color: var(--text3); margin-top: 2px; }
+    .p360-bono { margin-top: 8px; font-size: 12px; color: var(--text2); line-height: 1.4; }
+    .p360-bono b { color: var(--p-logr-ink); }
+    .p360-tp { margin-top: 18px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 14px; padding: 16px 18px; }
+    .p360-tp-top { display: flex; flex-wrap: wrap; gap: 16px; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+    .p360-tp-top b { font-size: 26px; font-weight: 800; color: var(--text); }
+    .p360-tp-top span { font-size: 12.5px; color: var(--text2); }
+    .p360-tp-bonus { background: rgba(46,204,113,.14); color: var(--p-logr-ink); border-radius: 999px; padding: 4px 12px; font-weight: 800; font-size: 13px; }
+    .p360-tp-fila { display: grid; grid-template-columns: 130px 1fr 70px; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 12.5px; color: var(--text2); }
+    .p360-tp-fila .p360-track { height: 9px; }
+    .p360-tp-fila .v { text-align: right; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
     .p360-exp-btn { font: 600 12px 'DM Sans', sans-serif; padding: 5px 12px; border-radius: 8px; cursor: pointer; background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
     .p360-exp-btn:hover { color: var(--text); }
     .p360-exp-btn.prim { background: var(--accent); color: #fff; border: 0; }
@@ -6819,9 +6829,28 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Error ' + res.status);
-        Object.assign(_p360Datos.hoja_vida, { formacion_items: data.formacion_items, experiencia: data.experiencia, anios: data.anios });
-        _p360ExpEdit = null; _p360ExpError = ''; p360RefrescarHV();
+        const r2 = await fetch('/api/perfil-docente/' + encodeURIComponent(_p360Datos.docente.id), { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!r2.ok) throw new Error('Se guardó, pero no se pudo recargar el perfil. Recarga la página.');
+        _p360Datos = await r2.json();
+        _p360ExpEdit = null; _p360ExpError = '';
+        renderPerfil360(_p360Datos);
       } catch (err) { _p360ExpError = err.message; p360RefrescarHV(); }
+    }
+
+    function p360PuntosTray(d) {
+      const g = d.global || {}, t = g.trayectoria;
+      if (!t) return '';
+      const nombres = { formacion: 'Formación', experiencia: 'Experiencia', ingles: 'Inglés' };
+      const filas = t.partes ? Object.keys(nombres).map(k => {
+        const x = t.partes[k];
+        if (!x) return k === 'experiencia'
+          ? `<div class="p360-tp-fila"><span>${nombres[k]}</span><span class="p360-note">Sin datos: no se incluye en el cálculo todavía</span><span class="v">—</span></div>` : '';
+        return `<div class="p360-tp-fila"><span>${nombres[k]}</span><div class="p360-track"><div style="width:${x.max ? x.pts / x.max * 100 : 0}%;background:var(--accent)"></div></div><span class="v">${p360Fmt(x.pts)} / ${x.max}</span></div>`;
+      }).join('') : '';
+      return `<div class="p360-tp"><div class="p360-tp-top">
+        <div><b>${p360Fmt(t.puntaje)}</b> <span>/ 100 · puntaje de trayectoria${t.completo ? '' : ' (parcial)'}</span></div>
+        <span class="p360-tp-bonus">+${p360Fmt(g.bono)} al puntaje global (máx. ${g.bono_max})</span></div>${filas}
+        <p class="p360-note" style="margin-top:8px">Formación 50 + experiencia 35 (tope a los 10 años) + inglés 15. Lo que falta cargar no resta: se calcula solo con los datos disponibles.</p></div>`;
     }
 
     function p360HojaVida(d) {
@@ -6833,7 +6862,7 @@
       if (h.ficha_vinculada) {
         celdas.push(`<div><b>Nivel educativo</b><p>${p360Esc(h.nivel_educativo || '—')}</p></div>`);
         if (h.ingles) celdas.push(`<div><b>Inglés</b><p>${p360Esc(h.ingles)}</p></div>`);
-        tray = p360Trayectoria(h);
+        tray = p360Trayectoria(h) + p360PuntosTray(d);
       } else {
         celdas.push(`<div><b>Formación</b><p class="p360-note" style="font-weight:400">${h.ficha_visible ? 'No se encontró la ficha de este docente.' : 'La formación y la experiencia las ve solo el Gerente General.'}</p></div>`);
       }
@@ -6895,7 +6924,8 @@
               <div class="p360-ring-num"><b>${p360Fmt(g.puntaje)}</b><span>de 100</span></div>
             </div>
             <div><div class="p360-lbl">Puntaje global</div><span class="p360-nivel ${niv.cls}">${niv.txt}</span>
-              ${pesosTxt ? `<div class="p360-pesos">${pesosTxt}</div>` : ''}</div>
+              ${pesosTxt ? `<div class="p360-pesos">${pesosTxt}</div>` : ''}
+              ${g.bono ? `<div class="p360-bono">Evaluación ${p360Fmt(g.base)} <b>+ ${p360Fmt(g.bono)}</b> por trayectoria</div>` : ''}</div>
           </div>
         </div>
 
@@ -7068,9 +7098,10 @@
       const filasVida = [['Cursos a cargo', (h.curso || '—') + (h.nivel ? ' — ' + h.nivel : '')], ['Tutoría', h.es_tutor ? 'Es tutor/a' : 'No es tutor/a']];
       if (h.ficha_vinculada) {
         filasVida.push(['Formación', (h.formacion || []).join(' | ') || '—']);
+        if (g.trayectoria) filasVida.push(['Trayectoria', `${p360Fmt(g.trayectoria.puntaje)} / 100 · aporta +${p360Fmt(g.bono)} al global (evaluación ${p360Fmt(g.base)} + trayectoria)`]);
         if (h.anios) filasVida.push(['Experiencia', `${h.anios.total} años en total · ${h.anios.cervantes} en Cervantes · ${h.anios.docencia} en docencia`]);
         const expPdf = (h.experiencia || []);
-        if (expPdf.length) filasVida.push(['Trayectoria', expPdf.slice(0, 5).map(e => `${e.cargo} — ${e.institucion} (${p360Periodo(e.desde, e.hasta)})`).join('\n') + (expPdf.length > 5 ? `\n+ ${expPdf.length - 5} más` : '')]);
+        if (expPdf.length) filasVida.push(['Experiencia laboral', expPdf.slice(0, 5).map(e => `${e.cargo} — ${e.institucion} (${p360Periodo(e.desde, e.hasta)})`).join('\n') + (expPdf.length > 5 ? `\n+ ${expPdf.length - 5} más` : '')]);
         const extra = [h.nivel_educativo, h.ingles ? 'Inglés: ' + h.ingles : null].filter(Boolean).join('  ·  ');
         if (extra) filasVida.push(['Nivel educativo', extra]);
       }
