@@ -2314,7 +2314,7 @@
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
             <div class="laura-welcome-note">Tu chico gustavo ❤️</div>
-            <div class="laura-welcome-sub">Que tengas un lindo martes 💛</div>
+            <div class="laura-welcome-sub" id="laura-welcome-sub-a">Que tengas un lindo día 💛</div>
             <div class="laura-pastel-cumple" id="laura-pastel-cumple" style="display:none">
               <div class="laura-pastel-emoji">🎂</div>
               <div class="laura-velitas" id="laura-velitas"></div>
@@ -5226,31 +5226,98 @@
 
     const EMAIL_LAURA_BIENVENIDA = 'laurachavez@cervantesschool.edu.pe';
 
-    // ✏️ Gustavo: cambia el mensaje principal y las preguntas del mini interrogatorio aquí
-    // ✏️ Gustavo: cambia estos mensajes cuando quieras :)
-    // ✏️ Gustavo: pon esto en false cuando pase su cumpleaños para volver al modo normal
-    const LAURA_CUMPLE_HOY = false;
-    const LAURA_NUM_VELITAS = 5;
+    // ✏️ Gustavo: mensajes de Laura POR FECHA. Si hoy coincide con una fecha de
+    // LAURA_MENSAJES_POR_FECHA se usa ese mensaje; si no, sale el mensaje normal
+    // (con el día de la semana automático). Formato de fecha: 'AAAA-MM-DD'.
+    const LAURA_DIAS_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const LAURA_HOY_OBJ = new Date();
+    const LAURA_FECHA_HOY = LAURA_HOY_OBJ.getFullYear() + '-' +
+      String(LAURA_HOY_OBJ.getMonth() + 1).padStart(2, '0') + '-' +
+      String(LAURA_HOY_OBJ.getDate()).padStart(2, '0');
+    const LAURA_DIA_HOY = LAURA_DIAS_SEMANA[LAURA_HOY_OBJ.getDay()];
+    // Día grande (2 meses): activa pastel con velitas, confeti dorado y corazones/globos
+    const LAURA_FECHA_ESPECIAL = '2026-11-13';
+    const LAURA_CUMPLE_HOY = LAURA_FECHA_HOY === LAURA_FECHA_ESPECIAL;
+    const LAURA_NUM_VELITAS = 2; // una velita por cada mes
     let laura_velitasApagadas = 0;
 
-    const LAURA_PANEL_A = LAURA_CUMPLE_HOY ? {
-      badge: " ¡Feliz Viernes 06!",
-      titulo: "¡Feliz Viernes, te quiero mucho ❤️",
-      boton: "Gracias ❤️"
-    } : {
-      badge: "💌 Tu mensajito de tu chico Gus ❤️",
-      titulo: "Alerta del sistema: se detectó una sonrisa tuya y mi día mejoró 💕",
-      // foto: "laura-noche-osito.jpg",  // quitada por ahora; descomenta para volver a mostrarla
-      boton: "Gracias ❤️"
+    const LAURA_MENSAJES_POR_FECHA = {
+      // Miércoles: faltan 2 días
+      '2026-11-11': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Alerta del sistema: faltan 2 días para nuestros 2 meses juntos, señorita. Gracias por cada risa y cada abrazo, ya estoy contando las horas 💕",
+          sub: "Que tengas un lindo miércoles 💛",
+          boton: "Gracias ❤️"
+        },
+        minis: [
+          "Feliz miércoles, mi amor ☀️",
+          "Faltan 2 días para nuestros 2 meses 🥰",
+          "Mi lugar favorito eres tú 💛",
+          "Te debo un abrazo con intereses 🧸",
+          "Qué orgulloso estoy de ti ❤️",
+          "Siempre a tu lado, mi amor"
+        ]
+      },
+      // Jueves: falta 1 día
+      '2026-11-12': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Aviso importante: mañana cumplimos 2 meses y ya no aguanto las ganas de verte. Esta noche el sistema solo piensa en ti 💛",
+          sub: "Que tengas un lindo jueves, mañana es nuestro día 🥰",
+          boton: "Gracias ❤️"
+        },
+        minis: [
+          "Feliz jueves, mi amor ☀️",
+          "Falta 1 día para nuestro día 🥰",
+          "Mañana pasa algo especial 👀",
+          "Te debo un abrazo con intereses 🧸",
+          "Qué orgulloso estoy de ti ❤️",
+          "Siempre a tu lado, mi amor"
+        ]
+      },
+      // Viernes 13: 2 meses (pastel con 2 velitas + foto grande)
+      '2026-11-13': {
+        panel: {
+          badge: "💌 ¡Feliz mesiversario, mi amor!",
+          titulo: "Hoy cumplimos 2 meses y cada día contigo ha sido lo mejor de mi vida. Gracias por quedarte a mi lado, TE QUIERO MUCHO 💕",
+          sub: "Feliz viernes, y feliz 2 meses 🎉",
+          foto: "laura-noche-osito.jpg",
+          boton: "Gracias, mi amor ❤️"
+        },
+        minis: [
+          "¡Feliz mesiversario, mi amor! 🎉",
+          "2 meses contigo y los que vengan 💕",
+          "Gracias por quedarte a mi lado 💛",
+          "Contigo todo es mejor 🧸",
+          "Te elegiría una y mil veces ❤️",
+          "Siempre a tu lado, mi amor"
+        ]
+      }
     };
-    const LAURA_MINI_PANELES = [
-      "Feliz martes, mi amor ☀️",
-      "Sistema: Laura = prioridad #1 🚨",
-      "Mi lugar favorito eres tú 💛",
-      "Te debo un abrazo con intereses 🧸",
-      "Qué orgulloso estoy de ti ❤️",
-      "Siempre a tu lado, mi amor"
-    ];
+
+    // Mensaje normal (cualquier otro día): el día de la semana sale solo
+    const LAURA_MENSAJE_NORMAL = {
+      panel: {
+        badge: "💌 Tu mensajito de tu chico Gus ❤️",
+        titulo: "Alerta del sistema: se detectó una sonrisa tuya y mi día mejoró 💕",
+        sub: "Que tengas un lindo " + LAURA_DIA_HOY + " 💛",
+        // foto: "laura-noche-osito.jpg",  // descomenta para mostrar la foto grande
+        boton: "Gracias ❤️"
+      },
+      minis: [
+        "Feliz " + LAURA_DIA_HOY + ", mi amor ☀️",
+        "Sistema: Laura = prioridad #1 🚨",
+        "Mi lugar favorito eres tú 💛",
+        "Te debo un abrazo con intereses 🧸",
+        "Qué orgulloso estoy de ti ❤️",
+        "Siempre a tu lado, mi amor"
+      ]
+    };
+
+    const LAURA_MENSAJE_HOY = LAURA_MENSAJES_POR_FECHA[LAURA_FECHA_HOY] || LAURA_MENSAJE_NORMAL;
+    const LAURA_PANEL_A = LAURA_MENSAJE_HOY.panel;
+    const LAURA_MINI_PANELES = LAURA_MENSAJE_HOY.minis;
  
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -5292,6 +5359,8 @@
       const btnEl = document.getElementById('laura-welcome-btn-' + sufijo);
       const fotoEl = document.getElementById('laura-welcome-photo-' + sufijo);
       const badgeEl = document.getElementById('laura-welcome-badge-' + sufijo);
+      const subEl = document.getElementById('laura-welcome-sub-' + sufijo);
+      if (subEl && panel.sub) subEl.textContent = panel.sub;
       if (btnEl) btnEl.textContent = panel.boton;
       if (fotoEl) {
         if (panel.foto) { fotoEl.src = panel.foto; fotoEl.style.display = ''; }
