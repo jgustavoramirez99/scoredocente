@@ -1071,6 +1071,66 @@
                  laura-portal-glow 2.2s ease-in-out infinite;
     }
     .laura-welcome-photo.laura-welcome-photo-panel:hover { rotate: -1.5deg; }
+    /* 🖼️ Carrusel de fotos (botón siguiente / anterior / puntitos) */
+    .laura-carrusel { width: 100%; margin: 0 auto 1.1rem; }
+    .laura-carrusel-vista {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 4px solid #ffd27a;
+      background: #1a1a2e;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      animation: laura-photo-pop 0.5s 0.15s both cubic-bezier(.34,1.56,.64,1),
+                 laura-portal-glow 2.2s ease-in-out infinite;
+    }
+    .laura-carrusel-vista img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.3s ease;
+    }
+    .laura-carrusel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.78);
+      color: #8a2f55;
+      font-size: 26px;
+      line-height: 1;
+      padding: 0 0 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .laura-carrusel-btn:hover { background: #fff; transform: translateY(-50%) scale(1.1); }
+    .laura-carrusel-btn.prev { left: 10px; }
+    .laura-carrusel-btn.next { right: 10px; }
+    .laura-carrusel-contador {
+      position: absolute;
+      bottom: 10px;
+      right: 12px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 10px;
+    }
+    .laura-carrusel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+    .laura-carrusel-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: rgba(138,47,85,0.28);
+      border: none; padding: 0; cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .laura-carrusel-dot.activo { background: #e0457b; transform: scale(1.35); }
     /* Modo atrapame: el panel se mueve solo y esquiva el mouse un rato */
     .laura-card-movil {
       position: fixed !important;
@@ -2312,6 +2372,15 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
+            <div class="laura-carrusel" id="laura-carrusel-a" style="display:none">
+              <div class="laura-carrusel-vista">
+                <img id="laura-carrusel-img-a" alt="">
+                <button type="button" class="laura-carrusel-btn prev" onclick="lauraCarruselIr(-1, true)" aria-label="Foto anterior">‹</button>
+                <button type="button" class="laura-carrusel-btn next" onclick="lauraCarruselIr(1, true)" aria-label="Foto siguiente">›</button>
+                <div class="laura-carrusel-contador" id="laura-carrusel-cont-a"></div>
+              </div>
+              <div class="laura-carrusel-dots" id="laura-carrusel-dots-a"></div>
+            </div>
             <div class="laura-welcome-title" id="laura-welcome-title-a"></div>
             <div class="laura-welcome-note">Tu chico gustavo ❤️</div>
             <div class="laura-welcome-sub" id="laura-welcome-sub-a">Que tengas un lindo día 💛</div>
@@ -5282,7 +5351,12 @@
           badge: "💌 ¡Feliz mesiversario, mi amor!",
           titulo: "Hoy cumplimos 2 meses y cada día contigo ha sido lo mejor de mi vida. Gracias por quedarte a mi lado, TE QUIERO MUCHO 💕",
           sub: "Feliz viernes, y feliz 2 meses 🎉",
-          foto: "laura-noche-osito.jpg",
+          fotos: [
+            { src: "laura-noche-osito.jpg",    pos: "55% 50%" },
+            { src: "laura-resto-osito.jpg",    pos: "50% 55%" },
+            { src: "laura-ramo-rosas.jpg",     pos: "50% 40%" },
+            { src: "laura-corazon-manos.jpg",  pos: "50% 100%" }
+          ],
           boton: "Gracias, mi amor ❤️"
         },
         minis: [
@@ -5353,6 +5427,65 @@
       el.classList.add('laura-shine');
     }
 
+    // 🖼️ Carrusel de fotos: panel.fotos = [{ src, pos }]. Cambia solo cada 4.5 s
+    // hasta que Laura toca siguiente/anterior o un puntito (ahí lo maneja ella).
+    let laura_carFotos = [];
+    let laura_carIdx = 0;
+    let laura_carTimer = null;
+    function iniciarCarruselLaura(sufijo, panel) {
+      const cont = document.getElementById('laura-carrusel-' + sufijo);
+      detenerCarruselLaura();
+      if (!cont) return;
+      if (!panel.fotos || !panel.fotos.length) { cont.style.display = 'none'; return; }
+      laura_carFotos = panel.fotos;
+      laura_carIdx = 0;
+      laura_carFotos.forEach(f => { const im = new Image(); im.src = f.src; }); // precarga
+      const dots = document.getElementById('laura-carrusel-dots-' + sufijo);
+      if (dots) {
+        dots.innerHTML = '';
+        laura_carFotos.forEach((_, i) => {
+          const d = document.createElement('button');
+          d.type = 'button';
+          d.className = 'laura-carrusel-dot';
+          d.setAttribute('aria-label', 'Foto ' + (i + 1));
+          d.onclick = () => lauraCarruselMostrar(i, true);
+          dots.appendChild(d);
+        });
+      }
+      cont.style.display = '';
+      lauraCarruselMostrar(0, false, true);
+      if (laura_carFotos.length > 1) {
+        laura_carTimer = setInterval(() => lauraCarruselIr(1, false), 4500);
+      }
+    }
+    function lauraCarruselMostrar(idx, manual, inmediato) {
+      if (!laura_carFotos.length) return;
+      if (manual && laura_carTimer) { clearInterval(laura_carTimer); laura_carTimer = null; }
+      const n = laura_carFotos.length;
+      laura_carIdx = ((idx % n) + n) % n;
+      const f = laura_carFotos[laura_carIdx];
+      const img = document.getElementById('laura-carrusel-img-a');
+      const cont = document.getElementById('laura-carrusel-cont-a');
+      const dots = document.querySelectorAll('#laura-carrusel-dots-a .laura-carrusel-dot');
+      if (cont) cont.textContent = (laura_carIdx + 1) + ' / ' + n;
+      dots.forEach((d, i) => d.classList.toggle('activo', i === laura_carIdx));
+      if (!img) return;
+      const poner = () => {
+        img.src = f.src;
+        img.style.objectPosition = f.pos || '50% 50%';
+        img.style.opacity = '1';
+      };
+      if (inmediato) { poner(); return; }
+      img.style.opacity = '0';
+      setTimeout(poner, 220);
+    }
+    function lauraCarruselIr(delta, manual) {
+      lauraCarruselMostrar(laura_carIdx + delta, manual);
+    }
+    function detenerCarruselLaura() {
+      if (laura_carTimer) { clearInterval(laura_carTimer); laura_carTimer = null; }
+    }
+
     // Tarjeta A: reporte meteorológico. Tarjeta B: sueño (con foto). Ambas aparecen a la vez.
     function renderTarjetaLaura(sufijo, panel) {
       const tituloEl = document.getElementById('laura-welcome-title-' + sufijo);
@@ -5366,7 +5499,7 @@
         if (panel.foto) { fotoEl.src = panel.foto; fotoEl.style.display = ''; }
         else { fotoEl.style.display = 'none'; }
         const cardEl = fotoEl.closest('.laura-welcome-card');
-        if (cardEl) cardEl.classList.toggle('laura-card-con-foto', !!panel.foto);
+        if (cardEl) cardEl.classList.toggle('laura-card-con-foto', !!(panel.foto || (panel.fotos && panel.fotos.length)));
       }
       if (badgeEl) {
         if (panel.badge) {
@@ -5378,6 +5511,7 @@
           badgeEl.style.display = 'none';
         }
       }
+      iniciarCarruselLaura(sufijo, panel);
       if (tituloEl) {
         tituloEl.classList.remove('laura-shine');
         escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
@@ -5572,6 +5706,7 @@
       detenerEstrellasFugacesLaura();
       detenerGlobosLaura();
       detenerBrilloPeriodicoLaura();
+      detenerCarruselLaura();
       laura_limpiarEscurridizo();
     }
 
