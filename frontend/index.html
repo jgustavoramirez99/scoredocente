@@ -5345,6 +5345,15 @@
           "Siempre a tu lado, mi amor"
         ]
       },
+      // Martes 17: después de los 2 meses (solo texto; los 6 paneles de los costados son los normales)
+      '2026-11-17': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Alerta del sistema: pasaron 2 meses y 4 días, y mi cariño por ti sigue en aumento 💕",
+          sub: "Que tengas un lindo martes 💛",
+          boton: "Gracias ❤️"
+        }
+      },
       // Viernes 13: 2 meses (pastel con 2 velitas + foto grande)
       '2026-11-13': {
         panel: {
@@ -5391,7 +5400,7 @@
 
     const LAURA_MENSAJE_HOY = LAURA_MENSAJES_POR_FECHA[LAURA_FECHA_HOY] || LAURA_MENSAJE_NORMAL;
     const LAURA_PANEL_A = LAURA_MENSAJE_HOY.panel;
-    const LAURA_MINI_PANELES = LAURA_MENSAJE_HOY.minis;
+    const LAURA_MINI_PANELES = LAURA_MENSAJE_HOY.minis || LAURA_MENSAJE_NORMAL.minis;
  
     function fechaBonitaLaura() {
       const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
