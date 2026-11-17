@@ -1124,6 +1124,26 @@
       border-radius: 10px;
     }
     .laura-carrusel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+    /* 🌹 Ramo de rosas que florece */
+    .laura-ramo { width: 100%; max-width: 270px; margin: 0 auto 0.6rem; }
+    .laura-ramo svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .laura-ramo .lr-tallo { fill: none; stroke: #3f8a3d; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+    .laura-ramo .lr-rosa, .laura-ramo .lr-hoja { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+    .laura-ramo .lr-env { opacity: 0; transform: translateY(40px); }
+    .laura-ramo .lr-petalo { opacity: 0; }
+    .laura-ramo.play .lr-tallo { animation: lr-crece .9s var(--d) ease-out forwards; }
+    .laura-ramo.play .lr-rosa { animation: lr-flor .9s var(--d) cubic-bezier(.34,1.56,.64,1) forwards; }
+    .laura-ramo.play .lr-hoja { animation: lr-flor .6s var(--d) ease-out forwards; }
+    .laura-ramo.play .lr-env { animation: lr-sube .8s .2s ease-out forwards; }
+    .laura-ramo.play .lr-petalo { animation: lr-cae 6s var(--d) linear infinite; }
+    @keyframes lr-crece { to { stroke-dashoffset: 0; } }
+    @keyframes lr-flor { to { transform: scale(1); } }
+    @keyframes lr-sube { to { opacity: 1; transform: translateY(0); } }
+    @keyframes lr-cae {
+      0% { opacity: 0; transform: translate(0,0) rotate(0); }
+      10% { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--x), 320px) rotate(260deg); }
+    }
     .laura-carrusel-dot {
       width: 9px; height: 9px; border-radius: 50%;
       background: rgba(138,47,85,0.28);
@@ -2372,6 +2392,21 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
+            <div class="laura-ramo" id="laura-ramo-a" style="display:none">
+              <svg viewBox="200 95 280 345" role="img" aria-label="Ramo de rosas que florece">
+                <g id="lr-tallos"></g>
+                <g id="lr-hojas"></g>
+                <g id="lr-rosas"></g>
+                <g class="lr-env">
+                  <polygon points="232,262 448,262 340,432" fill="#cfa56c"/>
+                  <polygon points="262,262 418,262 340,412" fill="#ead7b2" opacity="0.9"/>
+                  <ellipse cx="318" cy="322" rx="24" ry="12" fill="#ed93b1" transform="rotate(-20 318 322)"/>
+                  <ellipse cx="362" cy="322" rx="24" ry="12" fill="#ed93b1" transform="rotate(20 362 322)"/>
+                  <circle cx="340" cy="324" r="8" fill="#d4537e"/>
+                </g>
+                <g id="lr-petalos"></g>
+              </svg>
+            </div>
             <div class="laura-carrusel" id="laura-carrusel-a" style="display:none">
               <div class="laura-carrusel-vista">
                 <img id="laura-carrusel-img-a" alt="">
@@ -5354,6 +5389,16 @@
           boton: "Gracias ❤️"
         }
       },
+      // Miércoles 18: ramo de rosas que florece (sin fotos; paneles de los costados normales)
+      '2026-11-18': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Aviso del sistema: se detectó que contigo todo florece, hasta los miércoles 💕",
+          sub: "Que tengas un lindo miércoles 💛",
+          ramo: true,
+          boton: "Gracias ❤️"
+        }
+      },
       // Viernes 13: 2 meses (pastel con 2 velitas + foto grande)
       '2026-11-13': {
         panel: {
@@ -5434,6 +5479,41 @@
       el.classList.remove('laura-shine');
       void el.offsetWidth; // reinicia la animación
       el.classList.add('laura-shine');
+    }
+
+    // 🌹 Ramo de rosas que florece: se activa con panel.ramo = true
+    function iniciarRamoLaura(sufijo, panel) {
+      const cont = document.getElementById('laura-ramo-' + sufijo);
+      if (!cont) return;
+      if (!panel.ramo) { cont.style.display = 'none'; return; }
+      const R = [[340,185,40,.9],[278,215,34,1.2],[402,215,34,1.5],[305,140,30,1.8],[375,140,30,2.1],[240,180,26,2.4],[440,180,26,2.7]];
+      let t = '', h = '', r = '', p = '';
+      R.forEach(([x, y, rad, d]) => {
+        t += '<path class="lr-tallo" pathLength="1" style="--d:' + (d - 0.6).toFixed(1) + 's" d="M340 345 Q' + ((340 + x) / 2) + ' ' + ((345 + y) / 2 + 25) + ' ' + x + ' ' + y + '"/>';
+        const a = rad * 0.3;
+        r += '<g class="lr-rosa" style="--d:' + d + 's">' +
+          '<circle cx="' + x + '" cy="' + y + '" r="' + rad + '" fill="#b81e3c"/>' +
+          '<circle cx="' + x + '" cy="' + y + '" r="' + (rad * 0.8) + '" fill="#dc3552"/>' +
+          '<circle cx="' + x + '" cy="' + y + '" r="' + (rad * 0.52) + '" fill="#a3153a"/>' +
+          '<path d="M' + x + ' ' + (y - a) + ' a' + a + ' ' + a + ' 0 1 1 ' + (-a) + ' ' + a + '" fill="none" stroke="#f29bb0" stroke-width="2" stroke-linecap="round"/></g>';
+      });
+      [[300,285,-35],[380,285,35],[322,268,-70],[358,268,70],[270,250,-50],[410,250,50]].forEach(([x, y, ang], i) => {
+        h += '<ellipse class="lr-hoja" style="--d:' + (0.7 + i * 0.15).toFixed(2) + 's" cx="' + x + '" cy="' + y + '" rx="22" ry="9" fill="#3f8a3d" transform="rotate(' + ang + ' ' + x + ' ' + y + ')"/>';
+      });
+      for (let i = 0; i < 12; i++) {
+        const x = 230 + Math.round((i * 37) % 230);
+        const c = i % 2 ? '#dc3552' : '#f4a3b5';
+        const dx = (i % 2 ? 1 : -1) * (20 + (i * 13) % 50);
+        p += '<ellipse class="lr-petalo" style="--d:' + (3 + i * 0.45).toFixed(2) + 's;--x:' + dx + 'px" cx="' + x + '" cy="105" rx="7" ry="4" fill="' + c + '"/>';
+      }
+      document.getElementById('lr-tallos').innerHTML = t;
+      document.getElementById('lr-hojas').innerHTML = h;
+      document.getElementById('lr-rosas').innerHTML = r;
+      document.getElementById('lr-petalos').innerHTML = p;
+      cont.style.display = '';
+      cont.classList.remove('play');
+      void cont.getBoundingClientRect();
+      cont.classList.add('play');
     }
 
     // 🖼️ Carrusel de fotos: panel.fotos = [{ src, pos }]. Cambia solo cada 4.5 s
@@ -5521,6 +5601,7 @@
         }
       }
       iniciarCarruselLaura(sufijo, panel);
+      iniciarRamoLaura(sufijo, panel);
       if (tituloEl) {
         tituloEl.classList.remove('laura-shine');
         escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
