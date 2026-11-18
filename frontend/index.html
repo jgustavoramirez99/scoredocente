@@ -1127,6 +1127,31 @@
     /* 🌹 Ramo de rosas que florece */
     .laura-ramo { width: 100%; max-width: 270px; margin: 0 auto 0.6rem; }
     .laura-ramo svg { width: 100%; height: auto; display: block; overflow: visible; }
+    /* 🧸 Osito que abraza un corazón */
+    .laura-oso { width: 100%; max-width: 215px; margin: 0 auto 0.6rem; }
+    .laura-oso svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .laura-oso .lo-osito { transform-box: fill-box; transform-origin: 50% 100%; transform: scale(0); }
+    .laura-oso .lo-corazon { transform-box: fill-box; transform-origin: center; transform: scale(0); }
+    .laura-oso .lo-brazo-i, .laura-oso .lo-brazo-d { transform-box: fill-box; transform-origin: 50% 0%; }
+    .laura-oso .lo-brazo-i { transform: rotate(45deg); }
+    .laura-oso .lo-brazo-d { transform: rotate(-45deg); }
+    .laura-oso .lo-ojos { transform-box: fill-box; transform-origin: center; }
+    .laura-oso .lo-mini { opacity: 0; }
+    .laura-oso.play .lo-osito { animation: lo-pop .9s .1s cubic-bezier(.34,1.56,.64,1) forwards, lo-bote 2.8s 2.4s ease-in-out infinite; }
+    .laura-oso.play .lo-corazon { animation: lo-pop .7s .7s cubic-bezier(.34,1.56,.64,1) forwards, lo-late 1.1s 2s ease-in-out infinite; }
+    .laura-oso.play .lo-brazo-i, .laura-oso.play .lo-brazo-d { animation: lo-abraza .9s 1.3s cubic-bezier(.34,1.56,.64,1) forwards; }
+    .laura-oso.play .lo-ojos { animation: lo-parpadeo 4s 3s infinite; }
+    .laura-oso.play .lo-mini { animation: lo-sube 3.6s var(--d) ease-out infinite; }
+    @keyframes lo-pop { to { transform: scale(1); } }
+    @keyframes lo-bote { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1); } }
+    @keyframes lo-late { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.14); } 28% { transform: scale(1); } }
+    @keyframes lo-abraza { to { transform: rotate(0deg); } }
+    @keyframes lo-parpadeo { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+    @keyframes lo-sube {
+      0% { opacity: 0; transform: translate(0,0) scale(.6); }
+      15% { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--x), -120px) scale(1.2); }
+    }
     .laura-ramo .lr-tallo { fill: none; stroke: #3f8a3d; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
     .laura-ramo .lr-rosa, .laura-ramo .lr-hoja { transform-box: fill-box; transform-origin: center; transform: scale(0); }
     .laura-ramo .lr-env { opacity: 0; transform: translateY(40px); }
@@ -2392,6 +2417,46 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
+            <div class="laura-oso" id="laura-oso-a" style="display:none">
+              <svg viewBox="50 30 200 305" role="img" aria-label="Osito abrazando un corazón">
+                <g class="lo-osito">
+                  <ellipse cx="105" cy="318" rx="32" ry="20" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/>
+                  <ellipse cx="195" cy="318" rx="32" ry="20" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/>
+                  <ellipse cx="105" cy="322" rx="14" ry="9" fill="#cfe3fb"/>
+                  <ellipse cx="195" cy="322" rx="14" ry="9" fill="#cfe3fb"/>
+                  <ellipse cx="150" cy="255" rx="78" ry="70" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/>
+                  <circle cx="95" cy="70" r="30" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/>
+                  <circle cx="205" cy="70" r="30" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/>
+                  <circle cx="95" cy="70" r="16" fill="#cfe3fb"/>
+                  <circle cx="205" cy="70" r="16" fill="#cfe3fb"/>
+                  <circle cx="150" cy="115" r="75" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/>
+                  <g transform="translate(112 52)">
+                    <ellipse cx="-14" cy="0" rx="16" ry="9" fill="#3b82e6" transform="rotate(-20 -14 0)"/>
+                    <ellipse cx="14" cy="0" rx="16" ry="9" fill="#3b82e6" transform="rotate(20 14 0)"/>
+                    <circle r="6" fill="#2f6fd6"/>
+                  </g>
+                  <ellipse cx="150" cy="140" rx="34" ry="26" fill="#ffffff" stroke="#efe6d6" stroke-width="2"/>
+                  <ellipse cx="150" cy="127" rx="14" ry="10" fill="#2f6fd6"/>
+                  <ellipse cx="146" cy="124" rx="4" ry="2.5" fill="#ffffff" opacity="0.7"/>
+                  <path d="M150 137 L150 146 M150 146 Q141 155 132 148 M150 146 Q159 155 168 148" fill="none" stroke="#6b4a3a" stroke-width="3" stroke-linecap="round"/>
+                  <g class="lo-ojos">
+                    <circle cx="120" cy="105" r="8" fill="#2b2020"/>
+                    <circle cx="180" cy="105" r="8" fill="#2b2020"/>
+                    <circle cx="123" cy="102" r="2.5" fill="#ffffff"/>
+                    <circle cx="183" cy="102" r="2.5" fill="#ffffff"/>
+                  </g>
+                  <ellipse cx="100" cy="135" rx="10" ry="6" fill="#f4b8c5" opacity="0.75"/>
+                  <ellipse cx="200" cy="135" rx="10" ry="6" fill="#f4b8c5" opacity="0.75"/>
+                  <g class="lo-corazon">
+                    <path d="M150 292 C98 256 104 214 134 217 C144 218 150 225 150 230 C150 225 156 218 166 217 C196 214 202 256 150 292 Z" fill="#e0364f" stroke="#b81e3c" stroke-width="3"/>
+                    <ellipse cx="128" cy="232" rx="8" ry="5" fill="#ffffff" opacity="0.55" transform="rotate(-30 128 232)"/>
+                  </g>
+                  <g class="lo-brazo-i"><ellipse cx="100" cy="245" rx="20" ry="44" transform="rotate(-25 100 245)" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/></g>
+                  <g class="lo-brazo-d"><ellipse cx="200" cy="245" rx="20" ry="44" transform="rotate(25 200 245)" fill="#fffdf8" stroke="#e6dccb" stroke-width="3"/></g>
+                </g>
+                <g transform="translate(118 205)"><path class="lo-mini" style="--d:2.6s;--x:-22px" d="M0 6 C-9 -2 -7 -11 0 -7 C7 -11 9 -2 0 6Z" fill="#f48fb1"/></g><g transform="translate(182 205)"><path class="lo-mini" style="--d:3.3s;--x:22px" d="M0 6 C-9 -2 -7 -11 0 -7 C7 -11 9 -2 0 6Z" fill="#f48fb1"/></g><g transform="translate(150 190)"><path class="lo-mini" style="--d:4.0s;--x:0px" d="M0 6 C-9 -2 -7 -11 0 -7 C7 -11 9 -2 0 6Z" fill="#f48fb1"/></g><g transform="translate(100 235)"><path class="lo-mini" style="--d:4.7s;--x:-30px" d="M0 6 C-9 -2 -7 -11 0 -7 C7 -11 9 -2 0 6Z" fill="#f48fb1"/></g><g transform="translate(200 235)"><path class="lo-mini" style="--d:5.4s;--x:30px" d="M0 6 C-9 -2 -7 -11 0 -7 C7 -11 9 -2 0 6Z" fill="#f48fb1"/></g><g transform="translate(150 215)"><path class="lo-mini" style="--d:6.1s;--x:12px" d="M0 6 C-9 -2 -7 -11 0 -7 C7 -11 9 -2 0 6Z" fill="#f48fb1"/></g>
+              </svg>
+            </div>
             <div class="laura-ramo" id="laura-ramo-a" style="display:none">
               <svg viewBox="200 95 280 345" role="img" aria-label="Ramo de rosas que florece">
                 <g id="lr-tallos"></g>
@@ -5389,6 +5454,16 @@
           boton: "Gracias ❤️"
         }
       },
+      // Jueves 19: osito que abraza un corazón (sin fotos; paneles de los costados normales)
+      '2026-11-19': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Aviso del sistema: se detectó un osito con un abrazo enorme, enviado especialmente para ti mi Lau🧸💕",
+          sub: "Que tengas un lindo jueves 💛",
+          oso: true,
+          boton: "Gracias ❤️"
+        }
+      },
       // Miércoles 18: ramo de rosas que florece (sin fotos; paneles de los costados normales)
       '2026-11-18': {
         panel: {
@@ -5479,6 +5554,17 @@
       el.classList.remove('laura-shine');
       void el.offsetWidth; // reinicia la animación
       el.classList.add('laura-shine');
+    }
+
+    // 🧸 Osito abrazando un corazón: se activa con panel.oso = true
+    function iniciarOsoLaura(sufijo, panel) {
+      const cont = document.getElementById('laura-oso-' + sufijo);
+      if (!cont) return;
+      if (!panel.oso) { cont.style.display = 'none'; return; }
+      cont.style.display = '';
+      cont.classList.remove('play');
+      void cont.getBoundingClientRect();
+      cont.classList.add('play');
     }
 
     // 🌹 Ramo de rosas que florece: se activa con panel.ramo = true
@@ -5602,6 +5688,7 @@
       }
       iniciarCarruselLaura(sufijo, panel);
       iniciarRamoLaura(sufijo, panel);
+      iniciarOsoLaura(sufijo, panel);
       if (tituloEl) {
         tituloEl.classList.remove('laura-shine');
         escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
