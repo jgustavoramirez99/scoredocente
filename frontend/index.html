@@ -1127,6 +1127,14 @@
     /* 🌹 Ramo de rosas que florece */
     .laura-ramo { width: 100%; max-width: 270px; margin: 0 auto 0.6rem; }
     .laura-ramo svg { width: 100%; height: auto; display: block; overflow: visible; }
+    /* ✨ Tema constelación: tarjeta nocturna con letras de estrellas que forman un corazón */
+    .laura-welcome-card.laura-tema-sueno { width: 380px; max-width: 92vw; }
+    .laura-welcome-card.laura-tema-sueno .laura-welcome-title { color: #f6e8f2; }
+    .laura-welcome-card.laura-tema-sueno .laura-welcome-note,
+    .laura-welcome-card.laura-tema-sueno .laura-welcome-sub,
+    .laura-welcome-card.laura-tema-sueno .laura-welcome-date { color: #c9b8e6; }
+    .laura-const { width: 100%; max-width: 320px; margin: 0 auto 0.4rem; }
+    .laura-const svg { width: 100%; height: auto; display: block; overflow: visible; }
     /* 🧸 Osito que abraza un corazón */
     .laura-oso { width: 100%; max-width: 215px; margin: 0 auto 0.6rem; }
     .laura-oso svg { width: 100%; height: auto; display: block; overflow: visible; }
@@ -2413,10 +2421,23 @@
       <div class="laura-welcome-cards">
         <div class="laura-welcome-card laura-card-a" id="laura-welcome-card-a">
           <div class="laura-welcome-card-inner">
+            <div class="laura-welcome-moon">🌙</div>
             <div class="laura-welcome-heart-icon">💛</div>
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
+            <div class="laura-const" id="laura-const-a" style="display:none">
+              <svg viewBox="40 140 320 230" role="img" aria-label="Dos constelaciones, una L y una G, que se unen formando un corazón con una foto">
+                <defs><clipPath id="lc-clip"><path id="lc-clip-path"/></clipPath></defs>
+                <g id="lc-grupo">
+                  <path id="lc-relleno" fill="#f48fb1" opacity="0"/>
+                  <image id="lc-foto" x="88" y="154" width="224" height="200" preserveAspectRatio="xMidYMid slice" clip-path="url(#lc-clip)" opacity="0"/>
+                  <polyline id="lc-lineaL" fill="none" stroke="#e6d9ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                  <polyline id="lc-lineaG" fill="none" stroke="#ffc2dc" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                  <g id="lc-estrellas"></g>
+                </g>
+              </svg>
+            </div>
             <div class="laura-oso" id="laura-oso-a" style="display:none">
               <svg viewBox="50 30 200 305" role="img" aria-label="Osito abrazando un corazón">
                 <g class="lo-osito">
@@ -5454,6 +5475,17 @@
           boton: "Gracias ❤️"
         }
       },
+      // Viernes 20: constelaciones L y G que forman un corazón con foto (sin otros paneles especiales)
+      '2026-11-20': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Alerta del sistema: entre millones de estrellas, la mía eres tú ⭐",
+          sub: "Que tengas un lindo viernes 💛",
+          constelacion: true,
+          constelacionFoto: "laura-noche-osito.jpg",
+          boton: "Gracias ❤️"
+        }
+      },
       // Jueves 19: osito que abraza un corazón (sin fotos; paneles de los costados normales)
       '2026-11-19': {
         panel: {
@@ -5554,6 +5586,92 @@
       el.classList.remove('laura-shine');
       void el.offsetWidth; // reinicia la animación
       el.classList.add('laura-shine');
+    }
+
+    // ✨ Constelaciones: una L y una G de estrellas flotan, se juntan y forman un corazón
+    // que se llena con una foto. Se activa con panel.constelacion = true (y panel.constelacionFoto).
+    let laura_conRaf = null;
+    function detenerConstelacionLaura() {
+      if (laura_conRaf) { cancelAnimationFrame(laura_conRaf); laura_conRaf = null; }
+    }
+    function iniciarConstelacionLaura(sufijo, panel) {
+      detenerConstelacionLaura();
+      const cont = document.getElementById('laura-const-' + sufijo);
+      const card = document.getElementById('laura-welcome-card-' + sufijo);
+      if (card) card.classList.toggle('laura-tema-sueno', !!panel.constelacion);
+      if (!cont) return;
+      if (!panel.constelacion) { cont.style.display = 'none'; return; }
+      cont.style.display = '';
+      const NS = 'http://www.w3.org/2000/svg';
+      const L0 = [[50,150],[50,185],[50,220],[50,255],[50,290],[75,290],[100,290],[125,290],[150,290]];
+      const gcx = 310, gcy = 220, rx = 52, ry = 64;
+      const G0 = [45,90,135,180,225,270,315].map(a => [gcx + rx * Math.cos(a * Math.PI / 180), gcy - ry * Math.sin(a * Math.PI / 180)]);
+      G0.push([gcx + rx, gcy]); G0.push([gcx + rx * 0.35, gcy]);
+      const hx = [], hy = [];
+      for (let k = 0; k < 9; k++) {
+        const t = k * Math.PI / 8;
+        hx.push(16 * Math.pow(Math.sin(t), 3));
+        hy.push(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      }
+      const HL = hx.map((x, k) => [200 - 7 * x, 235 - 7 * hy[k]]);
+      const HR = hx.map((x, k) => [200 + 7 * x, 235 - 7 * hy[k]]);
+      const gE = document.getElementById('lc-estrellas');
+      gE.innerHTML = '';
+      const cs = [], gl = [];
+      for (let i = 0; i < 18; i++) {
+        const col = i < 9 ? '#ffeaa8' : '#ffc2dc';
+        const g = document.createElementNS(NS, 'circle'); g.setAttribute('r', '9'); g.setAttribute('fill', col); g.setAttribute('opacity', '0');
+        const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '3.6'); c.setAttribute('fill', col); c.setAttribute('opacity', '0');
+        gE.appendChild(g); gE.appendChild(c); gl.push(g); cs.push(c);
+      }
+      const foto = document.getElementById('lc-foto');
+      if (foto) {
+        const src = panel.constelacionFoto || '';
+        foto.setAttribute('href', src);
+        foto.setAttribute('opacity', '0');
+      }
+      const cl = v => Math.max(0, Math.min(1, v));
+      const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const pos = (base, dx, heart, i, t) => {
+        const e1 = ease(cl((t - 2.6) / 1.8)), e2 = ease(cl((t - 4.9) / 2));
+        const bx = base[0] + dx * e1, by = base[1];
+        const bob = (1 - e2) * Math.sin(t * 1.6 + i) * 3;
+        return [bx + (heart[0] - bx) * e2, by + bob + (heart[1] - by - bob) * e2];
+      };
+      const t0 = performance.now();
+      const elL = document.getElementById('lc-lineaL'), elG = document.getElementById('lc-lineaG');
+      const elRel = document.getElementById('lc-relleno'), elClip = document.getElementById('lc-clip-path');
+      const elGrupo = document.getElementById('lc-grupo');
+      function frame(now) {
+        const ov = document.getElementById('laura-welcome-overlay');
+        if (!ov || !ov.classList.contains('show')) { laura_conRaf = null; return; }
+        const t = (now - t0) / 1000;
+        const P = [];
+        for (let i = 0; i < 9; i++) P.push(pos(L0[i], 45, HL[i], i, t));
+        for (let i = 0; i < 9; i++) P.push(pos(G0[i], -45, HR[i], i + 9, t));
+        const ptsL = [], ptsG = [];
+        for (let i = 0; i < 18; i++) {
+          const local = i < 9 ? i : i - 9;
+          const a = cl((t - local * 0.2) / 0.4);
+          cs[i].setAttribute('cx', P[i][0]); cs[i].setAttribute('cy', P[i][1]); cs[i].setAttribute('opacity', a);
+          gl[i].setAttribute('cx', P[i][0]); gl[i].setAttribute('cy', P[i][1]); gl[i].setAttribute('opacity', a * 0.22);
+          if (a > 0.5) (i < 9 ? ptsL : ptsG).push(P[i][0].toFixed(1) + ',' + P[i][1].toFixed(1));
+        }
+        elL.setAttribute('points', ptsL.length > 1 ? ptsL.join(' ') : '');
+        elG.setAttribute('points', ptsG.length > 1 ? ptsG.join(' ') : '');
+        const poly = [];
+        for (let i = 0; i < 9; i++) poly.push(P[i][0] + ',' + P[i][1]);
+        for (let i = 8; i >= 0; i--) poly.push(P[9 + i][0] + ',' + P[9 + i][1]);
+        const d = 'M' + poly.join(' L') + 'Z';
+        elRel.setAttribute('d', d);
+        elClip.setAttribute('d', d);
+        elRel.setAttribute('opacity', (0.28 * cl((t - 6.4) / 1.2)).toFixed(3));
+        if (foto) foto.setAttribute('opacity', cl((t - 6.8) / 1.4).toFixed(3));
+        const pulse = t > 8 ? 1 + 0.025 * Math.sin((t - 8) * 3.4) : 1;
+        elGrupo.setAttribute('transform', 'translate(200 235) scale(' + pulse + ') translate(-200 -235)');
+        laura_conRaf = requestAnimationFrame(frame);
+      }
+      laura_conRaf = requestAnimationFrame(frame);
     }
 
     // 🧸 Osito abrazando un corazón: se activa con panel.oso = true
@@ -5689,9 +5807,20 @@
       iniciarCarruselLaura(sufijo, panel);
       iniciarRamoLaura(sufijo, panel);
       iniciarOsoLaura(sufijo, panel);
+      iniciarConstelacionLaura(sufijo, panel);
       if (tituloEl) {
         tituloEl.classList.remove('laura-shine');
-        escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
+        // En el modo constelación el título aparece cuando el corazón ya se formó
+        const retrasoTitulo = panel.constelacion ? 7000 : 0;
+        if (retrasoTitulo) {
+          tituloEl.textContent = '';
+          setTimeout(() => {
+            const ov = document.getElementById('laura-welcome-overlay');
+            if (ov && ov.classList.contains('show')) escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
+          }, retrasoTitulo);
+        } else {
+          escribirTextoLaura(tituloEl, panel.titulo, 26, () => aplicarShineLaura(tituloEl));
+        }
       }
     }
 
@@ -5865,7 +5994,7 @@
       // Cuando termina de escribirse el titulo, el panel se pone
       // "escurridizo": se mueve solo y esquiva el mouse hasta que Laura
       // logra atraparlo con el cursor para poder darle click al boton.
-      const tiempoEscritura = (LAURA_PANEL_A.titulo.length * 26) + 1400;
+      const tiempoEscritura = (LAURA_PANEL_A.titulo.length * 26) + 1400 + (LAURA_PANEL_A.constelacion ? 7000 : 0);
       if (!LAURA_CUMPLE_HOY) {
         laura_escurridizoTimeout = setTimeout(laura_iniciarEscurridizo, tiempoEscritura);
       }
@@ -5884,6 +6013,7 @@
       detenerGlobosLaura();
       detenerBrilloPeriodicoLaura();
       detenerCarruselLaura();
+      detenerConstelacionLaura();
       laura_limpiarEscurridizo();
     }
 
