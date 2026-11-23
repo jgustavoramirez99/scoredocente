@@ -1134,6 +1134,18 @@
     .laura-welcome-card.laura-tema-sueno .laura-welcome-sub,
     .laura-welcome-card.laura-tema-sueno .laura-welcome-date { color: #c9b8e6; }
     .laura-const { width: 100%; max-width: 320px; margin: 0 auto 0.4rem; }
+    .laura-farol { width: 100%; max-width: 320px; margin: 0 auto 0.4rem; }
+    .laura-farol svg { width: 100%; height: auto; display: block; overflow: hidden; }
+    @keyframes lf-sube { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 85% { opacity: .9; } 100% { transform: translateY(-420px); opacity: 0; } }
+    @keyframes lf-mece { from { transform: translateX(-9px); } to { transform: translateX(9px); } }
+    @keyframes lf-llega { 0% { transform: translateY(300px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(0); opacity: 1; } }
+    @keyframes lf-flota { from { transform: translateY(0); } to { transform: translateY(-9px); } }
+    @keyframes lf-brilla { from { opacity: .18; } to { opacity: .42; } }
+    .lf-sube { animation: lf-sube var(--dur, 13s) linear var(--d, 0s) infinite; opacity: 0; }
+    .lf-mece { animation: lf-mece var(--sw, 3.5s) ease-in-out infinite alternate; }
+    .lf-grande { animation: lf-llega 3.4s cubic-bezier(.2,.7,.3,1) .6s both; }
+    .lf-flota { animation: lf-flota 2.8s ease-in-out 4s infinite alternate; }
+    .lf-glow { animation: lf-brilla 1.8s ease-in-out infinite alternate; }
     .laura-const svg { width: 100%; height: auto; display: block; overflow: visible; }
     /* 🧸 Osito que abraza un corazón */
     .laura-oso { width: 100%; max-width: 215px; margin: 0 auto 0.6rem; }
@@ -2426,6 +2438,9 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
+            <div class="laura-farol" id="laura-farol-a" style="display:none">
+              <svg viewBox="0 0 320 280" role="img" aria-label="Farolitos flotando en el cielo"><g id="lf-capa"></g></svg>
+            </div>
             <div class="laura-const" id="laura-const-a" style="display:none">
               <svg viewBox="40 140 320 230" role="img" aria-label="Dos constelaciones, una L y una G, que se unen formando un corazón con una foto">
                 <defs><clipPath id="lc-clip"><path id="lc-clip-path"/></clipPath></defs>
@@ -5475,6 +5490,17 @@
           boton: "Gracias ❤️"
         }
       },
+      // Lunes 23: farolitos que suben y uno grande con "Lau"
+      '2026-11-23': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Alerta del sistema: pedí un deseo en cada farolito y en todos apareces tú 🏮",
+          sub: "Que tengas una linda noche 💛",
+          farolitos: true,
+          retrasoTitulo: 3600,
+          boton: "Gracias ❤️"
+        }
+      },
       // Viernes 20: constelaciones L y G que forman un corazón con foto (sin otros paneles especiales)
       '2026-11-20': {
         panel: {
@@ -5594,11 +5620,38 @@
     function detenerConstelacionLaura() {
       if (laura_conRaf) { cancelAnimationFrame(laura_conRaf); laura_conRaf = null; }
     }
+    function iniciarFarolitosLaura(sufijo, panel) {
+      const cont = document.getElementById('laura-farol-' + sufijo);
+      if (!cont) return;
+      if (!panel.farolitos) { cont.style.display = 'none'; return; }
+      cont.style.display = '';
+      const capa = document.getElementById('lf-capa');
+      const ns = 'http://www.w3.org/2000/svg';
+      const colores = ['#ffb23e', '#ff9f7a', '#ffd166'];
+      const cuerpo = (c) => '<circle class="lf-glow" r="26" fill="#ffc766" opacity=".25"/>' +
+        '<path d="M-14 -16 Q-17 0 -12 18 L12 18 Q17 0 14 -16 Z" fill="' + c + '" stroke="#e08a1e" stroke-width="1"/>' +
+        '<ellipse cx="0" cy="3" rx="7" ry="10" fill="#ffe9a8" opacity=".85"/>' +
+        '<rect x="-14" y="-19" width="28" height="4" rx="2" fill="#7a4318"/>' +
+        '<rect x="-12" y="17" width="24" height="3" rx="1.5" fill="#7a4318"/>' +
+        '<path d="M0 20 Q-2 26 0 31" stroke="#c98a4b" stroke-width="1" fill="none"/>';
+      const xs = [26, 68, 110, 214, 254, 294, 46, 274];
+      const es = [.8, .65, .9, .85, .7, .95, .6, .75];
+      const du = [12, 14, 11, 13, 15, 12, 16, 13];
+      const de = [-2, -7, -4, -9, -1, -6, -11, -3];
+      const sw = [3, 4, 3.5, 4.5, 3.2, 4.2, 3.8, 3.4];
+      let h = '';
+      xs.forEach((x, i) => {
+        h += '<g transform="translate(' + x + ' 300)"><g class="lf-sube" style="--dur:' + du[i] + 's;--d:' + de[i] + 's"><g class="lf-mece" style="--sw:' + sw[i] + 's"><g transform="scale(' + es[i] + ')">' + cuerpo(colores[i % 3]) + '</g></g></g></g>';
+      });
+      h += '<g transform="translate(160 118)"><g class="lf-grande"><g class="lf-flota"><g transform="scale(2.4)">' + cuerpo('#ffb23e') +
+        '<text x="0" y="8" text-anchor="middle" font-size="7" font-weight="700" fill="#5a2d0c" font-family="Quicksand, sans-serif">Lau</text></g></g></g></g>';
+      capa.innerHTML = h;
+    }
     function iniciarConstelacionLaura(sufijo, panel) {
       detenerConstelacionLaura();
       const cont = document.getElementById('laura-const-' + sufijo);
       const card = document.getElementById('laura-welcome-card-' + sufijo);
-      if (card) card.classList.toggle('laura-tema-sueno', !!panel.constelacion);
+      if (card) card.classList.toggle('laura-tema-sueno', !!(panel.constelacion || panel.farolitos));
       if (!cont) return;
       if (!panel.constelacion) { cont.style.display = 'none'; return; }
       cont.style.display = '';
@@ -5808,10 +5861,11 @@
       iniciarRamoLaura(sufijo, panel);
       iniciarOsoLaura(sufijo, panel);
       iniciarConstelacionLaura(sufijo, panel);
+      iniciarFarolitosLaura(sufijo, panel);
       if (tituloEl) {
         tituloEl.classList.remove('laura-shine');
         // En el modo constelación el título aparece cuando el corazón ya se formó
-        const retrasoTitulo = panel.constelacion ? 7000 : 0;
+        const retrasoTitulo = panel.retrasoTitulo || (panel.constelacion ? 7000 : 0);
         if (retrasoTitulo) {
           tituloEl.textContent = '';
           setTimeout(() => {
@@ -5994,7 +6048,7 @@
       // Cuando termina de escribirse el titulo, el panel se pone
       // "escurridizo": se mueve solo y esquiva el mouse hasta que Laura
       // logra atraparlo con el cursor para poder darle click al boton.
-      const tiempoEscritura = (LAURA_PANEL_A.titulo.length * 26) + 1400 + (LAURA_PANEL_A.constelacion ? 7000 : 0);
+      const tiempoEscritura = (LAURA_PANEL_A.titulo.length * 26) + 1400 + (LAURA_PANEL_A.retrasoTitulo || (LAURA_PANEL_A.constelacion ? 7000 : 0));
       if (!LAURA_CUMPLE_HOY) {
         laura_escurridizoTimeout = setTimeout(laura_iniciarEscurridizo, tiempoEscritura);
       }
