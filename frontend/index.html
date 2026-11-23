@@ -5502,7 +5502,8 @@
           titulo: "Alerta del sistema: cada vez que te veo mi Lau, me explotan fuegos artificiales por dentro 🎆",
           sub: "Que tengas un lindo martes 💛",
           fuegos: true,
-          retrasoTitulo: 6500,
+          fuegosFoto: "laura-gustavo-fuegos.jpg",
+          retrasoTitulo: 8000,
           boton: "Gracias ❤️"
         }
       },
@@ -5654,13 +5655,20 @@
       const mk = (n, seed) => { const a = []; for (let i = 0; i < n; i++) a.push([i / n * Math.PI * 2 + rnd(seed + i) * 0.2, 55 + rnd(seed + i * 3) * 45]); return a; };
       const b1 = mk(28, 10), b2 = mk(28, 200);
       const hp = [];
-      [[5.4, 100], [4.2, 60]].forEach((cfg, k) => {
+      [[6.2, 110], [5.7, 70]].forEach((cfg, k) => {
         for (let i = 0; i < cfg[1]; i++) {
           const q = i / cfg[1] * Math.PI * 2;
           hp.push([160 + cfg[0] * 16 * Math.pow(Math.sin(q), 3), 125 - cfg[0] * (13 * Math.cos(q) - 5 * Math.cos(2 * q) - 2 * Math.cos(3 * q) - Math.cos(4 * q)), k]);
         }
       });
       const ease = (u) => { u = Math.min(1, Math.max(0, u)); return 1 - Math.pow(1 - u, 3); };
+      const foto = new Image();
+      if (panel.fuegosFoto) foto.src = panel.fuegosFoto;
+      const clipPts = [];
+      for (let i = 0; i < 120; i++) {
+        const q = i / 120 * Math.PI * 2;
+        clipPts.push([160 + 5.9 * 16 * Math.pow(Math.sin(q), 3), 125 - 5.9 * (13 * Math.cos(q) - 5 * Math.cos(2 * q) - 2 * Math.cos(3 * q) - Math.cos(4 * q))]);
+      }
       const burst = (b, cx, cy, dt, col) => {
         if (dt < 0 || dt > 1.8) return;
         b.forEach(p => {
@@ -5683,6 +5691,18 @@
         rocket(70, 290, 95, 0.2, 1.2, t); burst(b1, 70, 95, t - 1.2, '#ffd166');
         rocket(250, 290, 80, 0.8, 1.8, t); burst(b2, 250, 80, t - 1.8, '#ff8fb1');
         rocket(160, 290, 125, 2.0, 3.2, t);
+        if (t >= 4.6 && foto.complete && foto.naturalWidth) {
+          c.save();
+          c.beginPath();
+          clipPts.forEach((pt, i) => { if (i) c.lineTo(pt[0], pt[1]); else c.moveTo(pt[0], pt[1]); });
+          c.closePath(); c.clip();
+          c.globalAlpha = Math.min(1, (t - 4.6) / 1.4);
+          c.drawImage(foto, 64, 45, 192, 185);
+          const gr = c.createLinearGradient(0, 120, 0, 232);
+          gr.addColorStop(0, 'rgba(10,8,30,0)'); gr.addColorStop(1, 'rgba(10,8,30,0.7)');
+          c.fillStyle = gr; c.fillRect(64, 120, 192, 112);
+          c.restore();
+        }
         if (t >= 3.2) {
           const dt = t - 3.2;
           hp.forEach((p, i) => {
@@ -5694,14 +5714,14 @@
             c.beginPath(); c.arc(x, y, p[2] === 0 ? 2.6 : 2, 0, 7); c.fill();
           });
         }
-        if (t >= 5.0) {
-          c.globalAlpha = Math.min(1, (t - 5.0) / 1.2);
-          c.fillStyle = '#ffe9a8'; c.shadowColor = '#ffb23e'; c.shadowBlur = 12;
+        if (t >= 6.2) {
+          c.globalAlpha = Math.min(1, (t - 6.2) / 1.0);
           c.textAlign = 'center'; c.textBaseline = 'middle';
-          c.font = 'bold 28px Georgia, serif';
-          c.fillText('Lau', 116, 128); c.fillText('Gus', 206, 128);
-          c.font = 'bold 20px Georgia, serif';
-          c.fillText('&', 160, 128);
+          c.font = 'bold 21px Georgia, serif';
+          c.lineWidth = 3; c.strokeStyle = 'rgba(40,10,40,0.75)'; c.lineJoin = 'round';
+          c.shadowColor = '#ffb23e'; c.shadowBlur = 8; c.fillStyle = '#ffe9a8';
+          const txt = 'Lau & Gus';
+          c.strokeText(txt, 160, 172); c.fillText(txt, 160, 172);
           c.shadowBlur = 0;
         }
         c.globalAlpha = 1;
