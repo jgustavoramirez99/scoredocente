@@ -6405,7 +6405,7 @@
     let laura_criaturaTimer = null;
     function iniciarCriaturasLaura() {
       const modoConejos = !!LAURA_PANEL_A.conejo;
-      const criaturas = modoConejos ? ['🐇', '🐇', '🐰'] : ['🧸', '🐶', '🐇', '🐹'];
+      const criaturas = modoConejos ? ['🐇', '🐇', '🐰'] : (LAURA_PANEL_A.abrazo ? ['🧸', '🐶', '🐹'] : ['🧸', '🐶', '🐇', '🐹']);
       function spawn() {
         const overlay = document.getElementById('laura-welcome-overlay');
         if (!overlay || !overlay.classList.contains('show')) return;
