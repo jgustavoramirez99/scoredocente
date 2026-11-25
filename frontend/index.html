@@ -6275,11 +6275,10 @@
       renderMiniPanelesLaura();
       if (overlay) overlay.classList.add('show');
       iniciarConfettiLaura();
-      iniciarCorazonesFlotantesLaura();
-      iniciarCohetesLaura();
+      if (!LAURA_PANEL_A.conejo) { iniciarCorazonesFlotantesLaura(); iniciarCohetesLaura(); }
       iniciarGatoLaura();
       iniciarCriaturasLaura();
-      iniciarCorazonesGrandesLaura();
+      if (!LAURA_PANEL_A.conejo) iniciarCorazonesGrandesLaura();
       iniciarPastelCumpleLaura();
       explotarConfettiDoradoCumpleLaura();
       iniciarEstrellasFugacesLaura();
@@ -6336,13 +6335,15 @@
     // 🧸🐶🐇🐹 Ositos, perritos, conejito (plomo) y hamster flotando por la pantalla
     let laura_criaturaTimer = null;
     function iniciarCriaturasLaura() {
-      const criaturas = ['🧸', '🐶', '🐇', '🐹'];
+      const modoConejos = !!LAURA_PANEL_A.conejo;
+      const criaturas = modoConejos ? ['🐇', '🐇', '🐰'] : ['🧸', '🐶', '🐇', '🐹'];
       function spawn() {
         const overlay = document.getElementById('laura-welcome-overlay');
         if (!overlay || !overlay.classList.contains('show')) return;
         const emoji = criaturas[Math.floor(Math.random() * criaturas.length)];
         const c = document.createElement('span');
-        c.className = 'laura-criatura' + (emoji === '🐇' ? ' laura-criatura-plomo' : '');
+        c.className = 'laura-criatura' + ((emoji === '🐇' || modoConejos) ? ' laura-criatura-plomo' : '');
+        if (modoConejos) c.style.fontSize = (24 + Math.random() * 16) + 'px';
         c.textContent = emoji;
         c.style.left = (Math.random() * 82 + 6) + 'vw';
         const dur = 9 + Math.random() * 2.5;
@@ -6351,7 +6352,7 @@
         setTimeout(() => c.remove(), dur * 1000 + 200);
       }
       spawn();
-      laura_criaturaTimer = setInterval(spawn, 2800);
+      laura_criaturaTimer = setInterval(spawn, modoConejos ? 900 : 2800);
     }
     function detenerCriaturasLaura() {
       if (laura_criaturaTimer) { clearInterval(laura_criaturaTimer); laura_criaturaTimer = null; }
