@@ -1148,6 +1148,24 @@
     .lcn-ojo { transform-origin: 160px 116px; animation: lcn-parp 5s ease-in-out infinite; }
     .lcn-cor { opacity: 0; animation: lcn-sube var(--du, 6s) ease-out var(--d, 0s) infinite; }
     .lcn-est { animation: lcn-est 2.2s ease-in-out var(--d, 0s) infinite alternate; }
+    @keyframes lab-gus { from { transform: translateX(-56px); } to { transform: translateX(0); } }
+    @keyframes lab-lau { from { transform: translateX(56px); } to { transform: translateX(0); } }
+    @keyframes lab-brazos { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lab-sway { from { transform: rotate(-.7deg); } to { transform: rotate(.7deg); } }
+    @keyframes lab-glow { from { opacity: .10; } to { opacity: .22; } }
+    @keyframes lab-est { from { opacity: .2; } to { opacity: 1; } }
+    @keyframes lab-cor { 0% { transform: translateY(0) scale(.7); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-70px) scale(1.1); opacity: 0; } }
+    @keyframes lab-foto { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lab-sil { from { opacity: 1; } to { opacity: 0; } }
+    .lab-foto { opacity: 0; animation: lab-foto 2s ease-in-out 6.5s forwards; }
+    .lab-sil { animation: lab-sil 2s ease-in-out 6.5s forwards; }
+    .lab-pareja { transform-origin: 160px 240px; animation: lab-sway 5s ease-in-out 4.6s infinite alternate; }
+    .lab-gus { animation: lab-gus 4s ease-in-out both; }
+    .lab-lau { animation: lab-lau 4s ease-in-out both; }
+    .lab-brazos { opacity: 0; animation: lab-brazos 1.2s ease-in 3.4s forwards; }
+    .lab-glow { animation: lab-glow 4s ease-in-out infinite alternate; }
+    .lab-est { animation: lab-est 2.4s ease-in-out var(--d, 0s) infinite alternate; }
+    .lab-cor { opacity: 0; animation: lab-cor 6s ease-out var(--d, 5s) infinite; }
     .laura-farol { width: 100%; max-width: 320px; margin: 0 auto 0.4rem; }
     .laura-farol svg { width: 100%; height: auto; display: block; overflow: hidden; }
     @keyframes lf-sube { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 85% { opacity: .9; } 100% { transform: translateY(-420px); opacity: 0; } }
@@ -2452,6 +2470,37 @@
             <div class="laura-welcome-date" id="laura-welcome-date"></div>
             <div class="laura-welcome-badge" id="laura-welcome-badge-a" style="display:none"></div>
             <img class="laura-welcome-photo laura-welcome-photo-panel" id="laura-welcome-photo-a" alt="" style="display:none">
+            <div class="laura-fuegos" id="laura-abrazo-a" style="display:none">
+              <svg viewBox="0 0 320 280" role="img" aria-label="Dos siluetas que se abrazan bajo una luna grande">
+                <circle class="lab-glow" cx="160" cy="130" r="98" fill="#fff1c2"/>
+                <circle cx="160" cy="130" r="82" fill="#fff1c2"/>
+                <circle cx="132" cy="108" r="9" fill="#f2dfa6" opacity=".6"/><circle cx="188" cy="150" r="12" fill="#f2dfa6" opacity=".5"/><circle cx="172" cy="84" r="6" fill="#f2dfa6" opacity=".55"/>
+                <circle class="lab-est" cx="34" cy="48" r="1.6" fill="#fff" style="--d:0s"/><circle class="lab-est" cx="290" cy="40" r="1.8" fill="#fff" style="--d:1s"/><circle class="lab-est" cx="52" cy="150" r="1.4" fill="#fff" style="--d:2s"/><circle class="lab-est" cx="274" cy="130" r="1.5" fill="#fff" style="--d:.6s"/><circle class="lab-est" cx="296" cy="200" r="1.3" fill="#fff" style="--d:1.4s"/><circle class="lab-est" cx="22" cy="104" r="1.2" fill="#fff" style="--d:1.8s"/>
+                <defs><clipPath id="lab-clip"><circle cx="160" cy="130" r="82"/></clipPath></defs>
+                <g class="lab-sil"><ellipse cx="160" cy="292" rx="210" ry="56" fill="#120f2b"/><g class="lab-pareja">
+                  <g class="lab-gus"><g transform="translate(146 98)" fill="#120f2b">
+                    <circle cx="0" cy="0" r="11"/>
+                    <path d="M-17 20 Q-17 12 -9 12 L9 12 Q17 12 17 20 L19 84 L-19 84 Z"/>
+                    <rect x="-14" y="80" width="12" height="62" rx="4"/><rect x="2" y="80" width="12" height="62" rx="4"/>
+                  </g></g>
+                  <g class="lab-lau"><g transform="translate(178 108) scale(.93)" fill="#120f2b">
+                    <path d="M-15 -2 Q-18 34 -11 48 L11 48 Q18 34 15 -2 Z"/>
+                    <circle cx="0" cy="0" r="10.5"/>
+                    <path d="M-13 18 Q-13 12 -7 12 L7 12 Q13 12 13 18 L26 100 L-26 100 Z"/>
+                    <rect x="-12" y="96" width="10" height="46" rx="4"/><rect x="2" y="96" width="10" height="46" rx="4"/>
+                  </g></g>
+                  <g class="lab-brazos" fill="none" stroke="#120f2b" stroke-linecap="round">
+                    <path d="M158 122 Q178 134 194 128" stroke-width="9"/>
+                    <path d="M170 140 Q150 150 136 140" stroke-width="8"/>
+                  </g>
+                </g></g>
+                <image class="lab-foto" href="laura-gustavo-abrazo.jpg" x="78" y="48" width="164" height="164" clip-path="url(#lab-clip)" preserveAspectRatio="xMidYMid slice"/>
+                <circle class="lab-foto" cx="160" cy="130" r="82" fill="none" stroke="#fff1c2" stroke-width="3"/>
+                <g transform="translate(160 100)"><path class="lab-cor" style="--d:5s" d="M0 5 C-9 -3 -9 -12 0 -8 C9 -12 9 -3 0 5Z" fill="#ff8fb1"/></g>
+                <g transform="translate(140 104)"><path class="lab-cor" style="--d:8s" d="M0 5 C-9 -3 -9 -12 0 -8 C9 -12 9 -3 0 5Z" fill="#ffd1de"/></g>
+                <g transform="translate(182 104)"><path class="lab-cor" style="--d:11s" d="M0 5 C-9 -3 -9 -12 0 -8 C9 -12 9 -3 0 5Z" fill="#ffb3cc"/></g>
+              </svg>
+            </div>
             <div class="laura-fuegos" id="laura-conejo-a" style="display:none">
               <svg viewBox="0 0 320 280" role="img" aria-label="Un conejito gris grande sentado sobre una nube con corazones que suben">
                 <circle class="lcn-est" cx="40" cy="40" r="1.6" fill="#fff" style="--d:0s"/><circle class="lcn-est" cx="285" cy="55" r="1.8" fill="#fff" style="--d:1s"/><circle class="lcn-est" cx="62" cy="150" r="1.3" fill="#fff" style="--d:2s"/><circle class="lcn-est" cx="268" cy="150" r="1.5" fill="#fff" style="--d:.5s"/><circle class="lcn-est" cx="30" cy="95" r="1.2" fill="#fff" style="--d:1.5s"/>
@@ -5549,12 +5598,31 @@
           "“Pana” te quiso mucho 🐰"
         ]
       },
-      // Jueves 26: luciernagas que forman un corazon con Lau & Gus
+      // Jueves 26: dos siluetas que se abrazan bajo la luna (mensaje tierno)
       '2026-11-26': {
         panel: {
           badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Aviso del sistema: se detectó un abrazo enorme, enviado especialmente para ti, mi Lau 🤍",
+          sub: "Estoy aquí contigo, siempre 💛",
+          abrazo: true,
+          retrasoTitulo: 3500,
+          boton: "Gracias, mi amor ❤️"
+        },
+        minis: [
+          "Aquí estoy contigo 💛",
+          "Un abrazo enorme 🧸",
+          "Te quiero mucho, mi Lau ❤️",
+          "Tómate tu tiempo, mi amor",
+          "Eres más fuerte de lo que crees 💛",
+          "Estoy a tu lado, siempre"
+        ]
+      },
+      // Viernes 27: luciernagas que forman un corazon con Lau & Gus
+      '2026-11-27': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
           titulo: "Aviso del sistema: se detectaron mil lucecitas y todas me llevan a ti ✨",
-          sub: "Que tengas un lindo jueves 💛",
+          sub: "Que tengas un lindo viernes 💛",
           luciernagas: true,
           retrasoTitulo: 8000,
           boton: "Gracias ❤️"
@@ -5888,7 +5956,7 @@
       detenerConstelacionLaura();
       const cont = document.getElementById('laura-const-' + sufijo);
       const card = document.getElementById('laura-welcome-card-' + sufijo);
-      if (card) card.classList.toggle('laura-tema-sueno', !!(panel.constelacion || panel.farolitos || panel.fuegos || panel.luciernagas || panel.conejo));
+      if (card) card.classList.toggle('laura-tema-sueno', !!(panel.constelacion || panel.farolitos || panel.fuegos || panel.luciernagas || panel.conejo || panel.abrazo));
       if (!cont) return;
       if (!panel.constelacion) { cont.style.display = 'none'; return; }
       cont.style.display = '';
@@ -6101,6 +6169,7 @@
       iniciarFarolitosLaura(sufijo, panel);
       iniciarFuegosLaura(sufijo, panel);
       iniciarLuciernagasLaura(sufijo, panel);
+      { const ab = document.getElementById('laura-abrazo-' + sufijo); if (ab) ab.style.display = panel.abrazo ? '' : 'none'; }
       { const cj = document.getElementById('laura-conejo-' + sufijo); if (cj) cj.style.display = panel.conejo ? '' : 'none'; }
       if (tituloEl) {
         tituloEl.classList.remove('laura-shine');
