@@ -1159,6 +1159,9 @@
     @keyframes lab-sil { from { opacity: 1; } to { opacity: 0; } }
     .lab-foto { opacity: 0; animation: lab-foto 2s ease-in-out 6.5s forwards; }
     .lab-sil { animation: lab-sil 2s ease-in-out 6.5s forwards; }
+    .laura-foto-carnet { position: fixed; top: -130px; z-index: 10001; width: 62px; height: 74px; padding: 3px; background: #fff; border-radius: 2px; box-shadow: 0 3px 10px rgba(0,0,0,.35); pointer-events: none; animation: laura-foto-cae var(--dur, 11s) linear forwards; }
+    .laura-foto-carnet img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    @keyframes laura-foto-cae { from { transform: translate(0, 0) rotate(var(--r0, -8deg)); opacity: 0; } 6% { opacity: 1; } to { transform: translate(var(--dx, 20px), calc(100vh + 160px)) rotate(var(--r1, 10deg)); opacity: 1; } }
     .lab-pareja { transform-origin: 160px 240px; animation: lab-sway 5s ease-in-out 4.6s infinite alternate; }
     .lab-gus { animation: lab-gus 4s ease-in-out both; }
     .lab-lau { animation: lab-lau 4s ease-in-out both; }
@@ -5617,12 +5620,31 @@
           "Estoy a tu lado, siempre"
         ]
       },
-      // Viernes 27: luciernagas que forman un corazon con Lau & Gus
+      // Viernes 27: lluvia de fotos tamano carnet que caen despacio
       '2026-11-27': {
         panel: {
           badge: "💌 Tu mensajito de tu chico Gus ❤️",
-          titulo: "Aviso del sistema: se detectaron mil lucecitas y todas me llevan a ti ✨",
+          titulo: "Aviso del sistema: se detectó una lluvia de recuerdos, y en todos apareces tú 📸💛",
           sub: "Que tengas un lindo viernes 💛",
+          lluviaFotos: true,
+          retrasoTitulo: 2000,
+          boton: "Gracias, mi amor ❤️"
+        },
+        minis: [
+          "Aquí estoy contigo 💛",
+          "Un abrazo enorme 🧸",
+          "Te quiero mucho, mi Lau ❤️",
+          "Qué lindos recuerdos contigo 📸",
+          "Eres más fuerte de lo que crees 💛",
+          "Estoy a tu lado, siempre"
+        ]
+      },
+      // Sabado 28: luciernagas que forman un corazon con Lau & Gus
+      '2026-11-28': {
+        panel: {
+          badge: "💌 Tu mensajito de tu chico Gus ❤️",
+          titulo: "Aviso del sistema: se detectaron mil lucecitas y todas me llevan a ti ✨",
+          sub: "Que tengas un lindo sábado 💛",
           luciernagas: true,
           retrasoTitulo: 8000,
           boton: "Gracias ❤️"
@@ -5769,6 +5791,39 @@
     let laura_conRaf = null;
     function detenerConstelacionLaura() {
       if (laura_conRaf) { cancelAnimationFrame(laura_conRaf); laura_conRaf = null; }
+    }
+    let laura_fotosTimer = null;
+    function iniciarLluviaFotosLaura() {
+      detenerLluviaFotosLaura();
+      const fotos = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => 'laura-carnet-' + n + '.jpg');
+      fotos.forEach(src => { const im = new Image(); im.src = src; });
+      let k = Math.floor(Math.random() * fotos.length);
+      function caer() {
+        const overlay = document.getElementById('laura-welcome-overlay');
+        if (!overlay || !overlay.classList.contains('show')) return;
+        const d = document.createElement('div');
+        d.className = 'laura-foto-carnet';
+        const im = document.createElement('img');
+        im.src = fotos[k % fotos.length]; k++;
+        im.alt = '';
+        d.appendChild(im);
+        d.style.left = (Math.random() * 90 + 2) + 'vw';
+        const dur = 10 + Math.random() * 4;
+        d.style.setProperty('--dur', dur + 's');
+        d.style.setProperty('--r0', (Math.random() * 24 - 12) + 'deg');
+        d.style.setProperty('--r1', (Math.random() * 30 - 15) + 'deg');
+        d.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+        document.body.appendChild(d);
+        setTimeout(() => d.remove(), dur * 1000 + 300);
+      }
+      caer();
+      setTimeout(caer, 500);
+      setTimeout(caer, 1100);
+      laura_fotosTimer = setInterval(caer, 1000);
+    }
+    function detenerLluviaFotosLaura() {
+      if (laura_fotosTimer) { clearInterval(laura_fotosTimer); laura_fotosTimer = null; }
+      document.querySelectorAll('.laura-foto-carnet').forEach(el => el.remove());
     }
     let laura_lucRaf = null;
     function detenerLuciernagasLaura() {
@@ -6347,6 +6402,7 @@
       if (!LAURA_PANEL_A.conejo) { iniciarCorazonesFlotantesLaura(); iniciarCohetesLaura(); }
       iniciarGatoLaura();
       iniciarCriaturasLaura();
+      if (LAURA_PANEL_A.lluviaFotos) iniciarLluviaFotosLaura();
       if (!LAURA_PANEL_A.conejo) iniciarCorazonesGrandesLaura();
       iniciarPastelCumpleLaura();
       explotarConfettiDoradoCumpleLaura();
@@ -6378,6 +6434,7 @@
       detenerConstelacionLaura();
       detenerFuegosLaura();
       detenerLuciernagasLaura();
+      detenerLluviaFotosLaura();
       laura_limpiarEscurridizo();
     }
 
@@ -6405,7 +6462,7 @@
     let laura_criaturaTimer = null;
     function iniciarCriaturasLaura() {
       const modoConejos = !!LAURA_PANEL_A.conejo;
-      const criaturas = modoConejos ? ['🐇', '🐇', '🐰'] : (LAURA_PANEL_A.abrazo ? ['🧸', '🐶', '🐹'] : ['🧸', '🐶', '🐇', '🐹']);
+      const criaturas = modoConejos ? ['🐇', '🐇', '🐰'] : ((LAURA_PANEL_A.abrazo || LAURA_PANEL_A.lluviaFotos) ? ['🧸', '🐶', '🐹'] : ['🧸', '🐶', '🐇', '🐹']);
       function spawn() {
         const overlay = document.getElementById('laura-welcome-overlay');
         if (!overlay || !overlay.classList.contains('show')) return;
